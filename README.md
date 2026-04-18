@@ -108,12 +108,26 @@ else:
 
 ### Pre-commit
 
+Add to your `.pre-commit-config.yaml`:
+
 ```yaml
 repos:
-  - repo: https://github.com/bawbel/bawbel-scanner
-    rev: v0.1.0
+  - repo: local
     hooks:
       - id: bawbel-scan
+        name: Bawbel Scanner — agentic AI component security scan
+        entry: bawbel scan
+        language: system        # uses your venv where bawbel-scanner is installed
+        pass_filenames: true
+        types: [markdown]       # scans .md files on every commit
+        args: ["--fail-on-severity", "high"]
+```
+
+Then install:
+
+```bash
+pip install bawbel-scanner
+pre-commit install
 ```
 
 ---
