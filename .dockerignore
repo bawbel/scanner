@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+.venv/
+venv/
+env/
+
+# Tests
+tests/
+*.test.md
+
+# Git
+.git/
+.gitignore
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Dev tools
+.env
+.env.*
+*.env
+.vscode/
+.idea/
+
+# Docs
+*.md
+!README.md
+
+# OS
+.DS_Store
+Thumbs.db

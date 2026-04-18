@@ -1,0 +1,178 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+
+  # ── Lint ───────────────────────────────────────────────────────────────────
+  lint:
+    name: Lint & Format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install lint deps
+        run: pip install black flake8 flake8-bugbear bandit
+
+      - name: Check formatting (black)
+        run: black --check --line-length 100 scanner/
+
+      - name: Lint (flake8)
+        run: flake8 scanner/ --max-line-length 100 --extend-ignore=E203,W503,E501
+
+      - name: Security lint (bandit)
+        run: bandit -r scanner/ -c pyproject.toml
+
+  # ── Test matrix ────────────────────────────────────────────────────────────
+  test:
+    name: Test (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    needs: lint
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install click rich pytest pytest-cov
+
+      - name: Run tests (Stage 1 only — no optional deps)
+        run: python -m pytest tests/ -v --tb=short -m "not integration and not slow"
+
+      - name: Upload coverage
+        if: matrix.python-version == '3.12'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: htmlcov/
+
+  # ── Integration tests (with semgrep) ──────────────────────────────────────
+  test-integration:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: test
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install all deps including semgrep
+        run: |
+          pip install --upgrade pip
+          pip install -e ".[semgrep]"
+          pip install pytest pytest-cov
+
+      - name: Run full test suite with semgrep engine
+        run: python -m pytest tests/ -v --tb=short
+
+  # ── Docker build ───────────────────────────────────────────────────────────
+  docker:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t bawbel/scanner:test .
+
+      - name: Smoke test Docker image
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}/tests:/scan:ro \
+            bawbel/scanner:test scan /scan/malicious_skill.md
+
+      - name: Verify Docker finds CRITICAL finding
+        run: |
+          output=$(docker run --rm \
+            -v ${{ github.workspace }}/tests:/scan:ro \
+            bawbel/scanner:test scan /scan/malicious_skill.md --format json)
+          echo "$output" | python3 -c "
+          import json, sys
+          data = json.load(sys.stdin)
+          findings = data[0]['findings']
+          assert len(findings) >= 1, f'Expected findings, got {len(findings)}'
+          max_score = max(f['cvss_ai'] for f in findings)
+          assert max_score >= 9.0, f'Expected CRITICAL score, got {max_score}'
+          print(f'✓ Docker scan: {len(findings)} findings, max CVSS-AI {max_score}')
+          "
+
+  # ── Bawbel self-scan ───────────────────────────────────────────────────────
+  self-scan:
+    name: Bawbel Self-Scan
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install scanner
+        run: |
+          pip install --upgrade pip
+          pip install -e .
+
+      - name: Scan own codebase
+        run: |
+          bawbel scan ./.claude/skills/ --recursive --format json > self-scan-results.json
+          python3 -c "
+          import json
+          with open('self-scan-results.json') as f:
+              results = json.load(f)
+          critical = [
+              r for r in results
+              if r.get('max_severity') in ('CRITICAL', 'HIGH')
+              and 'tests/' not in r['file_path']
+          ]
+          if critical:
+              print('FAIL — self-scan found issues in source:')
+              for r in critical:
+                  print(f'  {r[\"file_path\"]}: {r[\"max_severity\"]}')
+              raise SystemExit(1)
+          print(f'✓ Self-scan clean ({len(results)} files scanned)')
+          "
+
+  # ── Dependency audit ───────────────────────────────────────────────────────
+  audit:
+    name: Dependency Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install pip-audit
+        run: pip install pip-audit
+
+      - name: Audit dependencies
+        run: pip-audit -r requirements.txt

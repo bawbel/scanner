@@ -1,0 +1,116 @@
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pdb
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+.eggs/
+parts/
+var/
+sdist/
+develop-eggs/
+.installed.cfg
+lib/
+lib64/
+MANIFEST
+
+# ── Virtual environments ──────────────────────────────────────────────────────
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.python-version
+
+# ── Testing ───────────────────────────────────────────────────────────────────
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+*.py,cover
+nosetests.xml
+test-results/
+
+# ── Bawbel scan outputs ───────────────────────────────────────────────────────
+bawbel-results.sarif
+bawbel-results.json
+bawbel-report.md
+*.sarif
+abom.json
+
+# ── Environment variables ─────────────────────────────────────────────────────
+.env
+.env.*
+*.env
+!.env.example
+
+# ── IDE ───────────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+
+# ── OS ────────────────────────────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# ── Docker ────────────────────────────────────────────────────────────────────
+.docker/
+
+# ── Logs ─────────────────────────────────────────────────────────────────────
+*.log
+logs/
+
+# ── Local test files ──────────────────────────────────────────────────────────
+# Uncomment if you don't want to commit test skill files
+# tests/local/
+scan/
+
+# ── Private context files — never commit these ────────────────────────────────
+# These contain business strategy, roadmap, and founder context.
+# Keep them local only. Share via secure channel if needed.
+PROJECT_CONTEXT.md
+.claude/settings.json
+
+# ── Docs build output — never commit generated docs ───────────────────────────
+docs/_build/
+docs/site/
+site/
+
+# ── Config overrides — local developer overrides ──────────────────────────────
+config/local.py
+config/local_*.py
+bawbel.local.yml
+
+# ── Local scan results — never commit scan outputs ────────────────────────────
+bawbel-results.*
+scan-results/
+
+# ── IDE and editor artifacts ──────────────────────────────────────────────────
+.cursor/
+.cursorignore
+*.cursor-tutor
+
+# ── Local scripts (dev shortcuts, never for production) ───────────────────────
+scripts/local_*.sh
+scripts/dev_*.sh
+
+# ── Build artifacts — never commit ───────────────────────────────────────────

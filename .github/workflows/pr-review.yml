@@ -1,0 +1,180 @@
+name: PR Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+
+  # ── PR title format check ──────────────────────────────────────────────────
+  pr-title:
+    name: PR Title Format
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    steps:
+      - name: Check PR title follows Conventional Commits
+        uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            feat
+            fix
+            rule
+            test
+            docs
+            refactor
+            perf
+            chore
+            security
+          requireScope: false
+          subjectPattern: ^.{1,72}$
+          subjectPatternError: >
+            PR title must be under 72 characters.
+
+  # ── Golden fixture regression check ───────────────────────────────────────
+  regression-check:
+    name: Golden Fixture Regression
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install deps
+        run: pip install click rich pytest
+
+      - name: Run golden fixture check
+        run: |
+          python3 -c "
+          from scanner.scanner import scan, Severity
+          result = scan('tests/fixtures/skills/malicious/malicious_skill.md')
+
+          errors = []
+          rule_ids = [f.rule_id for f in result.findings]
+          if 'bawbel-external-fetch' not in rule_ids:
+              errors.append('bawbel-external-fetch not detected')
+          if 'bawbel-goal-override' not in rule_ids:
+              errors.append('bawbel-goal-override not detected')
+          if result.max_severity != Severity.CRITICAL:
+              errors.append(f'Expected CRITICAL, got {result.max_severity}')
+          if result.risk_score < 9.0:
+              errors.append(f'Expected risk >= 9.0, got {result.risk_score}')
+
+          ave_ids = [f.ave_id for f in result.findings]
+          if 'AVE-2026-00001' not in ave_ids:
+              errors.append('AVE-2026-00001 not detected')
+
+          if errors:
+              print('GOLDEN FIXTURE REGRESSION:')
+              for e in errors: print(f'  ✗ {e}')
+              raise SystemExit(1)
+
+          print(f'✓ Golden fixture OK — {len(result.findings)} findings, CRITICAL {result.risk_score}')
+          "
+
+  # ── New rules must have tests ──────────────────────────────────────────────
+  rule-test-check:
+    name: New Rules Have Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check new rules have corresponding tests
+        run: |
+          # Get changed rule files
+          changed_rules=$(git diff --name-only origin/${{ github.base_ref }}...HEAD \
+            | grep -E "scanner/rules/(yara|semgrep)/" || true)
+
+          if [ -z "$changed_rules" ]; then
+            echo "✓ No rule changes — skipping test check"
+            exit 0
+          fi
+
+          echo "Changed rules:"
+          echo "$changed_rules"
+
+          # Check tests exist
+          missing_tests=0
+          for rule_file in $changed_rules; do
+            rule_name=$(basename "$rule_file" | sed 's/\.[^.]*$//')
+            if ! grep -r "$rule_name\|ave_rule\|test_detect" tests/ > /dev/null 2>&1; then
+              echo "⚠️  Warning: No obvious test found for $rule_file"
+              echo "   Please add a test in tests/test_scanner.py"
+              missing_tests=$((missing_tests + 1))
+            else
+              echo "✓ Test found for $rule_file"
+            fi
+          done
+
+          if [ $missing_tests -gt 0 ]; then
+            echo ""
+            echo "Add tests for new rules in tests/test_scanner.py"
+            echo "See .claude/testing.md for guidance"
+            exit 1
+          fi
+
+  # ── Security review for sensitive changes ─────────────────────────────────
+  security-review:
+    name: Security Review Required
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Flag security-sensitive changes
+        run: |
+          changed=$(git diff --name-only origin/${{ github.base_ref }}...HEAD)
+
+          security_files=$(echo "$changed" | grep -E \
+            "(scanner\.py|Dockerfile|requirements\.txt|\.github/)" || true)
+
+          if [ -n "$security_files" ]; then
+            echo "⚠️  Security-sensitive files changed:"
+            echo "$security_files"
+            echo ""
+            echo "Please ensure:"
+            echo "  1. .claude/security.md rules are followed"
+            echo "  2. No shell=True in subprocess calls"
+            echo "  3. No hardcoded secrets"
+            echo "  4. File reads use Path().resolve() + errors='ignore'"
+            echo ""
+            echo "This PR requires review from a security-aware maintainer."
+          else
+            echo "✓ No security-sensitive files changed"
+          fi
+
+  # ── Size check ─────────────────────────────────────────────────────────────
+  pr-size:
+    name: PR Size Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check PR size
+        run: |
+          lines_changed=$(git diff --stat origin/${{ github.base_ref }}...HEAD \
+            | tail -1 | grep -oP '\d+(?= insertion)' || echo 0)
+          files_changed=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | wc -l)
+
+          echo "Files changed: $files_changed"
+          echo "Lines changed: $lines_changed"
+
+          if [ "$lines_changed" -gt 500 ]; then
+            echo "⚠️  Large PR ($lines_changed lines) — consider splitting"
+          fi
+
+          if [ "$files_changed" -gt 20 ]; then
+            echo "⚠️  Many files ($files_changed) — consider splitting"
+          fi
+
+          echo "✓ PR size check complete"

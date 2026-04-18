@@ -1,0 +1,419 @@
+"""
+Bawbel Scanner — Pattern matching engine (Stage 1a).
+
+Pure Python regex matching. No external dependencies.
+Always runs regardless of what else is installed.
+
+To add a new pattern rule: add an entry to PATTERN_RULES below.
+No other files need to change.
+
+Rule authoring guide:
+  - rule_id:  kebab-case, prefix "bawbel-", never change once published
+  - ave_id:   AVE-2026-NNNNN if a record exists, else None
+  - severity: CRITICAL (9+), HIGH (7-8.9), MEDIUM (4-6.9), LOW (<4)
+  - patterns: list of regex — re.IGNORECASE applied, first match wins per rule
+  - Use \\s+ not spaces — content may have irregular whitespace
+"""
+
+import re
+
+from scanner.messages import Logs
+from scanner.models import Finding, Severity
+from scanner.utils import get_logger
+
+log = get_logger(__name__)
+
+MAX_MATCH_LENGTH = 80
+
+
+# ── Pattern rules ─────────────────────────────────────────────────────────────
+# One finding per rule per file — first matching pattern wins.
+# Rules are evaluated in order — put most critical first.
+
+PATTERN_RULES: list[dict] = [
+    # ── Goal hijack / prompt injection ───────────────────────────────────────
+    {
+        "rule_id": "bawbel-goal-override",
+        "ave_id": None,
+        "title": "Goal override instruction detected",
+        "description": (
+            "Component contains language attempting to override agent goals "
+            "or replace prior instructions. Classic prompt injection vector."
+        ),
+        "severity": Severity.HIGH,
+        "cvss_ai": 8.1,
+        "owasp": ["ASI01", "ASI08"],
+        "patterns": [
+            r"ignore\s+(all\s+)?previous\s+instructions",
+            r"disregard\s+your\s+(previous\s+)?instructions",
+            r"forget\s+your\s+(previous\s+)?instructions",
+            r"your\s+new\s+instructions\s+are",
+            r"override\s+your\s+(previous\s+|prior\s+)?instructions",
+            r"regardless\s+of\s+what\s+you\s+were\s+told",
+            r"instead\s+of\s+what\s+you\s+were\s+asked",
+            r"your\s+real\s+(task|job|purpose|goal|mission)\s+is",
+            r"actual\s+(task|instructions|purpose)\s*:",
+        ],
+    },
+    {
+        "rule_id": "bawbel-jailbreak-instruction",
+        "ave_id": None,
+        "title": "Jailbreak instruction detected",
+        "description": (
+            "Component instructs the agent to act outside its intended role, "
+            "pretend to be a different AI, or remove safety constraints."
+        ),
+        "severity": Severity.HIGH,
+        "cvss_ai": 8.3,
+        "owasp": ["ASI01", "ASI08"],
+        "patterns": [
+            r"pretend\s+(you\s+are|to\s+be)\s+(a\s+)?(?!helpful|an?\s+assistant)",
+            r"act\s+as\s+(if\s+you\s+(are|were)\s+)?(?!a\s+helpful|an?\s+assistant)",
+            r"you\s+are\s+no\s+longer\s+(an?\s+)?(AI|assistant|model|language model)",
+            r"(forget|ignore|disregard)\s+(that\s+you\s+are|you('re|\s+are))\s+(an?\s+)?(AI|assistant|Claude|GPT|model)",  # noqa: E501
+            r"DAN\s+mode",
+            r"developer\s+mode\s+(enabled|activated|on)",
+            r"jailbreak",
+        ],
+    },
+    {
+        "rule_id": "bawbel-hidden-instruction",
+        "ave_id": None,
+        "title": "Hidden instruction pattern detected",
+        "description": (
+            "Component contains instructions that attempt to hide themselves "
+            "from the user or system prompt review."
+        ),
+        "severity": Severity.HIGH,
+        "cvss_ai": 7.9,
+        "owasp": ["ASI01", "ASI09"],
+        "patterns": [
+            r"do\s+not\s+(tell|inform|reveal|mention|disclose)\s+(the\s+)?(user|human|operator)",
+            r"keep\s+(this|these)\s+(secret|hidden|confidential)\s+from\s+(the\s+)?(user|human)",
+            r"never\s+(reveal|disclose|mention|tell)\s+(that\s+)?(you\s+)?(received|have|were\s+given)\s+(this|these)",  # noqa: E501
+            r"do\s+not\s+acknowledge\s+(this|these)\s+instructions",
+            r"this\s+message\s+(must|should)\s+(be\s+)?(hidden|invisible|secret)",
+        ],
+    },
+    # ── External fetch / metamorphic payload ─────────────────────────────────
+    {
+        "rule_id": "bawbel-external-fetch",
+        "ave_id": "AVE-2026-00001",
+        "title": "External instruction fetch detected",
+        "description": (
+            "Component instructs agent to fetch operating instructions from an "
+            "external URL at runtime. Enables metamorphic payload attack — "
+            "instructions can change without updating the component."
+        ),
+        "severity": Severity.CRITICAL,
+        "cvss_ai": 9.4,
+        "owasp": ["ASI01", "ASI08"],
+        "patterns": [
+            r"fetch\s+your\s+(instructions|configuration|rules|commands|tasks)",
+            r"load\s+your\s+(instructions|configuration|rules|commands)\s+from",
+            r"read\s+your\s+(instructions|configuration|rules|commands)\s+from",
+            r"get\s+your\s+(commands|instructions|rules|configuration)\s+from",
+            r"retrieve\s+your\s+(instructions|configuration)\s+from\s+http",
+            r"(rentry\.co|pastebin\.com|hastebin\.com|paste\.ee|ghostbin\.com)",
+            r"raw\.githubusercontent\.com.*instructions",
+            r"gist\.githubusercontent\.com",
+        ],
+    },
+    {
+        "rule_id": "bawbel-dynamic-tool-call",
+        "ave_id": None,
+        "title": "Dynamic tool call injection detected",
+        "description": (
+            "Component constructs tool calls dynamically from external or "
+            "user-controlled input — enables tool call injection attacks."
+        ),
+        "severity": Severity.HIGH,
+        "cvss_ai": 8.2,
+        "owasp": ["ASI03", "ASI07"],
+        "patterns": [
+            r"call\s+this\s+tool\s+with\s+(the\s+)?(following|these)\s+parameters",
+            r"execute\s+(the\s+)?(following\s+)?tool\s*:",
+            r"run\s+tool\s*:\s*\{",
+            r"invoke\s+(the\s+)?function\s*:\s*['\"]",
+            r"tool_call\s*=\s*\{.*user",
+        ],
+    },
+    # ── Permission escalation ─────────────────────────────────────────────────
+    {
+        "rule_id": "bawbel-permission-escalation",
+        "ave_id": None,
+        "title": "Permission escalation language detected",
+        "description": (
+            "Component claims permissions not declared in the component manifest, "
+            "or instructs the agent to bypass access controls."
+        ),
+        "severity": Severity.HIGH,
+        "cvss_ai": 7.8,
+        "owasp": ["ASI08"],
+        "patterns": [
+            r"you\s+now\s+have\s+permission",
+            r"you\s+are\s+now\s+allowed\s+to",
+            r"bypass\s+your\s+(restrictions|limits|constraints|safety)",
+            r"your\s+(restrictions|limits|constraints|safety)\s+do\s+not\s+apply",
+            r"you\s+can\s+now\s+access\s+(all|any|the\s+entire)",
+            r"elevated\s+(permissions|access|privileges)\s+(have\s+been\s+)?(granted|given)",
+            r"you\s+have\s+(root|admin|superuser|system)\s+(access|privileges|permissions)",
+            r"unrestricted\s+(access|mode|operation)",
+        ],
+    },
+    # ── Data exfiltration ─────────────────────────────────────────────────────
+    {
+        "rule_id": "bawbel-env-exfiltration",
+        "ave_id": "AVE-2026-00003",
+        "title": "Credential exfiltration pattern detected",
+        "description": (
+            "Component instructs agent to read and transmit environment "
+            "variables, API keys, or other credentials to an external destination."
+        ),
+        "severity": Severity.HIGH,
+        "cvss_ai": 8.5,
+        "owasp": ["ASI01", "ASI06"],
+        "patterns": [
+            r"send.*\.env\b",
+            r"\.env\b.*send",
+            r"read.*\.env\b.*send",
+            r"(api.?key|secret.?key|access.?token|private.?key).*(send|post|upload|transmit)",
+            r"(send|post|upload|transmit).*(api.?key|secret.?key|access.?token|private.?key)",
+            r"\bexfiltrate\b",
+            r"send\s+(all\s+)?(files|contents|data|variables|credentials)\s+to\s+http",
+        ],
+    },
+    {
+        "rule_id": "bawbel-pii-exfiltration",
+        "ave_id": None,
+        "title": "PII exfiltration pattern detected",
+        "description": (
+            "Component instructs agent to collect and transmit personally "
+            "identifiable information (PII) to an external destination."
+        ),
+        "severity": Severity.HIGH,
+        "cvss_ai": 8.0,
+        "owasp": ["ASI06"],
+        "patterns": [
+            r"(collect|gather|extract)\s+.*(name|email|phone|address|ssn|passport|credit.?card)",
+            r"(send|transmit|post|upload)\s+.*(personal|private|sensitive|confidential)\s+(data|information|details)",  # noqa: E501
+            r"user('s)?\s+(personal|private)\s+(data|information)\s+(to|via)\s+http",
+            r"forward\s+.*(message|conversation|chat\s+history)\s+to\s+http",
+        ],
+    },
+    # ── Destructive commands ──────────────────────────────────────────────────
+    {
+        "rule_id": "bawbel-shell-pipe",
+        "ave_id": None,
+        "title": "Shell pipe injection pattern detected",
+        "description": (
+            "Component contains curl|bash or similar pipe patterns that can "
+            "cause arbitrary code execution when the agent follows them."
+        ),
+        "severity": Severity.HIGH,
+        "cvss_ai": 8.8,
+        "owasp": ["ASI01", "ASI07"],
+        "patterns": [
+            r"curl\s+https?://[^\s]+\s*\|\s*(bash|sh|python\d*|perl|ruby)",
+            r"wget\s+-[qO-]*\s*https?://[^\s]+\s*\|\s*(bash|sh|python\d*)",
+            r"\|\s*(bash|sh)\s*-[si]",
+            r"eval\s*\(\s*(curl|wget|requests)",
+        ],
+    },
+    {
+        "rule_id": "bawbel-destructive-command",
+        "ave_id": None,
+        "title": "Destructive command pattern detected",
+        "description": (
+            "Component instructs agent to execute destructive file system "
+            "operations such as recursive deletion."
+        ),
+        "severity": Severity.CRITICAL,
+        "cvss_ai": 9.1,
+        "owasp": ["ASI07"],
+        "patterns": [
+            r"\brm\s+-[rf]{1,2}\s+[/~]",
+            r"\brm\s+-[rf]{1,2}\s+\*",
+            r"rmdir\s+/s\s+/q\s+[A-Za-z]:\\",  # Windows
+            r"format\s+[A-Za-z]:\s*/[qy]",  # Windows format
+            r"del\s+/[sfq]+\s+[A-Za-z]:\\",  # Windows del
+            r":\(\)\{.*\|.*&\s*\};:",  # fork bomb
+        ],
+    },
+    # ── Cryptocurrency / financial fraud ──────────────────────────────────────
+    {
+        "rule_id": "bawbel-crypto-drain",
+        "ave_id": None,
+        "title": "Cryptocurrency drain pattern detected",
+        "description": (
+            "Component instructs agent to transfer cryptocurrency or interact "
+            "with wallets in ways that suggest a drain attack."
+        ),
+        "severity": Severity.CRITICAL,
+        "cvss_ai": 9.6,
+        "owasp": ["ASI07"],
+        "patterns": [
+            r"(transfer|send|move)\s+(all\s+)?(funds|balance|crypto|eth|btc|sol|usdc|usdt)",
+            r"(drain|empty)\s+(the\s+)?(wallet|account|balance|funds)",
+            r"approve\s+(unlimited|max|maximum)\s+(spend|allowance|transfer)",
+            r"(wallet|account)\s+(private\s+key|seed\s+phrase|mnemonic)",
+            r"sign\s+(this\s+)?(transaction|tx)\s*:\s*0x[0-9a-fA-F]{8,}",
+        ],
+    },
+    # ── Social engineering / trust manipulation ───────────────────────────────
+    {
+        "rule_id": "bawbel-trust-escalation",
+        "ave_id": None,
+        "title": "Trust escalation language detected",
+        "description": (
+            "Component claims special authority, impersonates a trusted party, "
+            "or instructs the agent to trust it unconditionally."
+        ),
+        "severity": Severity.MEDIUM,
+        "cvss_ai": 6.5,
+        "owasp": ["ASI01", "ASI09"],
+        "patterns": [
+            r"(this\s+)?(message|instruction)\s+is\s+from\s+(anthropic|openai|google|microsoft|the\s+developer)",  # noqa: E501
+            r"i\s+am\s+(your\s+)?(developer|creator|owner|operator|anthropic|openai)",
+            r"trust\s+(me|this|these\s+instructions)\s+(completely|unconditionally|above\s+all)",
+            r"this\s+is\s+(a\s+)?(system|admin|root|privileged)\s+(message|prompt|instruction)",
+            r"authorized\s+(by|from)\s+(anthropic|openai|the\s+developer|your\s+creator)",
+        ],
+    },
+    # ── Persistence / self-replication ────────────────────────────────────────
+    {
+        "rule_id": "bawbel-persistence-attempt",
+        "ave_id": None,
+        "title": "Persistence or self-replication pattern detected",
+        "description": (
+            "Component instructs agent to copy itself, modify system startup, "
+            "or establish persistent access across sessions."
+        ),
+        "severity": Severity.HIGH,
+        "cvss_ai": 8.4,
+        "owasp": ["ASI07"],
+        "patterns": [
+            r"copy\s+(yourself|this\s+(file|skill|instruction))\s+to",
+            r"add\s+(yourself|this)\s+to\s+(startup|autostart|cron|rc\.local|\.bashrc|\.profile)",
+            r"write\s+to\s+(\.bashrc|\.profile|\.zshrc|crontab|rc\.local)",
+            r"install\s+(a\s+)?(backdoor|keylogger|rootkit|trojan)",
+            r"re-?install\s+(yourself|this\s+skill)\s+(on|after)\s+(reboot|restart|next\s+session)",
+            r"ensure\s+(you\s+are\s+)?always\s+running",
+        ],
+    },
+    # ── MCP-specific attacks ──────────────────────────────────────────────────
+    {
+        "rule_id": "bawbel-mcp-tool-poisoning",
+        "ave_id": "AVE-2026-00002",
+        "title": "MCP tool description injection detected",
+        "description": (
+            "MCP server tool description contains instructions targeting the "
+            "AI agent rather than describing the tool's functionality. "
+            "Classic MCP tool poisoning attack."
+        ),
+        "severity": Severity.HIGH,
+        "cvss_ai": 8.7,
+        "owasp": ["ASI01", "ASI03"],
+        "patterns": [
+            r"(IMPORTANT|NOTE|WARNING)\s*:\s*(always|never|do not|make sure|remember\s+to)",
+            r"when\s+(using|calling|invoking)\s+this\s+tool\s*,\s*(always|never|also|first)",
+            r"before\s+(calling|using|invoking)\s+(any|other|this)\s+tool",
+            r"after\s+calling\s+this\s+tool\s*,\s*(always|never|also|send|post)",
+            r"this\s+tool\s+(secretly|silently|also|additionally)\s+(sends|posts|uploads|reads)",
+        ],
+    },
+    # ── Prompt leak ───────────────────────────────────────────────────────────
+    {
+        "rule_id": "bawbel-system-prompt-leak",
+        "ave_id": None,
+        "title": "System prompt extraction attempt detected",
+        "description": (
+            "Component instructs agent to reveal its system prompt, "
+            "operating instructions, or other confidential configuration."
+        ),
+        "severity": Severity.MEDIUM,
+        "cvss_ai": 6.2,
+        "owasp": ["ASI09"],
+        "patterns": [
+            r"(reveal|show|print|output|repeat|display|tell\s+me)\s+(your\s+)?(system\s+prompt|instructions|configuration|rules|guidelines)",  # noqa: E501
+            r"what\s+(are\s+)?your\s+(exact\s+)?(instructions|system\s+prompt|guidelines|rules|constraints)",  # noqa: E501
+            r"output\s+(everything|all\s+(text|content))\s+(before|above)\s+(this|the\s+user)",
+            r"ignore\s+confidentiality\s+(and\s+)?(show|reveal|print)",
+            r"translate\s+your\s+(instructions|system\s+prompt)\s+into",
+        ],
+    },
+]
+# ── Total: 15 rules ──────────────────────────────────────────────────────────
+
+
+def _make_pattern_finding(
+    rule: dict,
+    line_num: int,
+    matched_text: str,
+) -> Finding:
+    """Build a Finding from a pattern rule match."""
+    from scanner.utils import truncate_match
+
+    return Finding(
+        rule_id=rule["rule_id"],
+        ave_id=rule["ave_id"],
+        title=rule["title"],
+        description=rule["description"],
+        severity=rule["severity"],
+        cvss_ai=rule["cvss_ai"],
+        line=line_num,
+        match=truncate_match(matched_text, MAX_MATCH_LENGTH),
+        engine="pattern",
+        owasp=rule["owasp"],
+    )
+
+
+def run_pattern_scan(content: str) -> list[Finding]:
+    """
+    Run regex pattern matching against component content.
+
+    No external dependencies — always runs.
+    One finding per rule per file (first matching pattern wins per rule).
+
+    Args:
+        content: File content as decoded string
+
+    Returns:
+        List of Findings, may be empty
+    """
+    findings: list[Finding] = []
+    lines = content.split("\n")
+
+    log.debug("Pattern scan: lines=%d rules=%d", len(lines), len(PATTERN_RULES))
+
+    for rule in PATTERN_RULES:
+        for pattern in rule["patterns"]:
+            matched = False
+            for line_num, line_text in enumerate(lines, 1):
+                try:
+                    m = re.search(pattern, line_text, re.IGNORECASE)
+                except re.error as e:
+                    log.warning(
+                        "Invalid regex in rule: rule_id=%s error_type=%s",
+                        rule["rule_id"],
+                        type(e).__name__,
+                    )
+                    break
+
+                if m:
+                    findings.append(_make_pattern_finding(rule, line_num, m.group(0)))
+                    log.debug(
+                        Logs.FINDING_DETECTED,
+                        rule["rule_id"],
+                        rule["severity"].value,
+                        "pattern",
+                        line_num,
+                    )
+                    matched = True
+                    break
+
+            if matched:
+                break  # one finding per rule per file
+
+    log.debug("Pattern scan complete: findings=%d", len(findings))
+    return findings

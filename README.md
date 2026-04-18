@@ -1,232 +1,157 @@
-<div align="center">
-
 # Bawbel Scanner
 
-**The open-source CLI scanner for agentic AI components**
+**Agentic AI component security scanner — detects AVE vulnerabilities before they reach production.**
 
-[![License](https://img.shields.io/badge/License-Apache_2.0-teal.svg)](LICENSE)
-[![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
-[![PyPI](https://img.shields.io/badge/PyPI-bawbel--scanner-teal.svg)](https://pypi.org/project/bawbel-scanner)
-[![AVE Standard](https://img.shields.io/badge/AVE-Standard-green.svg)](https://github.com/bawbel/bawbel-ave)
-[![Contributions Welcome](https://img.shields.io/badge/Contributions-Welcome-brightgreen.svg)](CONTRIBUTING.md)
+[![PyPI version](https://badge.fury.io/py/bawbel-scanner.svg)](https://pypi.org/project/bawbel-scanner/)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://pypi.org/project/bawbel-scanner/)
+[![AVE Standard](https://img.shields.io/badge/standard-AVE-teal.svg)](https://github.com/bawbel/bawbel-ave)
 
-[Documentation](https://bawbel.io/docs) · [AVE Standard](https://github.com/bawbel/bawbel-ave) · [bawbel.io](https://bawbel.io)
-
-</div>
+Bawbel Scanner scans agentic AI components — SKILL.md files, MCP server manifests,
+system prompts, and agent plugins — for security vulnerabilities mapped to the
+[AVE (Agentic Vulnerability Enumeration)](https://github.com/bawbel/bawbel-ave) standard.
 
 ---
 
-## What is Bawbel Scanner?
+## Install
 
-Bawbel Scanner is a free, open-source CLI tool that scans **agentic AI components** for security vulnerabilities before they reach production.
+```bash
+pip install bawbel-scanner
+```
 
-It detects threats in:
-- **SKILL.md files** — Claude Code, Cursor, Codex, Windsurf
-- **MCP server manifests** — any MCP-compatible agent
-- **System prompts** — LLM deployment instructions
-- **Agent plugins** — Copilot, AgentForce, Bedrock
-- **A2A protocol configs** — agent-to-agent handlers
+With optional engines:
 
-Findings are matched against the **[AVE database](https://github.com/bawbel/bawbel-ave)** — the open standard for agentic vulnerability enumeration.
+```bash
+pip install "bawbel-scanner[yara]"      # YARA rules
+pip install "bawbel-scanner[semgrep]"   # Semgrep rules
+pip install "bawbel-scanner[all]"       # everything
+```
 
 ---
 
 ## Quick Start
 
 ```bash
-pip install bawbel-scanner
+# Check version and active detection engines
+bawbel version
+bawbel --version
+
+# Scan a SKILL.md file
 bawbel scan ./my-skill.md
+
+# Scan a directory
+bawbel scan ./skills/ --recursive
+
+# Full report with remediation instructions
+bawbel report ./my-skill.md
+
+# Fail CI on high severity
+bawbel scan ./skills/ --fail-on-severity high
+
+# Output formats
+bawbel scan ./skills/ --format json     # JSON for tooling
+bawbel scan ./skills/ --format sarif    # SARIF for GitHub Security tab
 ```
 
 **Example output:**
+
 ```
 Bawbel Scanner v0.1.0
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Scanning: my-skill.md
-Component type: skill
+Scanning:  malicious-skill.md
+Type:      skill
 
 FINDINGS
-────────
-[CRITICAL 9.4]  AVE-2026-00001  Metamorphic Payload
-                External config fetch detected — skill fetches
-                instructions from https://rentry.co/config at runtime
+🔴  CRITICAL  AVE-2026-00001  External instruction fetch detected
+   Line 7 · pattern engine
+   OWASP: ASI01, ASI08
+
+🟠  HIGH      —               Goal override instruction detected
+   Line 17 · pattern engine
+   OWASP: ASI01, ASI08
 
 SUMMARY
-───────
-Risk score:     9.4 / 10  CRITICAL
-Findings:       1
-Scan time:      0.3s
-
-→ Run 'bawbel report my-skill.md' for full A-BOM and remediation guide
+Risk score:   9.4 / 10  CRITICAL
+Findings:     2
+Scan time:    5ms
 ```
 
 ---
 
-## Installation
+## Use as a Library
 
-**Requirements:** Python 3.10+
+```python
+from scanner import scan
 
-```bash
-# Using pip
-pip install bawbel-scanner
+result = scan("/path/to/skill.md")
 
-# Using uv (recommended)
-uv pip install bawbel-scanner
+if result.is_clean:
+    print("Clean")
+else:
+    for finding in result.findings:
+        print(f"[{finding.severity.value}] {finding.title}")
+    print(f"Risk score: {result.risk_score:.1f} / 10")
 ```
 
 ---
 
-## Usage
+## CI/CD Integration
 
-### Scan a single component
-```bash
-bawbel scan ./my-skill.md
-bawbel scan ./mcp-server.json
-bawbel scan ./system-prompt.txt
+### GitHub Actions
+
+```yaml
+- name: Bawbel scan
+  run: |
+    pip install bawbel-scanner
+    bawbel scan ./skills/ --recursive --fail-on-severity high
 ```
 
-### Scan a directory recursively
-```bash
-bawbel scan ./skills/ --recursive
-```
+### Pre-commit
 
-### Output formats
-```bash
-bawbel scan ./my-skill.md --format text      # default
-bawbel scan ./my-skill.md --format json
-bawbel scan ./my-skill.md --format markdown
-bawbel scan ./my-skill.md --format sarif     # for GitHub Code Scanning
+```yaml
+repos:
+  - repo: https://github.com/bawbel/bawbel-scanner
+    rev: v0.1.0
+    hooks:
+      - id: bawbel-scan
 ```
-
-### Generate a full A-BOM report
-```bash
-bawbel report ./my-skill.md
-```
-
-### CI/CD — fail build on findings
-```bash
-bawbel scan ./skills/ --fail-on-severity critical
-bawbel scan ./skills/ --fail-on-severity high
-```
-
-### Exit codes
-| Code | Meaning |
-|---|---|
-| `0` | Clean — no findings |
-| `1` | Warnings found |
-| `2` | Critical or high findings found |
 
 ---
 
-## Detection Engines
+## Detection Stages
 
-Bawbel Scanner uses three detection stages:
+| Stage | Engine | Requires | Coverage |
+|---|---|---|---|
+| 1a | Pattern matching | Nothing (stdlib) | 15 rules, always runs |
+| 1b | YARA | `yara-python` | Binary + text pattern matching |
+| 1c | Semgrep | `semgrep` | Structural pattern matching |
+| 2 | LLM semantic | API key | Nuanced prompt injection |
+| 3 | Behavioral | Docker + eBPF | Runtime behaviour (v1.0) |
 
-| Stage | Engine | What it detects |
-|---|---|---|
-| **1 — Static** | YARA + Semgrep + Gitleaks | Hardcoded secrets, suspicious patterns, known malicious signatures |
-| **2 — Semantic** | LLM analysis via LiteLLM | Prompt injection, goal hijack, shadow permissions |
-| **3 — Behavioral** | Sandbox + eBPF | Runtime network egress, file access, syscall anomalies |
-
-Stage 1 runs locally with no API key. Stages 2 and 3 require configuration.
-
----
-
-## CI/CD Integrations
-
-| Platform | Integration |
-|---|---|
-| GitHub Actions | [bawbel/bawbel-integrations](https://github.com/bawbel/bawbel-integrations) |
-| GitLab CI | [bawbel/bawbel-integrations](https://github.com/bawbel/bawbel-integrations) |
-| Jenkins | [bawbel/bawbel-integrations](https://github.com/bawbel/bawbel-integrations) |
-| CircleCI | [bawbel/bawbel-integrations](https://github.com/bawbel/bawbel-integrations) |
-| Bitbucket | [bawbel/bawbel-integrations](https://github.com/bawbel/bawbel-integrations) |
-| Pre-commit | [bawbel/bawbel-integrations](https://github.com/bawbel/bawbel-integrations) |
+**15 built-in pattern rules** cover: goal override, jailbreak, hidden instructions,
+external fetch, tool call injection, permission escalation, credential exfiltration,
+PII exfiltration, shell injection, destructive commands, cryptocurrency drain,
+trust escalation, persistence, MCP tool poisoning, system prompt extraction.
 
 ---
 
 ## AVE Standard
 
-Every finding is mapped to an **AVE record** — the open standard for agentic vulnerability enumeration.
+Every finding maps to an AVE record — the CVE equivalent for agentic AI components.
 
-```json
-{
-  "ave_id": "AVE-2026-00001",
-  "attack_class": "Metamorphic Payload",
-  "cvss_ai_score": 9.4,
-  "owasp_mapping": ["ASI01", "ASI08"]
-}
-```
-
-[→ Browse all AVE records](https://github.com/bawbel/bawbel-ave/tree/main/records)
+- Browse records: [github.com/bawbel/bawbel-ave](https://github.com/bawbel/bawbel-ave)
+- Report a new vulnerability: open an issue on bawbel-ave
 
 ---
 
-## Configuration
+## Documentation
 
-Create a `bawbel.yml` in your project root:
-
-```yaml
-# bawbel.yml
-version: "1"
-
-scan:
-  component_types:
-    - skill
-    - mcp
-    - prompt
-  fail_on_severity: high
-  recursive: true
-
-llm:
-  enabled: false         # set true to enable Stage 2 semantic analysis
-  provider: anthropic    # anthropic | openai | bedrock | vertex
-  model: claude-sonnet-4-20250514
-
-output:
-  format: sarif
-  file: bawbel-results.sarif
-```
-
----
-
-## Roadmap
-
-| Version | Features |
-|---|---|
-| `v0.1.0` | Static analysis — YARA + Semgrep + Gitleaks |
-| `v0.2.0` | LLM semantic analysis — Stage 2 |
-| `v0.3.0` | A-BOM generator — CycloneDX output |
-| `v0.4.0` | MCP server scanning |
-| `v1.0.0` | Behavioral sandbox — Stage 3 |
-
----
-
-## Contributing
-
-Contributions welcome — detection rules, new component type support, bug fixes, and documentation.
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
----
-
-## Related Projects
-
-| Project | Description |
-|---|---|
-| [bawbel-ave](https://github.com/bawbel/bawbel-ave) | AVE standard — the vulnerability database this scanner queries |
-| [bawbel-integrations](https://github.com/bawbel/bawbel-integrations) | CI/CD integrations for all major pipeline platforms |
-| [bawbel.io](https://bawbel.io) | Web scanner, verified registry, and enterprise platform |
+[bawbel.io/docs](https://bawbel.io/docs) · [Getting Started](docs/guides/getting-started.md) · [API Reference](docs/api/scan.md)
 
 ---
 
 ## License
 
-Apache License 2.0 — see [LICENSE](LICENSE)
+Apache 2.0 — see [LICENSE](LICENSE).
 
----
-
-<div align="center">
-Built by <a href="https://bawbel.io">Bawbel</a> · <a href="https://twitter.com/bawbel_io">@bawbel_io</a> · <a href="https://linkedin.com/company/bawbel">LinkedIn</a>
-</div>
+Built by [Bawbel](https://bawbel.io) · [bawbel.io@gmail.com](mailto:bawbel.io@gmail.com)

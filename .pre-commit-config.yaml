@@ -1,0 +1,70 @@
+repos:
+  # ── Standard pre-commit hooks ──────────────────────────────────────────────
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: ["--maxkb=500"]
+      - id: detect-private-key
+      - id: no-commit-to-branch
+        args: ["--branch", "main", "--branch", "develop"]
+
+  # ── Python formatting ──────────────────────────────────────────────────────
+  - repo: https://github.com/psf/black
+    rev: 24.4.2
+    hooks:
+      - id: black
+        language_version: python3.10
+        args: ["--line-length=100"]
+
+  # ── Linting ────────────────────────────────────────────────────────────────
+  - repo: https://github.com/PyCQA/flake8
+    rev: 7.0.0
+    hooks:
+      - id: flake8
+        args: ["--max-line-length=100", "--extend-ignore=E203,W503"]
+        additional_dependencies:
+          - flake8-bugbear
+          - flake8-bandit
+          - flake8-simplify
+          - flake8-pyproject
+
+  # ── Security checks ────────────────────────────────────────────────────────
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.8
+    hooks:
+      - id: bandit
+        args: ["-c", "pyproject.toml"]
+        additional_dependencies: ["bandit[toml]"]
+
+  # ── Secrets detection ─────────────────────────────────────────────────────
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.18.4
+    hooks:
+      - id: gitleaks
+
+  # ── Bawbel Scanner self-scan ──────────────────────────────────────────────
+  # The scanner scans itself — dogfooding
+  - repo: local
+    hooks:
+      - id: bawbel-self-scan
+        name: Bawbel self-scan
+        entry: bawbel scan docs/ --recursive
+        language: python
+        pass_filenames: false
+        always_run: true
+        additional_dependencies: ["click", "rich"]
+
+      # ── Run tests before every commit ──────────────────────────────────────
+      - id: pytest-check
+        name: Run test suite
+        entry: python -m pytest tests/ -v --tb=short -q
+        language: python
+        pass_filenames: false
+        always_run: true
+        additional_dependencies: ["pytest", "pytest-cov", "click", "rich"]

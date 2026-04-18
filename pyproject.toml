@@ -1,0 +1,145 @@
+# ── Build system ──────────────────────────────────────────────────────────────
+[build-system]
+requires      = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+# ── Project metadata ──────────────────────────────────────────────────────────
+[project]
+name            = "bawbel-scanner"
+version         = "0.1.0"
+description     = "Agentic AI component security scanner — detects AVE vulnerabilities"
+readme          = "README.md"
+license         = { text = "Apache-2.0" }
+requires-python = ">=3.10"
+authors         = [
+    { name = "Bawbel", email = "bawbel.io@gmail.com" }
+]
+keywords = [
+    "security", "ai", "scanner", "ave", "agentic",
+    "mcp", "llm", "skill", "prompt-injection",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Security",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Software Development :: Quality Assurance",
+]
+
+# Core dependencies — installed on every pip install bawbel-scanner
+dependencies = [
+    "click>=8.1.0",
+    "rich>=13.7.0",
+    "pydantic>=2.5.0",
+]
+
+# ── Optional dependencies ─────────────────────────────────────────────────────
+[project.optional-dependencies]
+
+# Detection engines (optional — scanner works without them)
+yara    = ["yara-python>=4.5.0"]
+semgrep = ["semgrep>=1.60.0"]
+llm     = ["litellm>=1.30.0"]
+all     = ["yara-python>=4.5.0", "semgrep>=1.60.0", "litellm>=1.30.0"]
+
+# Development tooling
+dev = [
+    "pytest>=8.0.0",
+    "pytest-cov>=5.0.0",
+    "pytest-mock>=3.12.0",
+    "black>=24.4.0",
+    "flake8>=7.0.0",
+    "flake8-bugbear>=24.0.0",
+    "bandit>=1.7.8",
+    "pre-commit>=3.7.0",
+    "pip-audit>=2.7.0",
+    "build>=1.0.0",
+    "twine>=5.0.0",
+]
+
+# ── URLs ──────────────────────────────────────────────────────────────────────
+[project.urls]
+Homepage      = "https://bawbel.io"
+Documentation = "https://bawbel.io/docs"
+Repository    = "https://github.com/bawbel/bawbel-scanner"
+"Bug Tracker" = "https://github.com/bawbel/bawbel-scanner/issues"
+Changelog     = "https://github.com/bawbel/bawbel-scanner/releases"
+"AVE Standard" = "https://github.com/bawbel/bawbel-ave"
+
+# ── CLI entry point ───────────────────────────────────────────────────────────
+# Points to scanner/cli.py:main() — inside the package, always importable
+[project.scripts]
+bawbel = "scanner.cli:main"
+
+# ── Package discovery ─────────────────────────────────────────────────────────
+# Explicitly include scanner/ and config/ — exclude tests and scripts
+[tool.setuptools.packages.find]
+where   = ["."]
+include = ["scanner*", "config*"]
+exclude = ["tests*", "scripts*", "docs*"]
+
+# Include non-Python files (YARA and Semgrep rules) in the distribution
+[tool.setuptools.package-data]
+"scanner" = [
+    "rules/yara/*.yar",
+    "rules/semgrep/*.yaml",
+    "rules/semgrep/*.yml",
+]
+
+# ── Tool: black ───────────────────────────────────────────────────────────────
+[tool.black]
+line-length     = 100
+target-version  = ["py310", "py311", "py312"]
+exclude         = '''/(\.git|\.venv|build|dist)/'''
+
+# ── Tool: pytest ──────────────────────────────────────────────────────────────
+[tool.pytest.ini_options]
+testpaths   = ["tests"]
+python_files  = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts     = "-v --tb=short --strict-markers"
+markers = [
+    "unit: unit tests (fast, no external deps)",
+    "integration: integration tests (may require semgrep/yara)",
+    "slow: slow tests (sandbox, LLM)",
+]
+
+# ── Tool: coverage ────────────────────────────────────────────────────────────
+[tool.coverage.run]
+source = ["scanner", "config"]
+omit   = ["tests/*", ".venv/*", "config/__init__.py", "scanner/cli.py"]
+
+[tool.coverage.report]
+fail_under    = 80
+show_missing  = true
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+    "except ImportError:",
+    "except Exception:",
+]
+
+# ── Tool: bandit ──────────────────────────────────────────────────────────────
+[tool.bandit]
+exclude_dirs = [".venv", "tests", "build", "dist"]
+skips = [
+    "B101",  # assert in tests
+    "B404",  # subprocess — intentional for semgrep integration
+    "B603",  # subprocess list args — correct, never shell=True
+]
+severity = "medium"
+
+# ── Tool: flake8 ──────────────────────────────────────────────────────────────
+[tool.flake8]
+max-line-length = 100
+extend-ignore   = ["E203", "W503", "E501"]
+exclude         = [".venv", "build", "dist", "__pycache__"]
+per-file-ignores = ["tests/*:S101"]

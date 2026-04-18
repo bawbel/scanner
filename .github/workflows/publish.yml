@@ -1,0 +1,139 @@
+name: Publish to PyPI
+
+# Triggers on a published GitHub Release (tag like v0.1.0)
+on:
+  release:
+    types: [published]
+
+# Also allow manual trigger for TestPyPI
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Publish target"
+        required: true
+        default: "testpypi"
+        type: choice
+        options: [testpypi, pypi]
+
+jobs:
+
+  # ── Verify tests pass before publishing ───────────────────────────────────
+  test:
+    name: Verify Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install deps
+        run: pip install click rich pydantic pytest pytest-cov
+
+      - name: Run tests
+        run: python -m pytest tests/ -v --tb=short
+
+      - name: Run Bandit
+        run: |
+          pip install bandit
+          bandit -r scanner/ -f screen
+        # 0 issues required before publishing
+
+  # ── Build distribution ────────────────────────────────────────────────────
+  build:
+    name: Build Distribution
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install build tools
+        run: pip install build twine
+
+      - name: Build wheel and sdist
+        run: python -m build
+
+      - name: Verify distribution
+        run: |
+          twine check dist/*
+          echo "=== Distribution contents ==="
+          ls -lh dist/
+
+          echo "=== Wheel contents ==="
+          pip install wheel
+          python -c "
+          import zipfile, sys
+          whl = [f for f in __import__('os').listdir('dist') if f.endswith('.whl')][0]
+          with zipfile.ZipFile(f'dist/{whl}') as z:
+              files = z.namelist()
+              print('\n'.join(sorted(files)))
+
+          # Verify rules are included
+          rule_files = [f for f in files if f.endswith(('.yar','.yaml'))]
+          assert rule_files, 'ERROR: Rule files missing from wheel!'
+          print(f'\n✓ Rules included: {rule_files}')
+
+          # Verify cli entry point is inside scanner package
+          cli_files = [f for f in files if 'cli.py' in f]
+          assert any('scanner/cli' in f for f in cli_files), \
+              f'ERROR: cli.py must be inside scanner/ package. Found: {cli_files}'
+          print(f'✓ CLI location correct: {[f for f in cli_files if \"scanner\" in f]}')
+          "
+
+      - name: Upload dist artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  # ── Publish to TestPyPI ───────────────────────────────────────────────────
+  publish-testpypi:
+    name: Publish → TestPyPI
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.target == 'testpypi'
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/p/bawbel-scanner
+    permissions:
+      id-token: write   # OIDC trusted publishing — no API key needed
+
+    steps:
+      - name: Download dist
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Publish to TestPyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+
+  # ── Publish to PyPI ───────────────────────────────────────────────────────
+  publish-pypi:
+    name: Publish → PyPI
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'release' && github.event.action == 'published'
+    environment:
+      name: pypi
+      url: https://pypi.org/p/bawbel-scanner
+    permissions:
+      id-token: write   # OIDC trusted publishing — no API key needed
+
+    steps:
+      - name: Download dist
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1

@@ -1,0 +1,180 @@
+# Bawbel Scanner — Docker Compose
+#
+# Services:
+#
+#   dev       — interactive development shell (hot-reload)
+#   test      — run full test suite
+#   scan      — scan ./scan/ directory (text output)
+#   report    — scan ./scan/ and show remediation guide
+#   scan-json — scan ./scan/ directory (JSON output)
+#   scan-sarif — scan ./scan/ directory (SARIF output)
+#   audit     — run security checks (bandit + pip-audit)
+#
+# Usage:
+#
+#   # Development shell
+#   docker compose run --rm dev
+#
+#   # Run all tests
+#   docker compose run --rm test
+#
+#   # Scan a directory (put files in ./scan/ first)
+#   mkdir -p scan && cp path/to/skill.md scan/
+#   docker compose run --rm scan
+#
+#   # Full remediation report
+#   docker compose run --rm report
+#
+#   # JSON output
+#   docker compose run --rm scan-json
+#
+#   # SARIF output (redirect to file)
+#   docker compose run --rm scan-sarif > results.sarif
+#
+#   # Security audit
+#   docker compose run --rm audit
+#
+# Environment variables (optional — set in .env file):
+#   ANTHROPIC_API_KEY   — enables Stage 2 LLM semantic analysis
+#   BAWBEL_LOG_LEVEL    — DEBUG | INFO | WARNING (default)
+#   SCAN_DIR            — override the scan directory (default: ./scan)
+
+x-base: &base
+  build:
+    context: .
+    dockerfile: Dockerfile
+  environment:
+    BAWBEL_LOG_LEVEL:    ${BAWBEL_LOG_LEVEL:-WARNING}
+    ANTHROPIC_API_KEY:   ${ANTHROPIC_API_KEY:-}
+    OPENAI_API_KEY:      ${OPENAI_API_KEY:-}
+    PYTHONDONTWRITEBYTECODE: "1"
+    PYTHONUNBUFFERED:    "1"
+
+x-scan-base: &scan-base
+  <<: *base
+  build:
+    context: .
+    dockerfile: Dockerfile
+    target: production
+  volumes:
+    - ${SCAN_DIR:-./scan}:/scan:ro
+  read_only: true
+  security_opt:
+    - no-new-privileges:true
+
+services:
+
+  # ── Development shell ───────────────────────────────────────────────────────
+  dev:
+    <<: *base
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: dev
+    container_name: bawbel-dev
+    volumes:
+      # Mount full source — changes reflect immediately (editable install)
+      - .:/app
+      # Persist pip cache across container rebuilds
+      - pip-cache:/root/.cache/pip
+    environment:
+      BAWBEL_LOG_LEVEL: DEBUG
+      PYTHONDONTWRITEBYTECODE: "1"
+      PYTHONUNBUFFERED: "1"
+    stdin_open: true
+    tty: true
+    # Override entrypoint for interactive shell
+    entrypoint: /bin/bash
+    profiles:
+      - dev
+
+  # ── Test runner ─────────────────────────────────────────────────────────────
+  test:
+    <<: *base
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: test
+    container_name: bawbel-test
+    # No volume mount needed — tests use internal fixtures
+    entrypoint: python
+    command:
+      - -m
+      - pytest
+      - tests/
+      - -v
+      - --tb=short
+    profiles:
+      - test
+
+  # ── Scan: text output (default) ─────────────────────────────────────────────
+  scan:
+    <<: *scan-base
+    container_name: bawbel-scan
+    entrypoint: ["python", "-m", "scanner.cli"]
+    command:
+      - scan
+      - /scan
+      - --recursive
+
+  # ── Report: full remediation guide ──────────────────────────────────────────
+  report:
+    <<: *scan-base
+    container_name: bawbel-report
+    entrypoint: ["python", "-m", "scanner.cli"]
+    command:
+      - report
+      - /scan
+    profiles:
+      - report
+
+  # ── Scan: JSON output ────────────────────────────────────────────────────────
+  scan-json:
+    <<: *scan-base
+    container_name: bawbel-scan-json
+    entrypoint: ["python", "-m", "scanner.cli"]
+    command:
+      - scan
+      - /scan
+      - --recursive
+      - --format
+      - json
+    profiles:
+      - json
+
+  # ── Scan: SARIF output ───────────────────────────────────────────────────────
+  scan-sarif:
+    <<: *scan-base
+    container_name: bawbel-scan-sarif
+    entrypoint: ["python", "-m", "scanner.cli"]
+    command:
+      - scan
+      - /scan
+      - --recursive
+      - --format
+      - sarif
+    profiles:
+      - sarif
+
+  # ── Security audit ───────────────────────────────────────────────────────────
+  audit:
+    <<: *base
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: dev
+    container_name: bawbel-audit
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        echo "=== Bandit ===" && \
+        bandit -r scanner/ -f screen && \
+        echo "" && \
+        echo "=== pip-audit ===" && \
+        pip-audit -r requirements.txt
+    profiles:
+      - audit
+
+volumes:
+  pip-cache:

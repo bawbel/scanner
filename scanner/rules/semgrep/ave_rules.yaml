@@ -1,0 +1,74 @@
+rules:
+  - id: ave-metamorphic-payload-url-fetch
+    patterns:
+      - pattern-regex: '(?i)(fetch|requests\.get|urllib|curl|wget)\s*\(?\s*["\']?https?://'
+    message: >
+      AVE-2026-00001 [CRITICAL 9.4] Metamorphic Payload detected.
+      This component fetches content from an external URL which may contain
+      malicious runtime instructions. Attack class: Metamorphic Payload.
+      OWASP: ASI01, ASI08.
+    languages: [generic]
+    severity: ERROR
+    metadata:
+      ave_id: AVE-2026-00001
+      attack_class: Metamorphic Payload
+      cvss_ai_score: 9.4
+      owasp_mapping:
+        - ASI01
+        - ASI08
+
+  - id: ave-hardcoded-secret-in-skill
+    patterns:
+      - pattern-regex: '(?i)(api[_-]?key|secret[_-]?key|access[_-]?token|private[_-]?key|password)\s*[=:]\s*["\'][A-Za-z0-9+/]{16,}["\']'
+    message: >
+      [HIGH] Hardcoded secret detected in agentic component.
+      Secrets embedded in skills are exposed to any agent that installs this component.
+      Remove the secret and use environment variables instead.
+    languages: [generic]
+    severity: ERROR
+    metadata:
+      attack_class: Credential Exposure
+      cvss_ai_score: 8.0
+
+  - id: ave-base64-encoded-payload
+    patterns:
+      - pattern-regex: '(?i)(base64|b64)[^a-z].*[A-Za-z0-9+/]{40,}={0,2}'
+    message: >
+      [MEDIUM] Base64-encoded content detected in agentic component.
+      Encoded payloads are a common obfuscation technique for hiding malicious instructions.
+      Decode and review the content manually.
+    languages: [generic]
+    severity: WARNING
+    metadata:
+      attack_class: Obfuscated Payload
+      cvss_ai_score: 5.5
+
+  - id: ave-shell-injection-pattern
+    patterns:
+      - pattern-regex: '(?i)(curl|wget|bash|sh|python|pip|npm|eval)\s*\|'
+    message: >
+      [HIGH] Shell pipe injection pattern detected.
+      curl|bash and similar patterns in skill instructions can cause
+      arbitrary code execution when the agent follows them.
+      Attack class: Tool Abuse.
+    languages: [generic]
+    severity: ERROR
+    metadata:
+      attack_class: Tool Abuse — Shell Injection
+      cvss_ai_score: 8.8
+      owasp_mapping:
+        - ASI01
+        - ASI07
+
+  - id: ave-rm-rf-pattern
+    patterns:
+      - pattern-regex: 'rm\s+-rf?\s+[/~]'
+    message: >
+      [CRITICAL] Destructive command pattern detected.
+      This skill instructs the agent to delete files recursively.
+      This is almost certainly malicious.
+    languages: [generic]
+    severity: ERROR
+    metadata:
+      attack_class: Tool Abuse — Destructive Command
+      cvss_ai_score: 9.8

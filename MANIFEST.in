@@ -1,0 +1,26 @@
+# MANIFEST.in — files included in source distribution (sdist)
+# pyproject.toml [tool.setuptools.package-data] handles wheel (.whl) includes.
+# This file covers sdist (pip install from source / git).
+
+# Rules files — required for detection to work after install
+recursive-include scanner/rules *.yar *.yaml *.yml
+
+# Documentation
+include README.md
+include LICENSE
+include CHANGELOG.md
+
+# Exclude everything that must never be published
+exclude PROJECT_CONTEXT.md
+exclude .env
+exclude .env.*
+exclude config/local.py
+recursive-exclude tests *
+recursive-exclude scripts *
+recursive-exclude docs *
+recursive-exclude .claude *
+recursive-exclude .github *
+global-exclude __pycache__
+global-exclude *.pyc
+global-exclude *.pyo
+global-exclude .DS_Store

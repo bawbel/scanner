@@ -1,0 +1,9 @@
+# Core dependencies — required for all installs
+# Optional engines: pip install "bawbel-scanner[yara]" or "[semgrep]" or "[all]"
+# Dev tools:        pip install "bawbel-scanner[dev]"
+# See pyproject.toml for full dependency groups
+
+click>=8.1.0
+rich>=13.7.0
+requests>=2.31.0
+pydantic>=2.5.0
