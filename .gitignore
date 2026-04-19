@@ -88,7 +88,7 @@ scan/
 # These contain business strategy, roadmap, and founder context.
 # Keep them local only. Share via secure channel if needed.
 PROJECT_CONTEXT.md
-.claude/settings.json
+.claude/
 
 # ── Docs build output — never commit generated docs ───────────────────────────
 docs/_build/

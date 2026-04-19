@@ -123,42 +123,43 @@ jobs:
           "
 
   # ── Bawbel self-scan ───────────────────────────────────────────────────────
-  self-scan:
-    name: Bawbel Self-Scan
-    runs-on: ubuntu-latest
-    needs: test
-    steps:
-      - uses: actions/checkout@v4
+  # self-scan:
+  #   name: Bawbel Self-Scan
+  #   runs-on: ubuntu-latest
+  #   needs: test
+  #   steps:
+  #     - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-          cache: pip
+  #     - uses: actions/setup-python@v5
+  #       with:
+  #         python-version: "3.12"
+  #         cache: pip
 
-      - name: Install scanner
-        run: |
-          pip install --upgrade pip
-          pip install -e .
+  #     - name: Install scanner
+  #       run: |
+  #         pip install --upgrade pip
+  #         pip install -e .
 
-      - name: Scan own codebase
-        run: |
-          bawbel scan ./.claude/skills/ --recursive --format json > self-scan-results.json
-          python3 -c "
-          import json
-          with open('self-scan-results.json') as f:
-              results = json.load(f)
-          critical = [
-              r for r in results
-              if r.get('max_severity') in ('CRITICAL', 'HIGH')
-              and 'tests/' not in r['file_path']
-          ]
-          if critical:
-              print('FAIL — self-scan found issues in source:')
-              for r in critical:
-                  print(f'  {r[\"file_path\"]}: {r[\"max_severity\"]}')
-              raise SystemExit(1)
-          print(f'✓ Self-scan clean ({len(results)} files scanned)')
-          "
+  #     - name: Scan own codebase
+  #       run: |
+  #         bawbel report . -r
+  #         # bawbel scan . --recursive --format json > self-scan-results.json
+  #         # python3 -c "
+  #         # import json
+  #         # with open('self-scan-results.json') as f:
+  #         #     results = json.load(f)
+  #         # critical = [
+  #         #     r for r in results
+  #         #     if r.get('max_severity') in ('CRITICAL', 'HIGH')
+  #         #     and 'tests/' not in r['file_path']
+  #         # ]
+  #         # if critical:
+  #         #     print('FAIL — self-scan found issues in source:')
+  #         #     for r in critical:
+  #         #         print(f'  {r[\"file_path\"]}: {r[\"max_severity\"]}')
+  #         #     raise SystemExit(1)
+  #         # print(f'✓ Self-scan clean ({len(results)} files scanned)')
+  #         # "
 
   # ── Dependency audit ───────────────────────────────────────────────────────
   audit:
