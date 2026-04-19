@@ -1,11 +1,14 @@
 name: Publish to PyPI
 
 # Triggers on a published GitHub Release (tag like v0.1.0)
+# Flow:
+#   Release published → Verify Tests → Build → Publish to TestPyPI
+#   → (manual approval in GitHub "pypi" environment) → Publish to PyPI
 on:
   release:
     types: [published]
 
-# Also allow manual trigger for TestPyPI
+  # Manual trigger — useful for re-running TestPyPI without a new release
   workflow_dispatch:
     inputs:
       target:
@@ -17,7 +20,7 @@ on:
 
 jobs:
 
-  # ── Verify tests pass before publishing ───────────────────────────────────
+  # ── 1. Verify tests pass ───────────────────────────────────────────────────
   test:
     name: Verify Tests
     runs-on: ubuntu-latest
@@ -39,9 +42,8 @@ jobs:
         run: |
           pip install bandit
           bandit -r scanner/ -f screen
-        # 0 issues required before publishing
 
-  # ── Build distribution ────────────────────────────────────────────────────
+  # ── 2. Build distribution ─────────────────────────────────────────────────
   build:
     name: Build Distribution
     runs-on: ubuntu-latest
@@ -68,18 +70,14 @@ jobs:
           echo "=== Wheel contents ==="
           pip install wheel
           python -c "
-          import zipfile, sys
-          whl = [f for f in __import__('os').listdir('dist') if f.endswith('.whl')][0]
+          import zipfile, os
+          whl = [f for f in os.listdir('dist') if f.endswith('.whl')][0]
           with zipfile.ZipFile(f'dist/{whl}') as z:
               files = z.namelist()
               print('\n'.join(sorted(files)))
-
-          # Verify rules are included
           rule_files = [f for f in files if f.endswith(('.yar','.yaml'))]
           assert rule_files, 'ERROR: Rule files missing from wheel!'
           print(f'\n✓ Rules included: {rule_files}')
-
-          # Verify cli entry point is inside scanner package
           cli_files = [f for f in files if 'cli.py' in f]
           assert any('scanner/cli' in f for f in cli_files), \
               f'ERROR: cli.py must be inside scanner/ package. Found: {cli_files}'
@@ -92,17 +90,21 @@ jobs:
           name: dist
           path: dist/
 
-  # ── Publish to TestPyPI ───────────────────────────────────────────────────
+  # ── 3. Publish to TestPyPI ─────────────────────────────────────────────────
+  # Runs automatically on every release AND on manual dispatch targeting testpypi.
+  # This is the gate — PyPI only runs after this succeeds AND is manually approved.
   publish-testpypi:
     name: Publish → TestPyPI
     runs-on: ubuntu-latest
     needs: build
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.target == 'testpypi'
+    if: |
+      github.event_name == 'release' ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.target == 'testpypi')
     environment:
       name: testpypi
       url: https://test.pypi.org/p/bawbel-scanner
     permissions:
-      id-token: write   # OIDC trusted publishing — no API key needed
+      id-token: write
 
     steps:
       - name: Download dist
@@ -116,17 +118,33 @@ jobs:
         with:
           repository-url: https://test.pypi.org/legacy/
 
-  # ── Publish to PyPI ───────────────────────────────────────────────────────
+      - name: Verify on TestPyPI
+        run: |
+          echo "✓ Published to TestPyPI"
+          echo "Verify at: https://test.pypi.org/project/bawbel-scanner/"
+          echo ""
+          echo "Test install:"
+          echo "  pip install --index-url https://test.pypi.org/simple/ \\"
+          echo "    --extra-index-url https://pypi.org/simple/ bawbel-scanner"
+          echo ""
+          echo "If OK → approve the 'pypi' environment in GitHub to publish to PyPI."
+
+  # ── 4. Publish to PyPI ─────────────────────────────────────────────────────
+  # Only runs after publish-testpypi succeeds.
+  # Requires manual approval via the "pypi" GitHub environment protection rule.
+  # Set up: repo Settings → Environments → pypi → Required reviewers → add yourself
   publish-pypi:
     name: Publish → PyPI
     runs-on: ubuntu-latest
-    needs: build
-    if: github.event_name == 'release' && github.event.action == 'published'
+    needs: publish-testpypi          # ← waits for TestPyPI to succeed first
+    if: |
+      github.event_name == 'release' ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.target == 'pypi')
     environment:
       name: pypi
       url: https://pypi.org/p/bawbel-scanner
     permissions:
-      id-token: write   # OIDC trusted publishing — no API key needed
+      id-token: write
 
     steps:
       - name: Download dist
