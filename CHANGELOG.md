@@ -8,14 +8,6 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-### Changed
-- LLM Stage 2 engine rewritten to use LiteLLM — supports any provider (Anthropic, OpenAI, Gemini, Mistral, Groq, Ollama, and 100+ more)
-- `BAWBEL_LLM_MODEL` env var controls which model to use (any LiteLLM model string)
-- Provider auto-detection from known API keys — set `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY`, etc.
-- 8/15 pattern rules now linked to AVE records (AVE-2026-00004 through 00008 wired)
-- `bawbel version` now shows the active LLM model name when Stage 2 is enabled
-- `pyproject.toml` `[llm]` extra now installs `litellm` instead of provider-specific packages
-
 ---
 
 ## [0.2.0] — 2026-04-20
