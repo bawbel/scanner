@@ -49,6 +49,9 @@ bawbel report ./my-skill.md
 # Fail CI on high severity
 bawbel scan ./skills/ --fail-on-severity high
 
+# Watch for changes and re-scan automatically
+bawbel scan ./skills/ --watch
+
 # Output formats
 bawbel scan ./skills/ --format json     # JSON for tooling
 bawbel scan ./skills/ --format sarif    # SARIF for GitHub Security tab
@@ -57,7 +60,7 @@ bawbel scan ./skills/ --format sarif    # SARIF for GitHub Security tab
 **Example output:**
 
 ```
-Bawbel Scanner v0.1.0
+Bawbel Scanner v0.2.0
 
 Scanning:  malicious-skill.md
 Type:      skill
@@ -140,7 +143,7 @@ pre-commit install
 | 1a | Pattern matching | Nothing (stdlib) | 15 rules, always runs |
 | 1b | YARA | `yara-python` | Binary + text pattern matching |
 | 1c | Semgrep | `semgrep` | Structural pattern matching |
-| 2 | LLM semantic | `pip install "bawbel-scanner[llm]"` + API key | Nuanced prompt injection, obfuscated payloads |
+| 2 | LLM semantic | `pip install "bawbel-scanner[llm]"` + API key | Nuanced injection, obfuscated payloads — any LiteLLM provider |
 | 3 | Behavioral | Docker + eBPF | Runtime behaviour (v1.0) |
 
 **15 built-in pattern rules** cover: goal override, jailbreak, hidden instructions,

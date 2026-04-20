@@ -99,11 +99,15 @@ CMD ["python", "-m", "pytest", "tests/", "-v", "--tb=short"]
 # ── Production: minimal runtime image ────────────────────────────────────────
 FROM python:${PYTHON_VERSION}-slim AS production
 
+# Optional: build with LLM support
+# docker build --target production --build-arg WITH_LLM=true -t bawbel/scanner:0.1.0 .
+ARG WITH_LLM=false
+
 LABEL org.opencontainers.image.title="Bawbel Scanner" \
       org.opencontainers.image.description="Agentic AI component security scanner — detects AVE vulnerabilities" \
       org.opencontainers.image.url="https://bawbel.io" \
       org.opencontainers.image.source="https://github.com/bawbel/bawbel-scanner" \
-      org.opencontainers.image.version="0.1.0" \
+      org.opencontainers.image.version="0.2.0" \
       org.opencontainers.image.licenses="Apache-2.0" \
       org.opencontainers.image.vendor="Bawbel"
 
@@ -117,8 +121,13 @@ COPY --from=builder /install /usr/local
 COPY scanner/   ./scanner/
 COPY config/    ./config/
 
-# Install the entry point script without pulling in any extra deps
+# Core runtime deps
 RUN pip install --no-cache-dir click rich pydantic --quiet
+
+# Optional LLM support — install litellm if WITH_LLM=true
+RUN if [ "$WITH_LLM" = "true" ]; then \
+        pip install --no-cache-dir litellm --quiet; \
+    fi
 
 # Security: non-root user
 RUN useradd \
@@ -133,9 +142,9 @@ USER bawbel
 # Mount point — always read-only
 VOLUME ["/scan"]
 
-# Health check: scan the empty volume, expect clean
+# Health check: verify CLI is importable
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "from scanner import scan; r = scan.__module__; print('ok')" || exit 1
+    CMD python -c "from scanner import scan; print('ok')" || exit 1
 
 # Entry point: bawbel CLI via module path (no root cli.py)
 ENTRYPOINT ["python", "-m", "scanner.cli"]

@@ -2,9 +2,10 @@
 Bawbel Scanner — CLI entry point.
 
 Commands:
-    bawbel scan <path>    Scan a component or directory
-    bawbel report <path>  Scan and show full remediation guide
-    bawbel version        Show version and engine status
+    bawbel scan <path>          Scan a component or directory
+    bawbel scan <path> --watch  Watch for changes and re-scan automatically
+    bawbel report <path>        Scan and show full remediation guide
+    bawbel version              Show version and engine status
 """
 
 import json as _json
@@ -263,6 +264,92 @@ def cli():
     pass
 
 
+# ── watch helper ──────────────────────────────────────────────────────────────
+
+
+def _run_watch(path: str, fmt: str, fail_on_severity: str, recursive: bool) -> None:
+    """
+    Watch a file or directory for changes and re-scan on every modification.
+    Requires watchdog: pip install "bawbel-scanner[watch]"
+    """
+    try:
+        from watchdog.observers import Observer
+        from watchdog.events import FileSystemEventHandler
+    except ImportError:
+        console.print(
+            "[red]watchdog not installed.[/] " 'Run: [bold]pip install "bawbel-scanner\\[watch]"[/]'
+        )
+        sys.exit(1)
+
+    import time
+
+    path_obj = Path(path).resolve()
+    watch_dir = path_obj if path_obj.is_dir() else path_obj.parent
+
+    # Extensions we care about — same as _collect_files
+    WATCHED_EXTS = {".md", ".yaml", ".yml", ".json", ".txt"}
+
+    def _do_scan(changed_path: str | None = None) -> None:
+        """Run a scan and print results."""
+        target = changed_path or path
+        files = _collect_files(Path(target) if changed_path else path_obj, recursive)
+        if not files:
+            return
+        console.print(f"\n[dim]{_timestamp()}[/]  [bold #1DB894]↺[/]  Re-scanning after change…\n")
+        results = []
+        for f in files:
+            result = scan(str(f))
+            results.append(result)
+            if fmt == "text":
+                _print_scan_result(result, show_report_hint=False)
+        if fmt == "json":
+            _print_json(results)
+        elif fmt == "sarif":
+            _print_sarif(results)
+
+    def _timestamp() -> str:
+        from datetime import datetime, timezone
+
+        return datetime.now(timezone.utc).strftime("%H:%M:%S")
+
+    class _Handler(FileSystemEventHandler):
+        def __init__(self):
+            self._last: float = 0.0
+
+        def on_modified(self, event):
+            if event.is_directory:
+                return
+            if Path(event.src_path).suffix.lower() not in WATCHED_EXTS:
+                return
+            # Debounce — ignore events within 500ms of the last scan
+            now = time.monotonic()
+            if now - self._last < 0.5:
+                return
+            self._last = now
+            _do_scan(event.src_path if path_obj.is_dir() else None)
+
+        on_created = on_modified
+
+    _print_banner()
+    console.print(f"[bold]Watching:[/]  [white]{path_obj}[/]\n" f"[dim]Press Ctrl+C to stop[/]\n")
+
+    # Initial scan
+    _do_scan()
+
+    observer = Observer()
+    observer.schedule(_Handler(), str(watch_dir), recursive=recursive)
+    observer.start()
+
+    try:
+        while True:
+            time.sleep(0.5)
+    except KeyboardInterrupt:
+        observer.stop()
+        console.print("\n[dim]Watch stopped.[/]")
+    finally:
+        observer.join()
+
+
 # ── scan command ──────────────────────────────────────────────────────────────
 
 
@@ -289,8 +376,18 @@ def cli():
     is_flag=True,
     help="Scan directory recursively",
 )
-def scan_cmd(path: str, fmt: str, fail_on_severity: str, recursive: bool) -> None:
+@click.option(
+    "--watch",
+    "-w",
+    is_flag=True,
+    help="Watch for file changes and re-scan automatically",
+)
+def scan_cmd(path: str, fmt: str, fail_on_severity: str, recursive: bool, watch: bool) -> None:
     """Scan an agentic AI component for AVE vulnerabilities."""
+
+    if watch:
+        _run_watch(path, fmt, fail_on_severity, recursive)
+        return
 
     path_obj = Path(path)
     files = _collect_files(path_obj, recursive)

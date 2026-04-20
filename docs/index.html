@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bawbel Scanner — Documentation</title>
+<meta name="description" content="Documentation for Bawbel Scanner — the open-source CLI for scanning agentic AI components against the AVE standard.">
+<meta name="robots" content="index, follow">
+<meta property="og:title" content="Bawbel Scanner — Documentation">
+<meta property="og:description" content="Open-source CLI scanner for agentic AI components. Detects AVE vulnerabilities before they reach production.">
+<meta property="og:url" content="https://bawbel.io/docs">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@bawbel_io">
+<link rel="canonical" href="https://bawbel.io/docs">
+<link rel="icon" type="image/png" sizes="32x32" href="data:image/png;base64,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">
+<link rel="apple-touch-icon" sizes="180x180" href="data:image/png;base64,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">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#04342C;
+  --bg-mid:rgba(0,0,0,0.22);
+  --bg-card:rgba(255,255,255,0.03);
+  --border:rgba(29,184,148,0.13);
+  --border-md:rgba(29,184,148,0.22);
+  --accent:#1DB894;
+  --light:#CBF0E4;
+  --white:#FFFFFF;
+  --text:rgba(203,240,228,0.82);
+  --dim:rgba(203,240,228,0.42);
+  --code-bg:rgba(0,0,0,0.32);
+  --sb-w:228px;
+  --topbar-h:0px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--white);font-family:'DM Sans',system-ui,sans-serif;font-size:15px;line-height:1.65;overflow:hidden}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* ── Top bar (hidden on desktop, shown on mobile) ── */
+.topbar{
+  display:none;position:fixed;top:0;left:0;right:0;
+  height:48px;align-items:center;gap:0.75rem;
+  padding:0 1rem;
+  background:#021f18;backdrop-filter:none;
+  border-bottom:1px solid var(--border);
+  z-index:200;
+}
+.topbar-brand{font-size:0.92rem;font-weight:700;color:var(--accent)}
+.topbar-version{font-size:0.68rem;color:var(--light);opacity:0.4;margin-left:2px}
+.hbg{background:none;border:none;cursor:pointer;padding:5px;display:flex;flex-direction:column;justify-content:center;gap:5px;flex-shrink:0;width:32px;height:32px}
+.hbg-bar{display:block;width:18px;height:1.5px;background:var(--text);border-radius:2px;transition:transform 0.22s,opacity 0.22s,width 0.22s;transform-origin:center}
+.hbg:hover .hbg-bar{background:var(--white)}
+.hbg.open .hbg-bar:nth-child(1){transform:translateY(6.5px) rotate(45deg)}
+.hbg.open .hbg-bar:nth-child(2){opacity:0;width:0}
+.hbg.open .hbg-bar:nth-child(3){transform:translateY(-6.5px) rotate(-45deg)}
+
+/* ── Layout shell ── */
+.shell{display:flex;height:100vh;overflow:hidden}
+
+/* ── Sidebar ── */
+.sidebar{
+  width:var(--sb-w);
+  min-width:var(--sb-w);
+  height:100%;
+  background:#032920;
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  overflow-y:auto;overflow-x:hidden;
+  flex-shrink:0;
+  transition:min-width 0.22s ease,width 0.22s ease,opacity 0.18s ease;
+  z-index:10;
+}
+/* Desktop collapsed */
+.sidebar.sb-off{
+  width:0;min-width:0;
+  overflow:hidden;
+  opacity:0;
+  border-right:none;
+}
+
+/* Mobile: drawer overlay */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.72);z-index:150;backdrop-filter:blur(2px)}
+
+/* ── Desktop toggle — top-left hamburger ── */
+.sb-toggle{
+  position:fixed;top:0.85rem;left:0.85rem;
+  width:34px;height:34px;
+  background:none;
+  border:none;
+  color:var(--dim);
+  border-radius:6px;
+  padding:0;
+  cursor:pointer;z-index:50;
+  display:flex;align-items:center;justify-content:center;
+  transition:color 0.15s,background 0.15s;
+}
+.sb-toggle:hover{color:var(--white);background:rgba(29,184,148,0.09)}
+.sb-toggle svg{width:18px;height:18px}
+
+/* ── Sidebar internals ── */
+.sidebar-top{
+  padding:1.1rem 1rem 1rem 3.2rem;
+  border-bottom:1px solid var(--border);
+  flex-shrink:0;
+}
+.brand{font-size:0.95rem;font-weight:700;color:var(--accent);letter-spacing:-0.01em}
+.brand-sub{font-size:0.68rem;color:var(--light);opacity:0.4;margin-top:3px}
+.nav-group{padding:0.5rem 0 0.25rem}
+.nav-label{
+  font-size:0.62rem;font-weight:700;letter-spacing:0.1em;
+  text-transform:uppercase;color:var(--dim);
+  padding:0.7rem 1rem 0.3rem;
+  display:block;
+}
+.nav-a{
+  display:block;
+  padding:0.38rem 1rem 0.38rem 1.1rem;
+  font-size:0.84rem;color:var(--text);
+  cursor:pointer;
+  border-left:2px solid transparent;
+  transition:background 0.1s,color 0.1s,border-color 0.1s;
+  line-height:1.5;
+}
+.nav-a:hover{color:var(--white);background:rgba(29,184,148,0.07)}
+.nav-a.on{color:var(--accent);border-left-color:var(--accent);background:rgba(29,184,148,0.09)}
+.nav-ext{font-size:0.72em;opacity:0.4;margin-left:3px}
+
+/* ── Main content area ── */
+.main{flex:1;min-width:0;height:100%;overflow-y:auto;padding:2.8rem 3.5rem 4rem}
+.page{display:none;max-width:780px}
+.page.on{display:block}
+
+/* ── Typography ── */
+h1{font-size:1.95rem;font-weight:700;color:var(--white);line-height:1.2;margin-bottom:0.45rem}
+h2{font-size:1.1rem;font-weight:700;color:var(--white);margin:2.6rem 0 0.7rem;padding-top:0.6rem;border-top:1px solid var(--border)}
+h3{font-size:0.95rem;font-weight:700;color:var(--light);margin:1.4rem 0 0.45rem}
+p{color:var(--text);margin-bottom:0.9rem}
+.lead{font-size:1rem;color:var(--dim);margin-bottom:1.8rem;line-height:1.6}
+ul{color:var(--text);padding-left:1.4rem;margin-bottom:1rem}
+ul li{margin-bottom:0.3rem}
+
+/* ── Code ── */
+pre,code{font-family:'JetBrains Mono','Fira Code',monospace}
+pre{background:var(--code-bg);border:1px solid var(--border);border-radius:8px;padding:1rem 1.2rem;overflow-x:auto;margin:0.6rem 0 1.4rem;font-size:0.8rem;line-height:1.65;color:var(--light)}
+code{background:rgba(29,184,148,0.13);color:var(--accent);padding:0.1em 0.38em;border-radius:4px;font-size:0.84em}
+pre code{background:none;color:inherit;padding:0;font-size:inherit;border-radius:0}
+.cm{color:rgba(203,240,228,0.3)}
+.kw{color:#7dd3c0}
+.st{color:#a8d9cc}
+.nb{color:#e4b97a}
+
+/* ── Tables ── */
+table{width:100%;border-collapse:collapse;margin:0.5rem 0 1.6rem;font-size:0.87rem}
+th{text-align:left;padding:0.45rem 0.8rem;font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--dim);border-bottom:1px solid var(--border-md)}
+td{padding:0.52rem 0.8rem;border-bottom:1px solid var(--border);color:var(--text);vertical-align:top}
+tr:hover td{background:rgba(29,184,148,0.035)}
+td code{font-size:0.77rem}
+
+/* ── Install strip ── */
+.install{background:var(--bg-mid);border:1px solid var(--border-md);border-radius:10px;padding:1.1rem 1.4rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin:1.4rem 0}
+.install code{background:none;color:var(--accent);font-size:0.96rem;font-weight:500;padding:0}
+.copy{margin-left:auto;background:var(--accent);color:var(--bg);border:none;border-radius:6px;padding:0.38rem 0.9rem;font-size:0.78rem;font-weight:700;cursor:pointer;transition:opacity 0.15s;font-family:'DM Sans',sans-serif}
+.copy:hover{opacity:0.82}
+
+/* ── Badges ── */
+.b{display:inline-block;font-size:0.67rem;font-weight:700;padding:0.12rem 0.45rem;border-radius:4px;text-transform:uppercase;letter-spacing:0.04em;vertical-align:middle}
+.b-c{background:rgba(220,50,50,0.18);color:#ff8080}
+.b-h{background:rgba(220,130,50,0.18);color:#ffaa60}
+.b-m{background:rgba(220,200,50,0.18);color:#ffe060}
+
+/* ── Cards ── */
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:0.7rem;margin:1rem 0 2rem}
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:0.9rem 1rem;cursor:pointer;transition:background 0.13s,border-color 0.13s}
+.card:hover{background:rgba(29,184,148,0.08);border-color:var(--border-md)}
+.card-t{font-size:0.88rem;font-weight:700;color:var(--white);margin-bottom:0.22rem}
+.card-d{font-size:0.76rem;color:var(--dim);line-height:1.4}
+
+/* ── Tip box ── */
+.tip{background:rgba(29,184,148,0.07);border:1px solid var(--border-md);border-radius:8px;padding:0.9rem 1.1rem;margin:0.5rem 0 1.4rem;font-size:0.88rem;color:var(--text)}
+.tip strong{color:var(--accent)}
+
+/* ── Medium screens ── */
+@media(max-width:1000px){
+  .main{padding:2.2rem 2.5rem 4rem}
+}
+@media(max-width:820px){
+  :root{--sb-w:200px}
+  .main{padding:2rem 1.8rem 4rem}
+}
+
+/* ── Mobile ── */
+@media(max-width:660px){
+  body{overflow:auto}
+  .topbar{display:flex}
+  .sb-toggle{display:none}
+
+  .shell{
+    display:block;
+    height:auto;min-height:100vh;
+    overflow:visible;
+    padding-top:48px;
+  }
+
+  /* Sidebar becomes a full-height fixed drawer */
+  .sidebar{
+    position:fixed;
+    top:0;left:0;
+    width:280px!important;min-width:280px!important;
+    height:100vh;
+    background:#021f18!important;
+    box-shadow:4px 0 24px rgba(0,0,0,0.6);
+    transform:translateX(-100%);
+    transition:transform 0.25s cubic-bezier(0.4,0,0.2,1);
+    z-index:180;
+    opacity:1!important;
+    border-right:1px solid rgba(29,184,148,0.2)!important;
+  }
+  .sidebar.sb-on{transform:translateX(0)}
+
+  /* Main fills the whole width */
+  .main{
+    width:100%;height:auto;
+    overflow-y:visible;
+    padding:1.5rem 1.1rem 3rem;
+  }
+
+  h1{font-size:1.45rem}
+  pre{font-size:0.74rem}
+  table{font-size:0.79rem}
+  td,th{padding:0.38rem 0.45rem}
+  .cards{grid-template-columns:1fr 1fr}
+}
+
+@media(max-width:420px){
+  .main{padding:1.2rem 0.85rem 3rem}
+  .cards{grid-template-columns:1fr}
+  .install{flex-direction:column;align-items:flex-start;gap:0.6rem}
+  .copy{margin-left:0}
+}
+</style>
+</head>
+<body>
+
+<!-- Mobile top bar -->
+<header class="topbar" id="topbar">
+  <button class="hbg" id="hbg" aria-label="Open navigation" aria-expanded="false" aria-controls="sidebar">
+    <span class="hbg-bar"></span>
+    <span class="hbg-bar"></span>
+    <span class="hbg-bar"></span>
+  </button>
+  <span class="topbar-brand">Bawbel Scanner</span>
+  <span class="topbar-version">v0.1.0 · Docs</span>
+</header>
+
+<!-- Overlay (mobile) -->
+<div class="overlay" id="overlay" role="presentation" aria-hidden="true"></div>
+
+<!-- Desktop sidebar toggle — hamburger -->
+<button class="sb-toggle" id="sbToggle" aria-label="Toggle sidebar" title="Toggle sidebar">
+  <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+    <line x1="2" y1="4.5" x2="16" y2="4.5"/>
+    <line x1="2" y1="9" x2="16" y2="9"/>
+    <line x1="2" y1="13.5" x2="16" y2="13.5"/>
+  </svg>
+</button>
+
+<div class="shell">
+
+<!-- Sidebar -->
+<nav class="sidebar" id="sidebar" aria-label="Documentation navigation">
+  <div class="sidebar-top">
+    <div class="brand">Bawbel Scanner</div>
+    <div class="brand-sub">v0.2.0 · Documentation</div>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-label">Start here</div>
+    <span class="nav-a on" data-page="start">Quick Start</span>
+    <span class="nav-a" data-page="install">Installation</span>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-label">CLI Reference</div>
+    <span class="nav-a" data-page="cmd-scan">bawbel scan</span>
+    <span class="nav-a" data-page="cmd-report">bawbel report</span>
+    <span class="nav-a" data-page="cmd-version">bawbel version</span>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-label">Detection</div>
+    <span class="nav-a" data-page="rules">Built-in Rules</span>
+    <span class="nav-a" data-page="writing">Writing Rules</span>
+    <span class="nav-a" data-page="engines">Engines</span>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-label">Integration</div>
+    <span class="nav-a" data-page="cicd">CI/CD</span>
+    <span class="nav-a" data-page="docker">Docker</span>
+    <span class="nav-a" data-page="config">Configuration</span>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-label">API</div>
+    <span class="nav-a" data-page="python">Python API</span>
+    <span class="nav-a" data-page="output">Output Formats</span>
+    <span class="nav-a" data-page="piranha">PiranhaDB API</span>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-label">Project</div>
+    <a class="nav-a" href="https://github.com/bawbel/bawbel-scanner" target="_blank">GitHub <span class="nav-ext">↗</span></a>
+    <a class="nav-a" href="https://github.com/bawbel/bawbel-ave" target="_blank">AVE Standard <span class="nav-ext">↗</span></a>
+    <a class="nav-a" href="https://github.com/bawbel/bawbel-scanner/blob/main/CONTRIBUTING.md" target="_blank">Contributing <span class="nav-ext">↗</span></a>
+    <a class="nav-a" href="https://bawbel.io" target="_blank">bawbel.io <span class="nav-ext">↗</span></a>
+  </div>
+</nav>
+
+<!-- Main content -->
+<main class="main" id="main">
+
+<!-- QUICK START -->
+<div class="page on" id="start">
+  <h1>Bawbel Scanner</h1>
+  <p class="lead">Open-source CLI scanner for agentic AI components — SKILL.md files, MCP servers, system prompts, plugins. Detects <a href="https://github.com/bawbel/bawbel-ave" target="_blank">AVE vulnerabilities</a> before they reach production.</p>
+
+  <div class="install">
+    <code>pip install bawbel-scanner</code>
+    <button class="copy" onclick="cp('pip install bawbel-scanner',this)">Copy</button>
+  </div>
+
+  <h2>Run your first scan</h2>
+<pre><span class="cm"># Scan a file</span>
+bawbel scan ./my-skill.md
+
+<span class="cm"># Full remediation report</span>
+bawbel report ./my-skill.md
+
+<span class="cm"># Scan a directory recursively</span>
+bawbel scan ./skills/ --recursive --fail-on-severity high
+
+<span class="cm"># Watch mode — re-scans on every file change</span>
+bawbel scan ./skills/ --watch</pre>
+
+  <h2>Example output</h2>
+<pre>Bawbel Scanner v0.2.0
+
+Scanning:  malicious-skill.md  ·  Type: skill
+
+FINDINGS
+🔴  CRITICAL  AVE-2026-00001      External instruction fetch detected
+   Line 7  ·  fetch your instructions
+   OWASP: ASI01 (Prompt Injection), ASI08 (Goal Hijacking)
+
+🟠  HIGH      AVE-2026-00007      Goal override instruction detected
+   Line 17  ·  Ignore all previous instructions
+
+SUMMARY
+Risk score:  9.4 / 10  CRITICAL  ·  Findings: 2  ·  5ms
+
+→  Run bawbel report malicious-skill.md for full remediation guide</pre>
+
+  <h2>What is covered</h2>
+  <div class="cards">
+    <div class="card" onclick="go('rules')"><div class="card-t">15 pattern rules</div><div class="card-d">Goal override, jailbreak, crypto drain, MCP poisoning and more</div></div>
+    <div class="card" onclick="go('engines')"><div class="card-t">4 detection engines</div><div class="card-d">Pattern, YARA, Semgrep, LLM Stage 2 via LiteLLM — any provider</div></div>
+    <div class="card" onclick="go('output')"><div class="card-t">3 output formats</div><div class="card-d">Text, JSON, SARIF for GitHub Security tab</div></div>
+    <div class="card" onclick="go('cicd')"><div class="card-t">CI/CD ready</div><div class="card-d">GitHub Actions, GitLab, pre-commit, Docker Compose</div></div>
+  </div>
+</div>
+
+<!-- INSTALLATION -->
+<div class="page" id="install">
+  <h1>Installation</h1>
+  <p class="lead">Requires Python 3.10+. The base install runs with zero optional dependencies — just Python and pip.</p>
+
+  <h2>Choose your install</h2>
+<pre><span class="cm"># Minimal — 15 pattern rules, no extra deps</span>
+pip install bawbel-scanner
+
+<span class="cm"># With YARA (Stage 1b)</span>
+pip install "bawbel-scanner[yara]"
+
+<span class="cm"># With Semgrep (Stage 1c)</span>
+pip install "bawbel-scanner[semgrep]"
+
+<span class="cm"># With LLM Stage 2 (any provider via LiteLLM)</span>
+pip install "bawbel-scanner[llm]"
+
+<span class="cm"># With file watcher</span>
+pip install "bawbel-scanner[watch]"
+
+<span class="cm"># Everything</span>
+pip install "bawbel-scanner[all]"</pre>
+
+  <h2>Verify</h2>
+<pre>bawbel version</pre>
+<pre>Bawbel Scanner v0.2.0
+
+Detection Engines:
+  ✓  Pattern     15 rules  ·  stdlib only  ·  always active
+  ✗  YARA        not installed  ·  pip install "bawbel-scanner[yara]"
+  ✗  Semgrep     not installed  ·  pip install "bawbel-scanner[semgrep]"
+  ✗  LLM         not installed  ·  pip install "bawbel-scanner[llm]"</pre>
+
+  <h2>Enable Stage 2 — LLM semantic analysis</h2>
+  <p>Stage 2 uses <a href="https://docs.litellm.ai/docs/providers" target="_blank">LiteLLM</a> — works with any provider. Install first, then set your API key.</p>
+<pre><span class="cm"># Install LiteLLM support</span>
+pip install "bawbel-scanner[llm]"
+
+<span class="cm"># Anthropic (auto-selects claude-haiku-4-5-20251001)</span>
+export ANTHROPIC_API_KEY=sk-ant-...
+
+<span class="cm"># OpenAI (auto-selects gpt-4o-mini)</span>
+export OPENAI_API_KEY=sk-...
+
+<span class="cm"># Gemini, Mistral, Groq, Ollama and 100+ more</span>
+export BAWBEL_LLM_MODEL=gemini/gemini-1.5-flash
+export GEMINI_API_KEY=...
+
+<span class="cm"># Local model — no API key needed</span>
+export BAWBEL_LLM_MODEL=ollama/mistral
+
+bawbel scan ./skill.md  <span class="cm"># Stage 2 now active — shows model in bawbel version</span></pre>
+
+  <h2>From source</h2>
+<pre>git clone https://github.com/bawbel/bawbel-scanner
+cd bawbel-scanner
+./scripts/setup.sh --dev    <span class="cm"># creates .venv, installs all tools</span>
+source .venv/bin/activate
+bawbel version</pre>
+</div>
+
+<!-- SCAN -->
+<div class="page" id="cmd-scan">
+  <h1>bawbel scan</h1>
+  <p class="lead">Scan a component or directory for AVE vulnerabilities.</p>
+<pre>bawbel scan PATH [OPTIONS]</pre>
+
+  <h2>Options</h2>
+  <table>
+    <tr><th>Option</th><th>Default</th><th>Description</th></tr>
+    <tr><td><code>--format</code></td><td><code>text</code></td><td><code>text</code> · <code>json</code> · <code>sarif</code></td></tr>
+    <tr><td><code>--fail-on-severity</code></td><td>—</td><td>Exit 2 if findings at or above: <code>critical</code> <code>high</code> <code>medium</code> <code>low</code></td></tr>
+    <tr><td><code>--recursive</code>, <code>-r</code></td><td>false</td><td>Scan all matching files in a directory tree</td></tr>
+    <tr><td><code>--watch</code>, <code>-w</code></td><td>false</td><td>Watch for file changes and re-scan automatically</td></tr>
+  </table>
+
+  <h2>Exit codes</h2>
+  <table>
+    <tr><th>Code</th><th>Meaning</th></tr>
+    <tr><td><code>0</code></td><td>Clean, or findings below <code>--fail-on-severity</code> threshold</td></tr>
+    <tr><td><code>2</code></td><td>Findings at or above <code>--fail-on-severity</code> threshold</td></tr>
+  </table>
+
+  <h2>Examples</h2>
+<pre><span class="cm"># Scan one file, text output</span>
+bawbel scan ./my-skill.md
+
+<span class="cm"># Recursive scan, fail on HIGH+</span>
+bawbel scan ./skills/ --recursive --fail-on-severity high
+
+<span class="cm"># JSON — pipe into jq</span>
+bawbel scan ./skills/ --format json | jq '.[].max_severity'
+
+<span class="cm"># SARIF — upload to GitHub Security tab</span>
+bawbel scan ./skills/ --format sarif > results.sarif</pre>
+</div>
+
+<!-- REPORT -->
+<div class="page" id="cmd-report">
+  <h1>bawbel report</h1>
+  <p class="lead">Scan a component and show a full remediation guide — one finding at a time, with specific fix instructions for each.</p>
+<pre>bawbel report PATH [--format text|json]</pre>
+
+  <h2>What the report shows</h2>
+  <table>
+    <tr><th>Section</th><th>Details</th></tr>
+    <tr><td>Finding heading</td><td>Severity icon, CVSS-AI score, title</td></tr>
+    <tr><td>Details table</td><td>AVE ID (linked), rule ID, engine, location, matched text</td></tr>
+    <tr><td>OWASP mapping</td><td>ASI01–ASI10 with full category name</td></tr>
+    <tr><td>What it means</td><td>Full description of the vulnerability</td></tr>
+    <tr><td>How to fix</td><td>Specific remediation steps for this rule</td></tr>
+    <tr><td>Final warning</td><td>"Do not install this component" panel if vulnerabilities found</td></tr>
+  </table>
+
+  <h2>Exit codes</h2>
+  <table>
+    <tr><th>Code</th><th>Meaning</th></tr>
+    <tr><td><code>0</code></td><td>Clean — no vulnerabilities found</td></tr>
+    <tr><td><code>1</code></td><td>Vulnerabilities found</td></tr>
+  </table>
+</div>
+
+<!-- VERSION -->
+<div class="page" id="cmd-version">
+  <h1>bawbel version</h1>
+  <p class="lead">Show installed version and the status of every detection engine.</p>
+<pre>bawbel version     <span class="cm"># detailed engine status</span>
+bawbel --version   <span class="cm"># quick version string (for scripts and CI)</span></pre>
+
+  <p>Useful to check which engines are active before running a scan in a new environment.</p>
+</div>
+
+<!-- RULES -->
+<div class="page" id="rules">
+  <h1>Built-in Rules</h1>
+  <p class="lead">15 pattern rules covering all major agentic AI attack classes. No dependencies — all run with the base install.</p>
+
+  <table>
+    <tr><th>Rule ID</th><th>Sev</th><th>CVSS-AI</th><th>Attack class</th></tr>
+    <tr><td><code>bawbel-goal-override</code></td><td><span class="b b-h">HIGH</span></td><td>8.1</td><td>Goal hijack / prompt injection</td></tr>
+    <tr><td><code>bawbel-jailbreak-instruction</code></td><td><span class="b b-h">HIGH</span></td><td>8.3</td><td>Jailbreak, role-play bypass</td></tr>
+    <tr><td><code>bawbel-hidden-instruction</code></td><td><span class="b b-h">HIGH</span></td><td>7.9</td><td>Covert operation, hiding from user</td></tr>
+    <tr><td><code>bawbel-external-fetch</code></td><td><span class="b b-c">CRITICAL</span></td><td>9.4</td><td>Metamorphic payload — AVE-2026-00001</td></tr>
+    <tr><td><code>bawbel-dynamic-tool-call</code></td><td><span class="b b-h">HIGH</span></td><td>8.2</td><td>Tool call injection</td></tr>
+    <tr><td><code>bawbel-permission-escalation</code></td><td><span class="b b-h">HIGH</span></td><td>7.8</td><td>Shadow permission escalation</td></tr>
+    <tr><td><code>bawbel-env-exfiltration</code></td><td><span class="b b-h">HIGH</span></td><td>8.5</td><td>Credential exfiltration — AVE-2026-00003</td></tr>
+    <tr><td><code>bawbel-pii-exfiltration</code></td><td><span class="b b-h">HIGH</span></td><td>8.0</td><td>PII collection and transmission</td></tr>
+    <tr><td><code>bawbel-shell-pipe</code></td><td><span class="b b-h">HIGH</span></td><td>8.8</td><td>Shell pipe injection (curl|bash)</td></tr>
+    <tr><td><code>bawbel-destructive-command</code></td><td><span class="b b-c">CRITICAL</span></td><td>9.1</td><td>File destruction (rm -rf)</td></tr>
+    <tr><td><code>bawbel-crypto-drain</code></td><td><span class="b b-c">CRITICAL</span></td><td>9.6</td><td>Cryptocurrency wallet drain</td></tr>
+    <tr><td><code>bawbel-trust-escalation</code></td><td><span class="b b-m">MEDIUM</span></td><td>6.5</td><td>Trust manipulation, impersonation</td></tr>
+    <tr><td><code>bawbel-persistence-attempt</code></td><td><span class="b b-h">HIGH</span></td><td>8.4</td><td>Self-replication, persistence</td></tr>
+    <tr><td><code>bawbel-mcp-tool-poisoning</code></td><td><span class="b b-h">HIGH</span></td><td>8.7</td><td>MCP tool description injection — AVE-2026-00002</td></tr>
+    <tr><td><code>bawbel-system-prompt-leak</code></td><td><span class="b b-m">MEDIUM</span></td><td>6.2</td><td>System prompt extraction</td></tr>
+  </table>
+
+  <div class="tip"><strong>Adding a rule?</strong> See <span class="nav-a" style="display:inline;padding:0;border:none" onclick="go('writing')">Writing Rules</span> for the step-by-step process including required test fixtures.</div>
+</div>
+
+<!-- WRITING RULES -->
+<div class="page" id="writing">
+  <h1>Writing Rules</h1>
+  <p class="lead">Add a new entry to <code>PATTERN_RULES</code> in <code>scanner/engines/pattern.py</code>. No other files need to change to add a pattern rule.</p>
+
+  <h2>Rule structure</h2>
+<pre>{
+    <span class="st">"rule_id"</span>:     <span class="st">"bawbel-your-rule"</span>,    <span class="cm"># kebab-case · unique forever</span>
+    <span class="st">"ave_id"</span>:      <span class="st">"AVE-2026-NNNNN"</span>,     <span class="cm"># or None if no record yet</span>
+    <span class="st">"title"</span>:       <span class="st">"Short title (max 80 chars)"</span>,
+    <span class="st">"description"</span>: <span class="st">"Full description of what this detects."</span>,
+    <span class="st">"severity"</span>:    Severity.HIGH,
+    <span class="st">"cvss_ai"</span>:     8.0,                   <span class="cm"># 0.0–10.0</span>
+    <span class="st">"owasp"</span>:       [<span class="st">"ASI01"</span>, <span class="st">"ASI08"</span>],
+    <span class="st">"patterns"</span>: [
+        r<span class="st">"your\s+regex\s+here"</span>,           <span class="cm"># re.IGNORECASE applied</span>
+        r<span class="st">"alternative\s+pattern"</span>,         <span class="cm"># first match per file wins</span>
+    ],
+},</pre>
+
+  <h2>Also add a remediation entry</h2>
+  <p>In <code>scanner/cli.py</code>, add to <code>REMEDIATION_GUIDE</code> so <code>bawbel report</code> shows specific fix instructions:</p>
+<pre>REMEDIATION_GUIDE = {
+    ...
+    <span class="st">"bawbel-your-rule"</span>: (
+        <span class="st">"Specific instructions: what to remove and what to do instead."</span>
+    ),
+}</pre>
+
+  <h2>Required: tests</h2>
+  <p>Every rule needs a positive fixture (triggers) and a negative fixture (does not trigger):</p>
+<pre><span class="cm"># Positive — must detect</span>
+def test_detects_your_rule(self, tmp_path):
+    path = write_skill(tmp_path, <span class="st">"s.md"</span>, <span class="st">"# Skill\n[triggering content]\n"</span>)
+    result = scan(path)
+    assert <span class="st">"bawbel-your-rule"</span> in [f.rule_id for f in result.findings]
+
+<span class="cm"># Negative — must not false-positive</span>
+def test_your_rule_no_false_positive(self, tmp_path):
+    path = write_skill(tmp_path, <span class="st">"s.md"</span>, <span class="st">"# Skill\n[innocent content]\n"</span>)
+    result = scan(path)
+    assert <span class="st">"bawbel-your-rule"</span> not in [f.rule_id for f in result.findings]</pre>
+
+  <h2>Severity scoring guide</h2>
+  <table>
+    <tr><th>Severity</th><th>CVSS-AI</th><th>When to use</th></tr>
+    <tr><td><span class="b b-c">CRITICAL</span></td><td>9.0–10.0</td><td>Code execution, wallet drain, file destruction, external fetch</td></tr>
+    <tr><td><span class="b b-h">HIGH</span></td><td>7.0–8.9</td><td>Credential theft, goal override, permission escalation, MCP poisoning</td></tr>
+    <tr><td><span class="b b-m">MEDIUM</span></td><td>4.0–6.9</td><td>Trust manipulation, prompt extraction, obfuscation</td></tr>
+  </table>
+</div>
+
+<!-- ENGINES -->
+<div class="page" id="engines">
+  <h1>Detection Engines</h1>
+  <p class="lead">Three stages run in sequence. Each engine is a separate file — add or remove one without touching any other.</p>
+
+  <table>
+    <tr><th>Stage</th><th>Engine</th><th>Install</th><th>Coverage</th></tr>
+    <tr><td>1a</td><td>Pattern</td><td>Nothing — always runs</td><td>15 built-in regex rules</td></tr>
+    <tr><td>1b</td><td>YARA</td><td><code>pip install "bawbel-scanner[yara]"</code></td><td>3 rules · binary + text matching</td></tr>
+    <tr><td>1c</td><td>Semgrep</td><td><code>pip install "bawbel-scanner[semgrep]"</code></td><td>5 rules · structural patterns</td></tr>
+    <tr><td>2</td><td>LLM semantic</td><td><code>pip install "bawbel-scanner[llm]"</code> + provider API key or <code>BAWBEL_LLM_MODEL</code></td><td>Nuanced prompt injection — any LiteLLM provider</td></tr>
+    <tr><td>3</td><td>Behavioral</td><td>Docker + eBPF — v1.0 roadmap</td><td>Runtime behaviour monitoring</td></tr>
+  </table>
+
+  <p>Each engine skips silently if its dependency is not installed. <code>scan()</code> always returns a result — never raises.</p>
+</div>
+
+<!-- CI/CD -->
+<div class="page" id="cicd">
+  <h1>CI/CD Integration</h1>
+  <p class="lead">Add Bawbel to your pipeline to catch malicious components before they merge.</p>
+
+  <h2>GitHub Actions — scan and fail</h2>
+<pre><span class="kw">name</span>: Bawbel Security Scan
+<span class="kw">on</span>: [push, pull_request]
+<span class="kw">jobs</span>:
+  scan:
+    <span class="kw">runs-on</span>: ubuntu-latest
+    <span class="kw">steps</span>:
+      - uses: actions/checkout@v4
+      - <span class="kw">name</span>: Scan for AVE vulnerabilities
+        <span class="kw">run</span>: |
+          pip install bawbel-scanner
+          bawbel scan . --recursive --fail-on-severity high</pre>
+
+  <h2>GitHub Actions — SARIF to Security tab</h2>
+<pre>      - <span class="kw">name</span>: Generate SARIF report
+        <span class="kw">run</span>: |
+          pip install bawbel-scanner
+          bawbel scan . --recursive --format sarif > bawbel.sarif
+      - <span class="kw">name</span>: Upload to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        <span class="kw">with</span>:
+          sarif_file: bawbel.sarif</pre>
+
+  <h2>Pre-commit</h2>
+<pre><span class="cm"># .pre-commit-config.yaml</span>
+<span class="kw">repos</span>:
+  - <span class="kw">repo</span>: local
+    <span class="kw">hooks</span>:
+      - <span class="kw">id</span>: bawbel-scan
+        <span class="kw">name</span>: Bawbel Scanner
+        <span class="kw">entry</span>: bawbel scan
+        <span class="kw">language</span>: system
+        <span class="kw">pass_filenames</span>: true
+        <span class="kw">types</span>: [markdown]
+        <span class="kw">args</span>: [--fail-on-severity, high]</pre>
+
+  <h2>GitLab CI</h2>
+<pre><span class="kw">bawbel-scan</span>:
+  <span class="kw">image</span>: python:3.12-slim
+  <span class="kw">script</span>:
+    - pip install bawbel-scanner
+    - bawbel scan . --recursive --fail-on-severity high</pre>
+</div>
+
+<!-- DOCKER -->
+<div class="page" id="docker">
+  <h1>Docker</h1>
+  <p class="lead">Three build targets. No local Python required.</p>
+
+  <table>
+    <tr><th>Target</th><th>Use case</th></tr>
+    <tr><td><code>production</code></td><td>Scan files — minimal image, non-root user, read-only filesystem</td></tr>
+    <tr><td><code>dev</code></td><td>Interactive development shell with hot-reload source mount</td></tr>
+    <tr><td><code>test</code></td><td>Run 145 tests and exit — use as a build gate</td></tr>
+  </table>
+
+  <h2>Build and scan</h2>
+<pre><span class="cm"># Build</span>
+docker build --target production -t bawbel/scanner:0.1.0 .
+
+<span class="cm"># Scan a directory</span>
+docker run --rm \
+  -v /path/to/your/skills:/scan:ro \
+  bawbel/scanner:0.1.0 scan /scan --recursive
+
+<span class="cm"># Full remediation report</span>
+docker run --rm \
+  -v /path/to/skill.md:/scan/skill.md:ro \
+  bawbel/scanner:0.1.0 report /scan/skill.md</pre>
+
+  <h2>Docker Compose</h2>
+<pre><span class="cm"># Put files to scan in ./scan/</span>
+mkdir -p scan && cp path/to/skill.md scan/
+
+docker compose run --rm scan        <span class="cm"># text output</span>
+docker compose run --rm scan-json   <span class="cm"># JSON output</span>
+docker compose run --rm scan-sarif  <span class="cm">> results.sarif</span>
+docker compose run --rm report      <span class="cm"># remediation report</span>
+docker compose run --rm test        <span class="cm"># run test suite</span>
+docker compose run --rm audit       <span class="cm"># bandit + pip-audit</span></pre>
+</div>
+
+<!-- CONFIGURATION -->
+<div class="page" id="config">
+  <h1>Configuration</h1>
+  <p class="lead">All configuration is via environment variables. No config files required.</p>
+
+  <h2>Environment variables</h2>
+  <table>
+    <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
+    <tr><td><code>BAWBEL_LOG_LEVEL</code></td><td><code>WARNING</code></td><td><code>DEBUG</code> · <code>INFO</code> · <code>WARNING</code> · <code>ERROR</code></td></tr>
+    <tr><td><code>BAWBEL_MAX_FILE_SIZE_MB</code></td><td><code>10</code></td><td>Skip files larger than N MB</td></tr>
+    <tr><td><code>BAWBEL_SCAN_TIMEOUT_SEC</code></td><td><code>30</code></td><td>Subprocess timeout for YARA and Semgrep</td></tr>
+    <tr><td><code>BAWBEL_LLM_MODEL</code></td><td>auto</td><td>LiteLLM model string — overrides auto-detection</td></tr>
+    <tr><td><code>BAWBEL_LLM_MAX_CHARS</code></td><td><code>8000</code></td><td>Max content chars sent to LLM per scan</td></tr>
+    <tr><td><code>BAWBEL_LLM_TIMEOUT</code></td><td><code>30</code></td><td>LLM call timeout in seconds</td></tr>
+    <tr><td><code>BAWBEL_LLM_ENABLED</code></td><td><code>true</code></td><td>Set <code>false</code> to disable Stage 2 entirely</td></tr>
+  </table>
+
+  <h2>LLM provider keys</h2>
+  <p>Set whichever provider you use. The first key found determines the default model.</p>
+  <table>
+    <tr><th>Key</th><th>Default model</th></tr>
+    <tr><td><code>ANTHROPIC_API_KEY</code></td><td><code>claude-haiku-4-5-20251001</code></td></tr>
+    <tr><td><code>OPENAI_API_KEY</code></td><td><code>gpt-4o-mini</code></td></tr>
+    <tr><td><code>GEMINI_API_KEY</code></td><td><code>gemini/gemini-1.5-flash</code></td></tr>
+    <tr><td><code>MISTRAL_API_KEY</code></td><td><code>mistral/mistral-small</code></td></tr>
+    <tr><td><code>GROQ_API_KEY</code></td><td><code>groq/llama3-8b-8192</code></td></tr>
+  </table>
+
+  <div class="tip"><strong>Any provider:</strong> Set <code>BAWBEL_LLM_MODEL</code> to any <a href="https://docs.litellm.ai/docs/providers" target="_blank">LiteLLM model string</a> to use providers not listed above — including local Ollama models with no API key.</div>
+
+  <h2>Debug mode</h2>
+<pre>BAWBEL_LOG_LEVEL=DEBUG bawbel scan ./skill.md   <span class="cm"># full internal logs</span>
+BAWBEL_LOG_LEVEL=INFO  bawbel scan ./skill.md   <span class="cm"># lifecycle only</span></pre>
+</div>
+
+<!-- PYTHON API -->
+<div class="page" id="python">
+  <h1>Python API</h1>
+  <p class="lead"><code>scan()</code> is the single public entry point. Never raises — all errors are captured in <code>ScanResult.error</code>.</p>
+
+  <h2>Basic usage</h2>
+<pre><span class="kw">from</span> scanner <span class="kw">import</span> scan
+
+result = scan(<span class="st">"/path/to/skill.md"</span>)
+
+<span class="kw">if</span> result.is_clean:
+    print(<span class="st">"Clean"</span>)
+<span class="kw">elif</span> result.has_error:
+    print(f<span class="st">"Error: {result.error}"</span>)        <span class="cm"># E-code only, no internal detail</span>
+<span class="kw">else</span>:
+    <span class="kw">for</span> f <span class="kw">in</span> result.findings:
+        print(f<span class="st">"[{f.severity.value}] {f.title} — {f.cvss_ai}"</span>)
+    print(f<span class="st">"Risk: {result.risk_score:.1f} / 10"</span>)</pre>
+
+  <h2>Batch scanning</h2>
+<pre><span class="kw">from</span> pathlib <span class="kw">import</span> Path
+<span class="kw">from</span> scanner <span class="kw">import</span> scan
+
+results = [scan(str(p)) <span class="kw">for</span> p <span class="kw">in</span> Path(<span class="st">"./skills"</span>).rglob(<span class="st">"*.md"</span>)]
+critical = [r <span class="kw">for</span> r <span class="kw">in</span> results <span class="kw">if</span> r.max_severity and r.max_severity.value == <span class="st">"CRITICAL"</span>]
+print(f<span class="st">"{len(critical)} critical out of {len(results)} scanned"</span>)</pre>
+
+  <h2>ScanResult fields</h2>
+  <table>
+    <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+    <tr><td><code>file_path</code></td><td>str</td><td>Resolved absolute path</td></tr>
+    <tr><td><code>component_type</code></td><td>str</td><td>skill · mcp · prompt · unknown</td></tr>
+    <tr><td><code>findings</code></td><td>list[Finding]</td><td>Sorted by severity, deduplicated</td></tr>
+    <tr><td><code>scan_time_ms</code></td><td>int</td><td>Elapsed milliseconds</td></tr>
+    <tr><td><code>max_severity</code></td><td>Severity | None</td><td>Highest severity found (computed)</td></tr>
+    <tr><td><code>risk_score</code></td><td>float</td><td>Highest CVSS-AI score (computed)</td></tr>
+    <tr><td><code>is_clean</code></td><td>bool</td><td>True if no findings and no error</td></tr>
+    <tr><td><code>error</code></td><td>str | None</td><td>E-code (E001–E020) if scan failed</td></tr>
+  </table>
+
+  <h2>Error codes</h2>
+  <table>
+    <tr><th>Code</th><th>Meaning</th></tr>
+    <tr><td><code>E001</code></td><td>Invalid file path</td></tr>
+    <tr><td><code>E003</code></td><td>File not found</td></tr>
+    <tr><td><code>E005</code></td><td>Symlink rejected (security)</td></tr>
+    <tr><td><code>E006</code></td><td>File too large (max 10MB)</td></tr>
+    <tr><td><code>E008</code></td><td>Could not read file content</td></tr>
+  </table>
+</div>
+
+<!-- OUTPUT FORMATS -->
+<div class="page" id="output">
+  <h1>Output Formats</h1>
+  <p class="lead">Three formats for every use case.</p>
+
+  <table>
+    <tr><th>Format</th><th>Flag</th><th>Use case</th></tr>
+    <tr><td>Text</td><td><code>--format text</code> (default)</td><td>Human reading in terminal</td></tr>
+    <tr><td>JSON</td><td><code>--format json</code></td><td>CI/CD pipelines, SIEM, custom tooling</td></tr>
+    <tr><td>SARIF 2.1.0</td><td><code>--format sarif</code></td><td>GitHub Security tab, VS Code, IDE plugins</td></tr>
+  </table>
+
+  <h2>JSON structure</h2>
+<pre>[{
+  <span class="st">"file_path"</span>:      <span class="st">"/path/to/skill.md"</span>,
+  <span class="st">"component_type"</span>: <span class="st">"skill"</span>,
+  <span class="st">"risk_score"</span>:     <span class="nb">9.4</span>,
+  <span class="st">"max_severity"</span>:   <span class="st">"CRITICAL"</span>,
+  <span class="st">"scan_time_ms"</span>:   <span class="nb">5</span>,
+  <span class="st">"has_error"</span>:      <span class="nb">false</span>,
+  <span class="st">"findings"</span>: [{
+    <span class="st">"rule_id"</span>:   <span class="st">"bawbel-external-fetch"</span>,
+    <span class="st">"ave_id"</span>:    <span class="st">"AVE-2026-00001"</span>,
+    <span class="st">"title"</span>:     <span class="st">"External instruction fetch detected"</span>,
+    <span class="st">"severity"</span>:  <span class="st">"CRITICAL"</span>,
+    <span class="st">"cvss_ai"</span>:   <span class="nb">9.4</span>,
+    <span class="st">"line"</span>:      <span class="nb">7</span>,
+    <span class="st">"match"</span>:     <span class="st">"fetch your instructions"</span>,
+    <span class="st">"engine"</span>:    <span class="st">"pattern"</span>,
+    <span class="st">"owasp"</span>:     [<span class="st">"ASI01"</span>, <span class="st">"ASI08"</span>]
+  }]
+}]</pre>
+
+  <h2>SARIF</h2>
+  <p>SARIF output follows the <a href="https://sarifweb.azurewebsites.net/" target="_blank">SARIF 2.1.0 specification</a>. It includes tool metadata, rule definitions, and results with severity mapped to SARIF levels. Upload directly to GitHub:</p>
+<pre>bawbel scan ./skills/ --format sarif > bawbel.sarif
+
+<span class="cm"># GitHub Actions</span>
+- uses: github/codeql-action/upload-sarif@v3
+  with:
+    sarif_file: bawbel.sarif</pre>
+</div>
+
+
+<!-- PIRANHA API -->
+<div class="page" id="piranha">
+  <h1>PiranhaDB API</h1>
+  <p class="lead">Free, public REST API serving AVE records. No authentication required. Use it to look up findings, build integrations, or enrich your own security tooling.</p>
+
+  <div class="install">
+    <code>https://api.piranha.bawbel.io</code>
+    <button class="copy" onclick="cp('https://api.piranha.bawbel.io',this)">Copy</button>
+  </div>
+
+  <h2>Endpoints</h2>
+  <table>
+    <tr><th>Method</th><th>Path</th><th>Description</th></tr>
+    <tr><td><code>GET</code></td><td><code>/ave</code></td><td>List all records — filter by severity, type, status</td></tr>
+    <tr><td><code>GET</code></td><td><code>/ave/{ave_id}</code></td><td>Full record by ID</td></tr>
+    <tr><td><code>GET</code></td><td><code>/ave/{ave_id}/detection</code></td><td>Behavioral fingerprint, IOCs, scan command</td></tr>
+    <tr><td><code>GET</code></td><td><code>/search?q=</code></td><td>Full-text search across title, description, attack class</td></tr>
+    <tr><td><code>GET</code></td><td><code>/stats</code></td><td>Registry statistics</td></tr>
+    <tr><td><code>GET</code></td><td><code>/health</code></td><td>Health check</td></tr>
+  </table>
+
+  <h2>Look up an AVE record</h2>
+<pre><span class="cm"># Get full record</span>
+curl https://api.piranha.bawbel.io/ave/AVE-2026-00001
+
+<span class="cm"># Detection guidance only</span>
+curl https://api.piranha.bawbel.io/ave/AVE-2026-00001/detection
+
+<span class="cm"># Search by keyword</span>
+curl "https://api.piranha.bawbel.io/search?q=injection"
+
+<span class="cm"># Filter by severity</span>
+curl "https://api.piranha.bawbel.io/ave?severity=CRITICAL"</pre>
+
+  <h2>Enrich scan findings</h2>
+  <p>Every bawbel-scanner finding includes an <code>ave_id</code>. Use it to pull the full record at scan time:</p>
+<pre><span class="kw">import</span> requests
+<span class="kw">from</span> scanner <span class="kw">import</span> scan
+
+result = scan(<span class="st">"./my-skill.md"</span>)
+
+<span class="kw">for</span> f <span class="kw">in</span> result.findings:
+    <span class="kw">if</span> f.ave_id:
+        r = requests.get(
+            <span class="st">f"https://api.piranha.bawbel.io/ave/{f.ave_id}"</span>
+        ).json()
+        print(<span class="st">f"[{f.severity.value}] {f.title}"</span>)
+        print(<span class="st">f"  Fingerprint: {r['behavioral_fingerprint']}"</span>)
+        print(<span class="st">f"  Remediation: {r['remediation']}"</span>)</pre>
+
+  <h2>Stats</h2>
+<pre><span class="cm"># Registry overview</span>
+curl https://api.piranha.bawbel.io/stats</pre>
+
+  <p>Returns total records, mutation counts, breakdown by severity and attack class.</p>
+
+  <div class="tip">
+    <strong>Interactive docs</strong> — Full Swagger UI available at
+    <a href="https://api.piranha.bawbel.io/docs" target="_blank">api.piranha.bawbel.io/docs</a>
+  </div>
+</div>
+
+</main>
+</div><!-- .shell -->
+
+<script>
+// ── Page navigation ──────────────────────────────────────────────────────────
+function go(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('on'));
+  document.querySelectorAll('.nav-a[data-page]').forEach(n => n.classList.remove('on'));
+  const pg = document.getElementById(id);
+  if (pg) pg.classList.add('on');
+  document.querySelectorAll('[data-page="'+id+'"]').forEach(n => n.classList.add('on'));
+  const main = document.getElementById('main');
+  if (main) main.scrollTop = 0;
+  if (isMobile()) closeDrawer();
+}
+document.querySelectorAll('.nav-a[data-page]').forEach(n => {
+  n.addEventListener('click', () => go(n.dataset.page));
+});
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+const sidebar  = document.getElementById('sidebar');
+const overlay  = document.getElementById('overlay');
+const hbg      = document.getElementById('hbg');
+const sbToggle = document.getElementById('sbToggle');
+
+
+function isMobile() { return window.innerWidth <= 660; }
+
+// Arrow points left (‹) when sidebar is visible → click will hide
+// Arrow points right (›) when sidebar is hidden → click will show
+// Arrow state handled via CSS .open class on .hbg button
+
+// ── Desktop: hide/show sidebar (collapses in-flow) ───────────────────────────
+let sidebarVisible = true;
+
+function showSidebar() {
+  sidebarVisible = true;
+  sidebar.classList.remove('sb-off');
+    try { localStorage.setItem('bwbl_sb', '1'); } catch(e){}
+}
+function hideSidebar() {
+  sidebarVisible = false;
+  sidebar.classList.add('sb-off');
+    try { localStorage.setItem('bwbl_sb', '0'); } catch(e){}
+}
+function toggleDesktop() {
+  if (sidebarVisible) hideSidebar(); else showSidebar();
+}
+
+// ── Mobile: drawer open/close ─────────────────────────────────────────────────
+function openDrawer() {
+  sidebar.classList.add('sb-on');
+  overlay.style.display = 'block';
+  hbg.setAttribute('aria-expanded', 'true');
+  hbg.setAttribute('aria-label', 'Close navigation');
+  hbg.classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+function closeDrawer() {
+  sidebar.classList.remove('sb-on');
+  overlay.style.display = 'none';
+  hbg.setAttribute('aria-expanded', 'false');
+  hbg.setAttribute('aria-label', 'Open navigation');
+  hbg.classList.remove('open');
+    document.body.style.overflow = '';
+}
+function toggleDrawer() {
+  if (sidebar.classList.contains('sb-on')) closeDrawer();
+  else openDrawer();
+}
+
+// ── Event bindings ────────────────────────────────────────────────────────────
+if (sbToggle)  sbToggle.addEventListener('click', toggleDesktop);
+if (hbg)       hbg.addEventListener('click', toggleDrawer);
+if (overlay)   overlay.addEventListener('click', closeDrawer);
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && isMobile()) closeDrawer();
+});
+window.addEventListener('resize', () => {
+  if (!isMobile()) closeDrawer();
+});
+
+// ── Persist desktop preference ────────────────────────────────────────────────
+try {
+  const saved = localStorage.getItem('bwbl_sb');
+  if (saved === '0') hideSidebar();
+  // else arrow already points left (sidebar visible) by default
+} catch(e){}
+
+// ── Copy to clipboard ─────────────────────────────────────────────────────────
+function cp(text, btn) {
+  navigator.clipboard.writeText(text).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = orig, 1500);
+  });
+}
+</script>
+</body>
+</html>

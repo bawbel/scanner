@@ -55,7 +55,7 @@ Provider API keys — set whichever you use:
 
 | Key | Default model |
 |---|---|
-| `ANTHROPIC_API_KEY` | `claude-haiku-4-5` |
+| `ANTHROPIC_API_KEY` | `claude-haiku-4-5-20251001` |
 | `OPENAI_API_KEY` | `gpt-4o-mini` |
 | `GEMINI_API_KEY` | `gemini/gemini-1.5-flash` |
 | `MISTRAL_API_KEY` | `mistral/mistral-small` |
