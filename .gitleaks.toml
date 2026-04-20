@@ -1,0 +1,9 @@
+title = "bawbel-scanner gitleaks config"
+
+[allowlist]
+  description = "False positives in scanner source"
+  regexes = [
+    # _KEY_TO_DEFAULT_MODEL maps env var names (e.g. ANTHROPIC_API_KEY) to
+    # LiteLLM model strings — these are not secrets.
+    '"[A-Z_]+_API_KEY":\\s*"[a-z]',
+  ]

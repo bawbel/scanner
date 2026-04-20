@@ -71,11 +71,32 @@ findings = run_semgrep_scan(resolved_file_path_string)
 
 ---
 
+### Stage 2 — LLM Engine (`engines/llm_engine.py`)
+
+- **Dependency:** `litellm` — `pip install "bawbel-scanner[llm]"`
+- **Always runs:** No — skips silently if litellm not installed or no model configured
+- **Providers:** Any LiteLLM-supported provider (Anthropic, OpenAI, Gemini, Mistral, Ollama, 100+ more)
+- **Activation:** Set `BAWBEL_LLM_MODEL` or a known provider API key
+
+```python
+from scanner.engines.llm_engine import run_llm_scan
+findings = run_llm_scan(file_content_string)
+```
+
+```bash
+# Provider examples
+export ANTHROPIC_API_KEY=sk-ant-...           # uses claude-haiku-4-5
+export OPENAI_API_KEY=sk-...                  # uses gpt-4o-mini
+export BAWBEL_LLM_MODEL=ollama/mistral        # local, no key needed
+export BAWBEL_LLM_MODEL=gemini/gemini-1.5-flash && export GEMINI_API_KEY=...
+```
+
+---
+
 ## Planned Engines
 
 | Engine | Stage | File | Status |
 |---|---|---|---|
-| LLM semantic analysis | 2 | `engines/llm_engine.py` | Planned v0.2.0 |
 | Behavioral sandbox | 3 | `engines/sandbox_engine.py` | Planned v1.0.0 |
 
 ---
@@ -97,7 +118,7 @@ Summary:
 `scanner/engines/__init__.py` exports all active engines:
 
 ```python
-from scanner.engines import run_pattern_scan, run_yara_scan, run_semgrep_scan
+from scanner.engines import run_pattern_scan, run_yara_scan, run_semgrep_scan, run_llm_scan
 ```
 
 To disable an engine temporarily: comment out its import in `__init__.py`.

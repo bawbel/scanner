@@ -46,8 +46,8 @@ dependencies = [
 # Detection engines (optional — scanner works without them)
 yara    = ["yara-python>=4.5.0"]
 semgrep = ["semgrep>=1.60.0"]
-llm     = ["litellm>=1.30.0"]
-all     = ["yara-python>=4.5.0", "semgrep>=1.60.0", "litellm>=1.30.0"]
+llm     = ["litellm>=1.30.0", "jsonschema~=4.25.1"]
+all     = ["yara-python>=4.5.0", "semgrep>=1.60.0", "litellm>=1.30.0", "jsonschema~=4.25.1"]
 
 # Development tooling
 dev = [

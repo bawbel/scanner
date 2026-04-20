@@ -8,6 +8,14 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+- LLM Stage 2 engine rewritten to use LiteLLM — supports any provider (Anthropic, OpenAI, Gemini, Mistral, Groq, Ollama, and 100+ more)
+- `BAWBEL_LLM_MODEL` env var controls which model to use (any LiteLLM model string)
+- Provider auto-detection from known API keys — set `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY`, etc.
+- 8/15 pattern rules now linked to AVE records (AVE-2026-00004 through 00008 wired)
+- `bawbel version` now shows the active LLM model name when Stage 2 is enabled
+- `pyproject.toml` `[llm]` extra now installs `litellm` instead of provider-specific packages
+
 ---
 
 ## [0.1.0] — 2026-04-19
@@ -27,7 +35,7 @@ First public release.
 - Stage 1a: pattern matching engine — stdlib only, zero dependencies, always runs
 - Stage 1b: YARA engine — optional, requires `yara-python`, 3 rules
 - Stage 1c: Semgrep engine — optional, requires `semgrep`, 5 rules
-- Stage 2: LLM semantic analysis — enabled by setting `ANTHROPIC_API_KEY` or `OPENAI_API_KEY`
+- Stage 2: LLM semantic analysis via LiteLLM — works with any provider (Anthropic, OpenAI, Gemini, Mistral, Ollama, and more). Enable with `pip install "bawbel-scanner[llm]"` and set `BAWBEL_LLM_MODEL` or a provider API key
 
 **Output formats**
 - `text` — human-readable terminal output with severity icons

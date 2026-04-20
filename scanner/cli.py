@@ -352,10 +352,8 @@ def report_cmd(path: str, fmt: str) -> None:
     name = Path(result.file_path).name
     console.print(f"[dim]Report for:[/]  [bold white]{name}[/]")
     console.print(f"[dim]Type:[/]        [bold white]{result.component_type}[/]")
-    console.print(
-        "[dim]AVE Standard:[/] "
-        "[link=https://github.com/bawbel/bawbel-ave]github.com/bawbel/bawbel-ave[/link]"
-    )
+    ave_url = "https://github.com/bawbel/bawbel-ave"
+    console.print(f"[dim]AVE Standard:[/] [link={ave_url}]github.com/bawbel/bawbel-ave[/link]")
     console.print()
 
     if result.has_error:
@@ -396,9 +394,10 @@ def report_cmd(path: str, fmt: str) -> None:
         table.add_column("value", style="white")
 
         if f.ave_id:
+            ave_base = "https://github.com/bawbel/bawbel-ave/blob/main/records"
             table.add_row(
                 "AVE ID",
-                f"[link=https://github.com/bawbel/bawbel-ave/blob/main/records/{f.ave_id}.md]{f.ave_id}[/link]",  # noqa: E501
+                f"[link={ave_base}/{f.ave_id}.md]{f.ave_id}[/link]",
             )
         table.add_row("Rule ID", f.rule_id)
         table.add_row("CVSS-AI", f"{f.cvss_ai:.1f} / 10.0")
@@ -475,13 +474,13 @@ def version_cmd() -> None:
         )
     except ImportError:
         console.print(
-            "  [dim]✗  YARA        not installed  ·  " 'pip install "bawbel-scanner[yara]"[/]'
+            "  [dim]✗  YARA        not installed  ·  " 'pip install "bawbel-scanner\\[yara]"[/]'
         )
 
     try:
-        import subprocess  # nosec B404  # noqa: S404
+        import subprocess  # nosec B404 # noqa: S404
 
-        r = subprocess.run(  # nosec B603 B607  # noqa: S603,S607
+        r = subprocess.run(  # nosec B603 B607 # noqa: S603 S607
             ["semgrep", "--version"],
             capture_output=True,
             text=True,
@@ -492,19 +491,33 @@ def version_cmd() -> None:
             console.print(f"  [bold #1DB894]✓[/]  Semgrep     " f"[dim]v{ver}  ·  active[/]")
         else:
             raise FileNotFoundError
-    except Exception:
+    except Exception:  # noqa: B014
         console.print(
-            "  [dim]✗  Semgrep     not installed  ·  " 'pip install "bawbel-scanner[semgrep]"[/]'
+            "  [dim]✗  Semgrep     not installed  ·  " 'pip install "bawbel-scanner\\[semgrep]"[/]'
         )
 
-    import os
+    try:
+        import litellm  # noqa: F401
 
-    llm_key = os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("OPENAI_API_KEY")
-    if llm_key:
-        console.print("  [bold #1DB894]✓[/]  LLM         " "[dim]API key set  ·  Stage 2 active[/]")
+        llm_installed = True
+    except ImportError:
+        llm_installed = False
+
+    from scanner.engines.llm_engine import _resolve_model
+
+    active_model = _resolve_model() if llm_installed else None
+
+    if llm_installed and active_model:
+        console.print(
+            f"  [bold #1DB894]✓[/]  LLM         " f"[dim]{active_model}  ·  Stage 2 active[/]"
+        )
+    elif llm_installed and not active_model:
+        console.print(
+            "  [dim]✗  LLM         installed  ·  " "set BAWBEL_LLM_MODEL or a provider API key[/]"
+        )
     else:
         console.print(
-            "  [dim]✗  LLM         no API key  ·  " "set ANTHROPIC_API_KEY to enable Stage 2[/]"
+            "  [dim]✗  LLM         not installed  ·  " r'pip install "bawbel-scanner\[llm]"[/]'
         )
 
     console.print()
@@ -600,7 +613,10 @@ def _print_sarif(results: list[ScanResult]) -> None:
             )
 
     sarif = {
-        "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",  # noqa: E501
+        "$schema": (
+            "https://raw.githubusercontent.com/oasis-tcs/sarif-spec"
+            "/master/Schemata/sarif-schema-2.1.0.json"
+        ),
         "version": "2.1.0",
         "runs": [
             {

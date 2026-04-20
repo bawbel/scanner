@@ -35,7 +35,13 @@
 #   docker compose run --rm audit
 #
 # Environment variables (optional — set in .env file):
-#   ANTHROPIC_API_KEY   — enables Stage 2 LLM semantic analysis
+#   BAWBEL_LLM_MODEL    — LiteLLM model string (e.g. claude-haiku-4-5, gpt-4o-mini, ollama/mistral)
+#   ANTHROPIC_API_KEY   — enables Stage 2 via Claude (auto-selects claude-haiku-4-5)
+#   OPENAI_API_KEY      — enables Stage 2 via OpenAI (auto-selects gpt-4o-mini)
+#   GEMINI_API_KEY      — enables Stage 2 via Gemini
+#   MISTRAL_API_KEY     — enables Stage 2 via Mistral
+#   GROQ_API_KEY        — enables Stage 2 via Groq
+#   BAWBEL_LLM_ENABLED  — set false to disable Stage 2 even if key is present
 #   BAWBEL_LOG_LEVEL    — DEBUG | INFO | WARNING (default)
 #   SCAN_DIR            — override the scan directory (default: ./scan)
 
@@ -44,11 +50,16 @@ x-base: &base
     context: .
     dockerfile: Dockerfile
   environment:
-    BAWBEL_LOG_LEVEL:    ${BAWBEL_LOG_LEVEL:-WARNING}
-    ANTHROPIC_API_KEY:   ${ANTHROPIC_API_KEY:-}
-    OPENAI_API_KEY:      ${OPENAI_API_KEY:-}
+    BAWBEL_LOG_LEVEL:        ${BAWBEL_LOG_LEVEL:-WARNING}
+    BAWBEL_LLM_MODEL:        ${BAWBEL_LLM_MODEL:-}
+    BAWBEL_LLM_ENABLED:      ${BAWBEL_LLM_ENABLED:-true}
+    ANTHROPIC_API_KEY:       ${ANTHROPIC_API_KEY:-}
+    OPENAI_API_KEY:          ${OPENAI_API_KEY:-}
+    GEMINI_API_KEY:          ${GEMINI_API_KEY:-}
+    MISTRAL_API_KEY:         ${MISTRAL_API_KEY:-}
+    GROQ_API_KEY:            ${GROQ_API_KEY:-}
     PYTHONDONTWRITEBYTECODE: "1"
-    PYTHONUNBUFFERED:    "1"
+    PYTHONUNBUFFERED:        "1"
 
 x-scan-base: &scan-base
   <<: *base

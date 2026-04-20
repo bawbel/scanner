@@ -162,26 +162,35 @@ docker compose run --rm test
 Pass environment variables to enable optional features:
 
 ```bash
-# Enable Stage 2 LLM semantic analysis
+# Stage 2 LLM — Anthropic
 docker run --rm \
   -e ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY \
   -v /path/to/skills:/scan:ro \
-  bawbel/scanner:0.1.0 \
-  scan /scan --recursive
+  bawbel/scanner:0.1.0 scan /scan --recursive
+
+# Stage 2 LLM — OpenAI
+docker run --rm \
+  -e OPENAI_API_KEY=$OPENAI_API_KEY \
+  -v /path/to/skills:/scan:ro \
+  bawbel/scanner:0.1.0 scan /scan
+
+# Stage 2 LLM — explicit model (any LiteLLM provider)
+docker run --rm \
+  -e BAWBEL_LLM_MODEL=gemini/gemini-1.5-flash \
+  -e GEMINI_API_KEY=$GEMINI_API_KEY \
+  -v /path/to/skills:/scan:ro \
+  bawbel/scanner:0.1.0 scan /scan
+
+# Use a .env file (recommended — works with any provider)
+docker run --rm --env-file .env \
+  -v /path/to/skills:/scan:ro \
+  bawbel/scanner:0.1.0 scan /scan
 
 # Set log level
 docker run --rm \
   -e BAWBEL_LOG_LEVEL=DEBUG \
   -v /path/to/skills:/scan:ro \
-  bawbel/scanner:0.1.0 \
-  scan /scan
-
-# Use a .env file
-echo "ANTHROPIC_API_KEY=sk-ant-..." > .env
-docker run --rm --env-file .env \
-  -v /path/to/skills:/scan:ro \
-  bawbel/scanner:0.1.0 \
-  scan /scan
+  bawbel/scanner:0.1.0 scan /scan
 ```
 
 ---

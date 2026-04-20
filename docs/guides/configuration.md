@@ -41,19 +41,46 @@ BAWBEL_SCAN_TIMEOUT_SEC=10 bawbel scan ./skills/
 
 ### Stage 2: LLM Semantic Analysis (optional)
 
+Stage 2 uses [LiteLLM](https://docs.litellm.ai) — works with any LLM provider.
+Install first: `pip install "bawbel-scanner[llm]"`
+
 | Variable | Default | Description |
 |---|---|---|
-| `ANTHROPIC_API_KEY` | — | Enables LLM analysis via Claude |
-| `OPENAI_API_KEY` | — | Alternative LLM provider |
-| `BAWBEL_LLM_MODEL` | `claude-sonnet-4-20250514` | LLM model to use |
-| `BAWBEL_LLM_MAX_TOKENS` | `1000` | Max tokens per LLM call |
-| `BAWBEL_LLM_TIMEOUT_SEC` | `60` | LLM call timeout |
+| `BAWBEL_LLM_MODEL` | auto-detected | LiteLLM model string — any provider |
+| `BAWBEL_LLM_MAX_CHARS` | `8000` | Max content chars sent to LLM |
+| `BAWBEL_LLM_TIMEOUT` | `30` | LLM call timeout in seconds |
+| `BAWBEL_LLM_ENABLED` | `true` | Set `false` to disable Stage 2 |
 
-Stage 2 is disabled by default. Set an API key to enable it:
+Provider API keys — set whichever you use:
+
+| Key | Default model |
+|---|---|
+| `ANTHROPIC_API_KEY` | `claude-haiku-4-5` |
+| `OPENAI_API_KEY` | `gpt-4o-mini` |
+| `GEMINI_API_KEY` | `gemini/gemini-1.5-flash` |
+| `MISTRAL_API_KEY` | `mistral/mistral-small` |
+| `GROQ_API_KEY` | `groq/llama3-8b-8192` |
+
+Stage 2 activates as soon as `litellm` is installed and a key (or model) is set:
 
 ```bash
+# Anthropic
+pip install "bawbel-scanner[llm]"
 export ANTHROPIC_API_KEY=sk-ant-...
-bawbel scan ./skill.md   # now runs semantic analysis
+bawbel scan ./skill.md
+
+# OpenAI
+export OPENAI_API_KEY=sk-...
+bawbel scan ./skill.md
+
+# Local Ollama (no API key needed)
+export BAWBEL_LLM_MODEL=ollama/mistral
+bawbel scan ./skill.md
+
+# Explicit model override (any LiteLLM model string)
+export BAWBEL_LLM_MODEL=gemini/gemini-1.5-flash
+export GEMINI_API_KEY=...
+bawbel scan ./skill.md
 ```
 
 ### Stage 3: Behavioral Sandbox (future)
@@ -86,9 +113,8 @@ output:
   file: bawbel-results.sarif
 
 llm:
-  enabled: false          # set true to enable Stage 2
-  provider: anthropic
-  model: claude-sonnet-4-20250514
+  enabled: false          # set true to enable Stage 2 (requires bawbel-scanner[llm])
+  model: claude-haiku-4-5 # any LiteLLM model string
 ```
 
 ---
@@ -110,10 +136,15 @@ if r.returncode == 0:
 else:
     print('✗ semgrep — install: pip install semgrep')
 
-import os
-if os.environ.get('ANTHROPIC_API_KEY') or os.environ.get('OPENAI_API_KEY'):
-    print('✓ LLM key set — Stage 2 enabled')
-else:
-    print('✗ No LLM key — Stage 2 disabled')
+try:
+    import litellm
+    from scanner.engines.llm_engine import _resolve_model
+    model = _resolve_model()
+    if model:
+        print(f'✓ LLM Stage 2 enabled — model={model}')
+    else:
+        print('✗ LLM installed but no model set — set BAWBEL_LLM_MODEL or a provider API key')
+except ImportError:
+    print('✗ litellm not installed — pip install "bawbel-scanner[llm]"')
 "
 ```

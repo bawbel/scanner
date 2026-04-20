@@ -34,7 +34,7 @@ PATTERN_RULES: list[dict] = [
     # ── Goal hijack / prompt injection ───────────────────────────────────────
     {
         "rule_id": "bawbel-goal-override",
-        "ave_id": None,
+        "ave_id": "AVE-2026-00007",
         "title": "Goal override instruction detected",
         "description": (
             "Component contains language attempting to override agent goals "
@@ -70,7 +70,10 @@ PATTERN_RULES: list[dict] = [
             r"pretend\s+(you\s+are|to\s+be)\s+(a\s+)?(?!helpful|an?\s+assistant)",
             r"act\s+as\s+(if\s+you\s+(are|were)\s+)?(?!a\s+helpful|an?\s+assistant)",
             r"you\s+are\s+no\s+longer\s+(an?\s+)?(AI|assistant|model|language model)",
-            r"(forget|ignore|disregard)\s+(that\s+you\s+are|you('re|\s+are))\s+(an?\s+)?(AI|assistant|Claude|GPT|model)",  # noqa: E501
+            (
+                r"(forget|ignore|disregard)\s+(that\s+you\s+are"
+                r"|you('re|\s+are))\s+(an?\s+)?(AI|assistant|Claude|GPT|model)"
+            ),
             r"DAN\s+mode",
             r"developer\s+mode\s+(enabled|activated|on)",
             r"jailbreak",
@@ -90,7 +93,10 @@ PATTERN_RULES: list[dict] = [
         "patterns": [
             r"do\s+not\s+(tell|inform|reveal|mention|disclose)\s+(the\s+)?(user|human|operator)",
             r"keep\s+(this|these)\s+(secret|hidden|confidential)\s+from\s+(the\s+)?(user|human)",
-            r"never\s+(reveal|disclose|mention|tell)\s+(that\s+)?(you\s+)?(received|have|were\s+given)\s+(this|these)",  # noqa: E501
+            (
+                r"never\s+(reveal|disclose|mention|tell)\s+(that\s+)?"
+                r"(you\s+)?(received|have|were\s+given)\s+(this|these)"
+            ),
             r"do\s+not\s+acknowledge\s+(this|these)\s+instructions",
             r"this\s+message\s+(must|should)\s+(be\s+)?(hidden|invisible|secret)",
         ],
@@ -195,8 +201,14 @@ PATTERN_RULES: list[dict] = [
         "cvss_ai": 8.0,
         "owasp": ["ASI06"],
         "patterns": [
-            r"(collect|gather|extract)\s+.*(name|email|phone|address|ssn|passport|credit.?card)",
-            r"(send|transmit|post|upload)\s+.*(personal|private|sensitive|confidential)\s+(data|information|details)",  # noqa: E501
+            (
+                r"(collect|gather|extract)\s+.*"
+                r"(name|email|phone|address|ssn|passport|credit.?card)"
+            ),
+            (
+                r"(send|transmit|post|upload)\s+.*"
+                r"(personal|private|sensitive|confidential)\s+(data|information|details)"
+            ),
             r"user('s)?\s+(personal|private)\s+(data|information)\s+(to|via)\s+http",
             r"forward\s+.*(message|conversation|chat\s+history)\s+to\s+http",
         ],
@@ -204,7 +216,7 @@ PATTERN_RULES: list[dict] = [
     # ── Destructive commands ──────────────────────────────────────────────────
     {
         "rule_id": "bawbel-shell-pipe",
-        "ave_id": None,
+        "ave_id": "AVE-2026-00004",
         "title": "Shell pipe injection pattern detected",
         "description": (
             "Component contains curl|bash or similar pipe patterns that can "
@@ -222,7 +234,7 @@ PATTERN_RULES: list[dict] = [
     },
     {
         "rule_id": "bawbel-destructive-command",
-        "ave_id": None,
+        "ave_id": "AVE-2026-00005",
         "title": "Destructive command pattern detected",
         "description": (
             "Component instructs agent to execute destructive file system "
@@ -243,7 +255,7 @@ PATTERN_RULES: list[dict] = [
     # ── Cryptocurrency / financial fraud ──────────────────────────────────────
     {
         "rule_id": "bawbel-crypto-drain",
-        "ave_id": None,
+        "ave_id": "AVE-2026-00006",
         "title": "Cryptocurrency drain pattern detected",
         "description": (
             "Component instructs agent to transfer cryptocurrency or interact "
@@ -273,7 +285,10 @@ PATTERN_RULES: list[dict] = [
         "cvss_ai": 6.5,
         "owasp": ["ASI01", "ASI09"],
         "patterns": [
-            r"(this\s+)?(message|instruction)\s+is\s+from\s+(anthropic|openai|google|microsoft|the\s+developer)",  # noqa: E501
+            (
+                r"(this\s+)?(message|instruction)\s+is\s+from\s+"
+                r"(anthropic|openai|google|microsoft|the\s+developer)"
+            ),
             r"i\s+am\s+(your\s+)?(developer|creator|owner|operator|anthropic|openai)",
             r"trust\s+(me|this|these\s+instructions)\s+(completely|unconditionally|above\s+all)",
             r"this\s+is\s+(a\s+)?(system|admin|root|privileged)\s+(message|prompt|instruction)",
@@ -283,7 +298,7 @@ PATTERN_RULES: list[dict] = [
     # ── Persistence / self-replication ────────────────────────────────────────
     {
         "rule_id": "bawbel-persistence-attempt",
-        "ave_id": None,
+        "ave_id": "AVE-2026-00008",
         "title": "Persistence or self-replication pattern detected",
         "description": (
             "Component instructs agent to copy itself, modify system startup, "
@@ -335,8 +350,14 @@ PATTERN_RULES: list[dict] = [
         "cvss_ai": 6.2,
         "owasp": ["ASI09"],
         "patterns": [
-            r"(reveal|show|print|output|repeat|display|tell\s+me)\s+(your\s+)?(system\s+prompt|instructions|configuration|rules|guidelines)",  # noqa: E501
-            r"what\s+(are\s+)?your\s+(exact\s+)?(instructions|system\s+prompt|guidelines|rules|constraints)",  # noqa: E501
+            (
+                r"(reveal|show|print|output|repeat|display|tell\s+me)\s+(your\s+)?"
+                r"(system\s+prompt|instructions|configuration|rules|guidelines)"
+            ),
+            (
+                r"what\s+(are\s+)?your\s+(exact\s+)?"
+                r"(instructions|system\s+prompt|guidelines|rules|constraints)"
+            ),
             r"output\s+(everything|all\s+(text|content))\s+(before|above)\s+(this|the\s+user)",
             r"ignore\s+confidentiality\s+(and\s+)?(show|reveal|print)",
             r"translate\s+your\s+(instructions|system\s+prompt)\s+into",

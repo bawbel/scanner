@@ -46,7 +46,7 @@ Detection Engines:
   ✓  Pattern     15 rules  ·  stdlib only  ·  always active
   ✗  YARA        not installed  ·  pip install "bawbel-scanner[yara]"
   ✗  Semgrep     not installed  ·  pip install "bawbel-scanner[semgrep]"
-  ✗  LLM         no API key  ·  set ANTHROPIC_API_KEY to enable Stage 2
+  ✗  LLM         not installed  ·  pip install "bawbel-scanner[llm]"
 ```
 
 ---
