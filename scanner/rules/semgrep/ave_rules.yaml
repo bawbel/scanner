@@ -74,3 +74,171 @@ rules:
       cvss_ai_score: "9.8"
       owasp_mapping:
         - ASI07
+
+  - id: ave-goal-override
+    patterns:
+      - pattern-regex: "(?i)(ignore|disregard|forget|override)\\s+(all\\s+)?(previous|your|prior)\\s+(instructions?|guidelines?|rules?|directives?)"
+    message: >
+      AVE-2026-00007 [HIGH 8.1] Goal override instruction detected.
+      Component instructs the agent to ignore its primary instructions.
+      Attack class: Goal Hijack. OWASP: ASI01, ASI08.
+    languages: [generic]
+    severity: ERROR
+    metadata:
+      ave_id: AVE-2026-00007
+      attack_class: Goal Hijack
+      cvss_ai_score: "8.1"
+      owasp_mapping:
+        - ASI01
+        - ASI08
+
+  - id: ave-crypto-drain
+    patterns:
+      - pattern-regex: "(?i)(drain|transfer|withdraw|send)\\s+(all|the)\\s+(wallet|funds|crypto|ethereum|bitcoin|eth|btc)"
+    message: >
+      AVE-2026-00006 [CRITICAL 9.6] Cryptocurrency drain pattern detected.
+      Component instructs agent to transfer or drain cryptocurrency funds.
+      Attack class: Crypto Drain. OWASP: ASI01, ASI06.
+    languages: [generic]
+    severity: ERROR
+    metadata:
+      ave_id: AVE-2026-00006
+      attack_class: Cryptocurrency Drain
+      cvss_ai_score: "9.6"
+      owasp_mapping:
+        - ASI01
+        - ASI06
+
+  - id: ave-jailbreak-instruction
+    patterns:
+      - pattern-regex: "(?i)(pretend|act)\\s+(you\\s+are|as\\s+if\\s+you\\s+(are|were))\\s+(a\\s+)?(different|unrestricted|free)"
+    message: >
+      AVE-2026-00009 [HIGH 8.3] AI identity jailbreak detected.
+      Component attempts to override agent identity or disable safety guidelines.
+      Attack class: Jailbreak. OWASP: ASI01, ASI08.
+    languages: [generic]
+    severity: ERROR
+    metadata:
+      ave_id: AVE-2026-00009
+      attack_class: "Prompt Injection - Jailbreak"
+      cvss_ai_score: "8.3"
+      owasp_mapping:
+        - ASI01
+        - ASI08
+
+  - id: ave-hidden-instruction
+    patterns:
+      - pattern-regex: "(?i)(do\\s+not|never|don't)\\s+(tell|inform|reveal|mention|disclose|acknowledge)\\s+(the\\s+)?(user|human|operator)"
+    message: >
+      AVE-2026-00010 [HIGH 7.9] Hidden instruction concealment detected.
+      Component instructs agent to hide its instructions from the user.
+      Attack class: Hidden Instruction. OWASP: ASI01, ASI09.
+    languages: [generic]
+    severity: ERROR
+    metadata:
+      ave_id: AVE-2026-00010
+      attack_class: "Prompt Injection - Hidden Instruction"
+      cvss_ai_score: "7.9"
+      owasp_mapping:
+        - ASI01
+        - ASI09
+
+  - id: ave-permission-escalation
+    patterns:
+      - pattern-regex: "(?i)(you\\s+(now\\s+have|are\\s+now\\s+(allowed|granted))|your\\s+restrictions\\s+have\\s+been|elevated\\s+access\\s+granted)"
+    message: >
+      AVE-2026-00012 [HIGH 7.8] False permission grant detected.
+      Component falsely claims the agent has been granted elevated permissions.
+      Attack class: Permission Escalation. OWASP: ASI01, ASI08.
+    languages: [generic]
+    severity: ERROR
+    metadata:
+      ave_id: AVE-2026-00012
+      attack_class: "Privilege Escalation - Permission Grant"
+      cvss_ai_score: "7.8"
+      owasp_mapping:
+        - ASI01
+        - ASI08
+
+  - id: ave-pii-exfiltration
+    patterns:
+      - pattern-regex: "(?i)(collect|gather|extract)\\s+.{0,40}(name|email|phone|address|ssn|passport|credit.{0,5}card)"
+    message: >
+      AVE-2026-00013 [HIGH 8.0] PII exfiltration instruction detected.
+      Component instructs agent to collect personally identifiable information.
+      Attack class: PII Exfiltration. OWASP: ASI01, ASI06.
+    languages: [generic]
+    severity: ERROR
+    metadata:
+      ave_id: AVE-2026-00013
+      attack_class: "Data Exfiltration - PII Theft"
+      cvss_ai_score: "8.0"
+      owasp_mapping:
+        - ASI01
+        - ASI06
+
+  - id: ave-trust-escalation
+    patterns:
+      - pattern-regex: "(?i)(this\\s+(message|instruction)\\s+is\\s+from\\s+(anthropic|openai|google|microsoft)|i\\s+am\\s+(your\\s+)?(developer|creator|operator|anthropic|openai))"
+    message: >
+      AVE-2026-00014 [MEDIUM 6.5] Trust escalation / authority impersonation detected.
+      Component falsely claims to originate from a trusted AI provider.
+      Attack class: Trust Escalation. OWASP: ASI01, ASI08.
+    languages: [generic]
+    severity: WARNING
+    metadata:
+      ave_id: AVE-2026-00014
+      attack_class: "Social Engineering - Trust Escalation"
+      cvss_ai_score: "6.5"
+      owasp_mapping:
+        - ASI01
+        - ASI08
+
+  - id: ave-system-prompt-leak
+    patterns:
+      - pattern-regex: "(?i)(reveal|show|print|output|repeat|display)\\s+(your\\s+)?(system\\s+prompt|instructions?|configuration|rules|guidelines|constraints)"
+    message: >
+      AVE-2026-00015 [MEDIUM 6.2] System prompt extraction attempt detected.
+      Component instructs agent to reveal its system prompt or internal guidelines.
+      Attack class: System Prompt Leak. OWASP: ASI01, ASI09.
+    languages: [generic]
+    severity: WARNING
+    metadata:
+      ave_id: AVE-2026-00015
+      attack_class: "Information Disclosure - System Prompt Leak"
+      cvss_ai_score: "6.2"
+      owasp_mapping:
+        - ASI01
+        - ASI09
+
+  - id: ave-persistence-attempt
+    patterns:
+      - pattern-regex: "(?i)(crontab|cron\\s+job|systemctl\\s+enable|autostart|startup\\s+folder|~\\/.bashrc|~\\/.zshrc|replicate\\s+this\\s+skill|install\\s+this\\s+skill)"
+    message: >
+      AVE-2026-00008 [HIGH 8.4] Persistence or self-replication pattern detected.
+      Component attempts to install itself or schedule recurring tasks.
+      Attack class: Persistence. OWASP: ASI07.
+    languages: [generic]
+    severity: ERROR
+    metadata:
+      ave_id: AVE-2026-00008
+      attack_class: "Persistence - Self-Replication"
+      cvss_ai_score: "8.4"
+      owasp_mapping:
+        - ASI07
+
+  - id: ave-dynamic-tool-call
+    patterns:
+      - pattern-regex: "(?i)(call|execute|invoke|run)\\s+(this\\s+)?(tool|function)\\s+(with|using)\\s+(the\\s+)?(following|these)"
+    message: >
+      AVE-2026-00011 [HIGH 8.2] Dynamic tool call injection detected.
+      Component embeds explicit tool invocations with attacker-controlled parameters.
+      Attack class: Dynamic Tool Call. OWASP: ASI07.
+    languages: [generic]
+    severity: ERROR
+    metadata:
+      ave_id: AVE-2026-00011
+      attack_class: "Tool Abuse - Dynamic Tool Call"
+      cvss_ai_score: "8.2"
+      owasp_mapping:
+        - ASI07

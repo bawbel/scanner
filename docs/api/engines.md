@@ -93,11 +93,24 @@ export BAWBEL_LLM_MODEL=gemini/gemini-1.5-flash && export GEMINI_API_KEY=...
 
 ---
 
-## Planned Engines
+## Stage 3 — Sandbox Engine (`engines/sandbox_engine.py`)
 
-| Engine | Stage | File | Status |
-|---|---|---|---|
-| Behavioral sandbox | 3 | `engines/sandbox_engine.py` | Planned v1.0.0 |
+- **Dependency:** Docker + `BAWBEL_SANDBOX_ENABLED=true`
+- **Always runs:** No — opt-in, skips silently if Docker unavailable
+- **Status:** scaffold — Docker image (`bawbel/sandbox:latest`) ships in v1.0
+
+```python
+from scanner.engines.sandbox_engine import run_sandbox_scan
+findings = run_sandbox_scan(resolved_file_path_string)
+```
+
+```bash
+export BAWBEL_SANDBOX_ENABLED=true
+bawbel scan ./my-skill.md
+```
+
+For full documentation including diagrams, IOC tables, and local testing guide
+see **[Detection Engines Guide](../guides/engines.md)**.
 
 ---
 

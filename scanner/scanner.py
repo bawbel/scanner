@@ -31,9 +31,10 @@ from scanner.models import Finding, ScanResult, Severity
 
 # Engines
 from scanner.engines import run_pattern_scan, run_semgrep_scan, run_yara_scan, run_llm_scan
+from scanner.engines.sandbox_engine import run_sandbox_scan, SANDBOX_ENABLED, is_docker_available
 
 # Infrastructure
-from scanner.messages import Errors, Logs  # noqa: F401
+from scanner.messages import Logs
 from scanner.utils import (
     Timer,
     get_logger,
@@ -111,24 +112,68 @@ def _make_finding(
 
 def _deduplicate(findings: list[Finding]) -> list[Finding]:
     """
-    Keep the highest-severity finding per rule_id.
+    Deduplicate findings across engines.
+
+    Two passes:
+    1. Keep the highest-severity finding per rule_id (same engine, same rule).
+    2. Keep the highest-severity finding per (ave_id, line) — removes cross-engine
+       duplicates where pattern + YARA + Semgrep all detect the same AVE ID on
+       the same line. The finding with the richer match/description wins.
 
     Stable contract: do not change without a minor version bump.
-    Downstream CI/CD integrations may depend on finding counts.
     """
-    seen: dict[str, Finding] = {}
-
+    # Pass 1 — deduplicate by rule_id
+    by_rule: dict[str, Finding] = {}
     for f in findings:
-        existing = seen.get(f.rule_id)
+        existing = by_rule.get(f.rule_id)
         if existing is None:
-            seen[f.rule_id] = f
+            by_rule[f.rule_id] = f
         elif SEVERITY_SCORES.get(f.severity.value, 0) > SEVERITY_SCORES.get(
             existing.severity.value, 0
         ):
             log.debug(Logs.FINDING_DEDUPED, f.rule_id, f.severity.value)
-            seen[f.rule_id] = f
+            by_rule[f.rule_id] = f
 
-    result = list(seen.values())
+    # Pass 2 — deduplicate by ave_id across engines
+    # Groups all findings with the same ave_id, keeps the best one:
+    # - prefer the finding that has a line number (more specific)
+    # - among those with lines, prefer pattern > yara > semgrep > llm > sandbox
+    by_ave: dict[str, Finding] = {}
+    no_ave: list[Finding] = []
+
+    priority = {"pattern": 0, "yara": 1, "semgrep": 2, "llm": 3, "sandbox": 4}
+
+    for f in by_rule.values():
+        if not f.ave_id:
+            no_ave.append(f)
+            continue
+
+        existing = by_ave.get(f.ave_id)
+        if existing is None:
+            by_ave[f.ave_id] = f
+            continue
+
+        # Prefer the finding with a line number
+        f_has_line = f.line is not None
+        ex_has_line = existing.line is not None
+
+        if f_has_line and not ex_has_line:
+            by_ave[f.ave_id] = f  # f is more specific
+        elif not f_has_line and ex_has_line:
+            pass  # keep existing — it has a line
+        else:
+            # Both have (or both lack) line numbers — prefer by engine priority
+            if priority.get(f.engine, 99) < priority.get(existing.engine, 99):
+                by_ave[f.ave_id] = f
+                log.debug(
+                    "Cross-engine dedup: kept %s(%s) over %s for %s",
+                    f.engine,
+                    f.rule_id,
+                    existing.engine,
+                    f.ave_id,
+                )
+
+    result = list(by_ave.values()) + no_ave
     log.debug(Logs.DEDUP_COMPLETE, len(findings), len(result))
     return result
 
@@ -192,7 +237,20 @@ def scan(file_path: str) -> ScanResult:
         findings.extend(run_yara_scan(str(path)))
         findings.extend(run_semgrep_scan(str(path)))
         findings.extend(run_llm_scan(content))  # Stage 2: LLM semantic analysis
-        # Future: findings.extend(run_sandbox_scan(str(path)))
+
+        # ── Stage 3: Behavioral sandbox ──────────────────────────────────────
+        if SANDBOX_ENABLED:
+            if is_docker_available():
+                sandbox_findings = run_sandbox_scan(str(path))
+                findings.extend(sandbox_findings)
+                if not sandbox_findings:
+                    log.warning(
+                        "Sandbox engine: no findings returned — "
+                        "ensure bawbel/sandbox:latest image is built. "
+                        "See docs/guides/engines.md for mock container setup."
+                    )
+            else:
+                log.warning("Sandbox engine: Docker not running — Stage 3 skipped")
 
         # ── Step 6: Deduplicate and sort ──────────────────────────────────────
         findings = _deduplicate(findings)

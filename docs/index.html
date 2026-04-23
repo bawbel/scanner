@@ -240,6 +240,67 @@ td code{font-size:0.77rem}
   .install{flex-direction:column;align-items:flex-start;gap:0.6rem}
   .copy{margin-left:0}
 }
+
+/* ── Version selector ── */
+.ver-wrap {
+  margin: 0.75rem 1rem 0.5rem;
+  position: relative;
+}
+.ver-label {
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--dim);
+  margin-bottom: 0.35rem;
+}
+.ver-select {
+  width: 100%;
+  background: rgba(29,184,148,0.07);
+  border: 1px solid rgba(29,184,148,0.22);
+  color: var(--accent);
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.45rem 2rem 0.45rem 0.75rem;
+  border-radius: 7px;
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%231DB894' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.65rem center;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+.ver-select:hover { border-color: var(--accent); background-color: rgba(29,184,148,0.12); }
+.ver-select option { background: #04342C; color: #fff; }
+.ver-badge {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  margin-left: 0.4rem;
+  vertical-align: middle;
+  letter-spacing: 0.04em;
+}
+.ver-badge.latest { background: rgba(29,184,148,0.18); color: var(--accent); }
+.ver-badge.older  { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.35); }
+/* Version-gated content */
+[data-minver] { transition: opacity 0.2s; }
+[data-minver].ver-hidden { display: none !important; }
+.ver-banner {
+  display: none;
+  margin-bottom: 1.2rem;
+  padding: 0.65rem 1rem;
+  background: rgba(245,166,35,0.1);
+  border: 1px solid rgba(245,166,35,0.25);
+  border-radius: 8px;
+  font-size: 0.83rem;
+  color: rgba(245,166,35,0.9);
+}
+.ver-banner.show { display: flex; align-items: center; gap: 0.6rem; }
+
 </style>
 </head>
 <body>
@@ -252,7 +313,7 @@ td code{font-size:0.77rem}
     <span class="hbg-bar"></span>
   </button>
   <span class="topbar-brand">Bawbel Scanner</span>
-  <span class="topbar-version">v0.1.0 · Docs</span>
+  <span class="topbar-version" id="topbarVer">v0.3.0 · Docs</span>
 </header>
 
 <!-- Overlay (mobile) -->
@@ -273,7 +334,15 @@ td code{font-size:0.77rem}
 <nav class="sidebar" id="sidebar" aria-label="Documentation navigation">
   <div class="sidebar-top">
     <div class="brand">Bawbel Scanner</div>
-    <div class="brand-sub">v0.2.0 · Documentation</div>
+    <div class="brand-sub">Documentation</div>
+  </div>
+  <div class="ver-wrap">
+    <div class="ver-label">Version</div>
+    <select class="ver-select" id="verSelect" aria-label="Select documentation version">
+      <option value="0.3.0" selected>v0.3.0 — latest</option>
+      <option value="0.2.0">v0.2.0</option>
+      <option value="0.1.0">v0.1.0</option>
+    </select>
   </div>
 
   <div class="nav-group">
@@ -321,6 +390,10 @@ td code{font-size:0.77rem}
 
 <!-- Main content -->
 <main class="main" id="main">
+<div class="ver-banner" id="verBanner">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+  <span id="verBannerText">You are viewing docs for v0.2.0. <a href="#" onclick="setVersion('0.3.0');return false">Switch to v0.3.0 (latest)</a></span>
+</div>
 
 <!-- QUICK START -->
 <div class="page on" id="start">
@@ -346,7 +419,7 @@ bawbel scan ./skills/ --recursive --fail-on-severity high
 bawbel scan ./skills/ --watch</pre>
 
   <h2>Example output</h2>
-<pre>Bawbel Scanner v0.2.0
+<pre>Bawbel Scanner <span data-ver-text="version">v0.3.0</span>
 
 Scanning:  malicious-skill.md  ·  Type: skill
 
@@ -366,7 +439,7 @@ Risk score:  9.4 / 10  CRITICAL  ·  Findings: 2  ·  5ms
   <h2>What is covered</h2>
   <div class="cards">
     <div class="card" onclick="go('rules')"><div class="card-t">15 pattern rules</div><div class="card-d">Goal override, jailbreak, crypto drain, MCP poisoning and more</div></div>
-    <div class="card" onclick="go('engines')"><div class="card-t">4 detection engines</div><div class="card-d">Pattern, YARA, Semgrep, LLM Stage 2 via LiteLLM — any provider</div></div>
+    <div class="card" onclick="go('engines')"><div class="card-t"><span data-ver-text="engine-count">5 detection engines</span></div><div class="card-d">Pattern, YARA, Semgrep, LLM Stage 2 via LiteLLM<span data-minver="0.3.0">, Stage 3 Sandbox</span></div></div>
     <div class="card" onclick="go('output')"><div class="card-t">3 output formats</div><div class="card-d">Text, JSON, SARIF for GitHub Security tab</div></div>
     <div class="card" onclick="go('cicd')"><div class="card-t">CI/CD ready</div><div class="card-d">GitHub Actions, GitLab, pre-commit, Docker Compose</div></div>
   </div>
@@ -398,13 +471,14 @@ pip install "bawbel-scanner[all]"</pre>
 
   <h2>Verify</h2>
 <pre>bawbel version</pre>
-<pre>Bawbel Scanner v0.2.0
+<pre>Bawbel Scanner <span data-ver-text="version">v0.3.0</span>
 
 Detection Engines:
   ✓  Pattern     15 rules  ·  stdlib only  ·  always active
   ✗  YARA        not installed  ·  pip install "bawbel-scanner[yara]"
   ✗  Semgrep     not installed  ·  pip install "bawbel-scanner[semgrep]"
-  ✗  LLM         not installed  ·  pip install "bawbel-scanner[llm]"</pre>
+  ✗  LLM         not installed  ·  pip install "bawbel-scanner[llm]"
+<span data-minver="0.3.0">  ✗  Sandbox     disabled  ·  set BAWBEL_SANDBOX_ENABLED=true</span></pre>
 
   <h2>Enable Stage 2 — LLM semantic analysis</h2>
   <p>Stage 2 uses <a href="https://docs.litellm.ai/docs/providers" target="_blank">LiteLLM</a> — works with any provider. Install first, then set your API key.</p>
@@ -592,10 +666,11 @@ def test_your_rule_no_false_positive(self, tmp_path):
   <table>
     <tr><th>Stage</th><th>Engine</th><th>Install</th><th>Coverage</th></tr>
     <tr><td>1a</td><td>Pattern</td><td>Nothing — always runs</td><td>15 built-in regex rules</td></tr>
-    <tr><td>1b</td><td>YARA</td><td><code>pip install "bawbel-scanner[yara]"</code></td><td>3 rules · binary + text matching</td></tr>
-    <tr><td>1c</td><td>Semgrep</td><td><code>pip install "bawbel-scanner[semgrep]"</code></td><td>5 rules · structural patterns</td></tr>
-    <tr><td>2</td><td>LLM semantic</td><td><code>pip install "bawbel-scanner[llm]"</code> + provider API key or <code>BAWBEL_LLM_MODEL</code></td><td>Nuanced prompt injection — any LiteLLM provider</td></tr>
-    <tr><td>3</td><td>Behavioral</td><td>Docker + eBPF — v1.0 roadmap</td><td>Runtime behaviour monitoring</td></tr>
+    <tr><td>1b</td><td>YARA</td><td><code>pip install "bawbel-scanner[yara]"</code></td><td><span data-ver-text="yara-rules">15 rules</span> · binary + text matching</td></tr>
+    <tr><td>1c</td><td>Semgrep</td><td><code>pip install "bawbel-scanner[semgrep]"</code></td><td><span data-ver-text="semgrep-rules">15 rules</span> · structural patterns</td></tr>
+    <tr><td>2</td><td>LLM semantic</td><td><code>pip install "bawbel-scanner[llm]"</code> + provider API key</td><td>Nuanced prompt injection — any LiteLLM provider</td></tr>
+    <tr data-minver="0.3.0"><td>3</td><td>Behavioral sandbox</td><td>Docker + <code>BAWBEL_SANDBOX_ENABLED=true</code></td><td>Runtime network, filesystem, process IOCs — hybrid image</td></tr>
+    <tr data-maxver="0.2.0"><td>3</td><td>Behavioral</td><td>Docker + eBPF — v1.0 roadmap</td><td>Runtime behaviour monitoring</td></tr>
   </table>
 
   <p>Each engine skips silently if its dependency is not installed. <code>scan()</code> always returns a result — never raises.</p>
@@ -704,6 +779,17 @@ docker compose run --rm audit       <span class="cm"># bandit + pip-audit</span>
     <tr><td><code>BAWBEL_LLM_TIMEOUT</code></td><td><code>30</code></td><td>LLM call timeout in seconds</td></tr>
     <tr><td><code>BAWBEL_LLM_ENABLED</code></td><td><code>true</code></td><td>Set <code>false</code> to disable Stage 2 entirely</td></tr>
   </table>
+
+  <div data-minver="0.3.0">
+  <h2>Stage 3 — Sandbox variables</h2>
+  <table>
+    <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
+    <tr><td><code>BAWBEL_SANDBOX_ENABLED</code></td><td><code>false</code></td><td>Set <code>true</code> to enable Stage 3</td></tr>
+    <tr><td><code>BAWBEL_SANDBOX_IMAGE</code></td><td><code>default</code></td><td><code>default</code>=hybrid · <code>local</code>=bundled build · custom image</td></tr>
+    <tr><td><code>BAWBEL_SANDBOX_TIMEOUT</code></td><td><code>30</code></td><td>Container timeout in seconds</td></tr>
+    <tr><td><code>BAWBEL_SANDBOX_NETWORK</code></td><td><code>none</code></td><td><code>none</code>=isolated · <code>bridge</code>=internet</td></tr>
+  </table>
+  </div>
 
   <h2>LLM provider keys</h2>
   <p>Set whichever provider you use. The first key found determines the default model.</p>
@@ -977,6 +1063,97 @@ function cp(text, btn) {
     setTimeout(() => btn.textContent = orig, 1500);
   });
 }
+
+// ── Version switcher ──────────────────────────────────────────────────────────
+const VERSIONS = {
+  '0.3.0': {
+    label:          'v0.3.0',
+    version:        'v0.3.0',
+    'engine-count': '5 detection engines',
+    'yara-rules':   '15 rules',
+    'semgrep-rules':'15 rules',
+    minver:         0.3,
+  },
+  '0.2.0': {
+    label:          'v0.2.0',
+    version:        'v0.2.0',
+    'engine-count': '4 detection engines',
+    'yara-rules':   '3 rules',
+    'semgrep-rules':'5 rules',
+    minver:         0.2,
+  },
+  '0.1.0': {
+    label:          'v0.1.0',
+    version:        'v0.1.0',
+    'engine-count': '3 detection engines',
+    'yara-rules':   '3 rules',
+    'semgrep-rules':'5 rules',
+    minver:         0.1,
+  },
+};
+const LATEST = '0.3.0';
+
+function setVersion(v) {
+  const vd = VERSIONS[v];
+  if (!vd) return;
+
+  // Update selector
+  document.getElementById('verSelect').value = v;
+
+  // Update topbar
+  const tb = document.getElementById('topbarVer');
+  if (tb) tb.textContent = vd.version + ' · Docs';
+
+  // Update all data-ver-text spans
+  document.querySelectorAll('[data-ver-text]').forEach(el => {
+    const key = el.getAttribute('data-ver-text');
+    if (vd[key]) el.textContent = vd[key];
+  });
+
+  // Show/hide data-minver elements (require at least this version)
+  document.querySelectorAll('[data-minver]').forEach(el => {
+    const min = parseFloat(el.getAttribute('data-minver'));
+    el.classList.toggle('ver-hidden', vd.minver < min);
+  });
+
+  // Show/hide data-maxver elements (only show up to this version)
+  document.querySelectorAll('[data-maxver]').forEach(el => {
+    const max = parseFloat(el.getAttribute('data-maxver'));
+    el.classList.toggle('ver-hidden', vd.minver > max);
+  });
+
+  // Version banner
+  const banner = document.getElementById('verBanner');
+  const bannerText = document.getElementById('verBannerText');
+  if (v !== LATEST) {
+    banner.classList.add('show');
+    bannerText.innerHTML = 'You are viewing docs for ' + vd.label +
+      '. <a href="#" onclick="setVersion(\'' + LATEST + '\');return false">Switch to v' +
+      LATEST + ' (latest)</a>';
+  } else {
+    banner.classList.remove('show');
+  }
+
+  // Persist in URL hash (skip in sandboxed iframes)
+  try { history.replaceState(null, '', '#v' + v.replace(/\./g,'')); } catch(e) {}
+}
+
+// Init version selector
+document.getElementById('verSelect').addEventListener('change', function() {
+  setVersion(this.value);
+});
+
+// Read version from URL hash on load (e.g. #v030 = 0.3.0)
+(function() {
+  const hash = location.hash;
+  const m = hash.match(/#v(\d)(\d)(\d)/);
+  if (m) {
+    const v = m[1] + '.' + m[2] + '.' + m[3];
+    if (VERSIONS[v]) { setVersion(v); return; }
+  }
+  setVersion(LATEST);
+})();
+
 </script>
 </body>
 </html>

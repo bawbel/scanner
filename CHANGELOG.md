@@ -10,6 +10,45 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.3.0] — 2026-04-21
+
+### Added
+- **Full YARA coverage — 15/15 rules** — added 12 new YARA rules covering AVE-2026-00004 through 00015. Every attack class now has pattern, YARA, and Semgrep detection.
+- **Full Semgrep coverage — 15/15 rules** — added 10 new Semgrep rules covering AVE-2026-00007 through 00015. All rules validated against semgrep v1.159.0.
+- **Stage 3 behavioral sandbox — hybrid image strategy** (`scanner/engines/sandbox_engine.py`):
+  - Docker container isolates execution — `--network none`, `--memory 256m`, `--cap-drop ALL`, `--read-only`
+  - **Hybrid image resolution** — no setup required: local cache → Docker Hub pull → bundled local build fallback
+  - Works offline and in air-gapped environments via bundled `scanner/sandbox/Dockerfile`
+  - `scanner/sandbox/harness.py` — text-based analysis harness runs inside the container (v0.3.x); eBPF tracing in v1.0
+  - Enable with `BAWBEL_SANDBOX_ENABLED=true`
+- **`[watch]` extra** — `pip install "bawbel-scanner[watch]"` installs `watchdog` for `bawbel scan --watch`
+- **`.env.example`** — complete environment variable template with all options, defaults, and examples
+- **`docs/guides/engines.md`** — comprehensive detection engines guide covering all 5 stages with diagrams, IOC tables, and testing guide
+- `bawbel version` now shows Stage 3 sandbox status — active / Docker not running / disabled
+- New env vars: `BAWBEL_SANDBOX_ENABLED`, `BAWBEL_SANDBOX_IMAGE`, `BAWBEL_SANDBOX_TIMEOUT`, `BAWBEL_SANDBOX_NETWORK`
+
+### Fixed
+- **YARA `SyntaxError`** — `$pii10` declared but not referenced in `AVE_PIIExfiltration` condition; duplicate `$pipe11` string. Both fixed.
+- **Cross-engine duplicate findings** — deduplication now uses a two-pass strategy: pass 1 deduplicates by `rule_id`, pass 2 deduplicates by `ave_id` across engines. Pattern engine findings take priority over YARA/Semgrep for the same AVE ID. Eliminates the "requires login" noise from semgrep findings overlapping with pattern findings.
+- **Sandbox wiring** — sandbox call was a `# Future:` comment in `scanner.py`, never actually ran. Now properly wired into the pipeline.
+- **Sandbox warning when image missing** — previously skipped silently; now logs a clear warning pointing to `docs/guides/engines.md`.
+
+### Changed
+- `BAWBEL_SANDBOX_IMAGE` default changed from `bawbel/sandbox:latest` to `default` — triggers hybrid resolution instead of a direct image reference
+- Deduplication contract updated to two-pass strategy (see Fixed above)
+
+### Detection coverage (v0.3.0)
+
+| Engine  | Rules | AVE IDs covered | Status |
+|---------|-------|-----------------|--------|
+| Pattern | 15/15 | 00001–00015 | ✓ always active |
+| YARA    | 15/15 | 00001–00015 | ✓ requires `[yara]` |
+| Semgrep | 15/15 | 00001–00015 | ✓ requires `[semgrep]` |
+| LLM     | all   | semantic analysis | ✓ requires `[llm]` + API key |
+| Sandbox | 15 IOC patterns | network, fs, process | ✓ requires Docker |
+
+---
+
 ## [0.2.0] — 2026-04-20
 
 ### Added

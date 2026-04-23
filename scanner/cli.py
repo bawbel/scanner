@@ -61,12 +61,12 @@ REMEDIATION_GUIDE = {
         "Legitimate skills do not need to tell an agent to forget prior instructions."
     ),
     "bawbel-jailbreak-instruction": (
-        "Remove role-play instructions that tell the agent to act outside its "
-        "intended purpose or disable safety constraints."
+        "Remove role-play instructions that tell the agent to act outside its intended "
+        "purpose or disable safety constraints."
     ),
     "bawbel-hidden-instruction": (
-        "Remove any instructions that tell the agent to hide its behaviour "
-        "from the user or operator."
+        "Remove any instructions that tell the agent to hide its behaviour from the "
+        "user or operator."
     ),
     "bawbel-external-fetch": (
         "Remove all external URL fetches for instructions. Embed all instructions "
@@ -77,16 +77,16 @@ REMEDIATION_GUIDE = {
         "Validate all tool parameters before execution."
     ),
     "bawbel-permission-escalation": (
-        "Remove undeclared permission claims. Declare all required permissions "
-        "in the component manifest and request only what is needed."
+        "Remove undeclared permission claims. Declare all required permissions in the "
+        "component manifest and request only what is needed."
     ),
     "bawbel-env-exfiltration": (
-        "Remove all instructions to read or transmit credentials, .env files, or API keys. "
-        "Never include credentials in component outputs."
+        "Remove all instructions to read or transmit credentials, .env files, or API "
+        "keys. Never include credentials in component outputs."
     ),
     "bawbel-pii-exfiltration": (
-        "Remove all instructions to collect or transmit personal data without "
-        "explicit user consent and a declared privacy policy."
+        "Remove all instructions to collect or transmit personal data without explicit "
+        "user consent and a declared privacy policy."
     ),
     "bawbel-shell-pipe": (
         "Remove shell pipe patterns (curl|bash). If code execution is genuinely "
@@ -113,8 +113,8 @@ REMEDIATION_GUIDE = {
         "only describe tool functionality, not give the agent additional tasks."
     ),
     "bawbel-system-prompt-leak": (
-        "Remove instructions that attempt to extract the system prompt "
-        "or operating configuration."
+        "Remove instructions that attempt to extract the system prompt or operating "
+        "configuration."
     ),
 }
 
@@ -449,8 +449,11 @@ def report_cmd(path: str, fmt: str) -> None:
     name = Path(result.file_path).name
     console.print(f"[dim]Report for:[/]  [bold white]{name}[/]")
     console.print(f"[dim]Type:[/]        [bold white]{result.component_type}[/]")
-    ave_url = "https://github.com/bawbel/bawbel-ave"
-    console.print(f"[dim]AVE Standard:[/] [link={ave_url}]github.com/bawbel/bawbel-ave[/link]")
+    console.print(
+        "[dim]AVE Standard:[/] "
+        "[link=https://github.com/bawbel/bawbel-ave]"
+        "github.com/bawbel/bawbel-ave[/link]"
+    )
     console.print()
 
     if result.has_error:
@@ -491,10 +494,13 @@ def report_cmd(path: str, fmt: str) -> None:
         table.add_column("value", style="white")
 
         if f.ave_id:
-            ave_base = "https://github.com/bawbel/bawbel-ave/blob/main/records"
             table.add_row(
                 "AVE ID",
-                f"[link={ave_base}/{f.ave_id}.md]{f.ave_id}[/link]",
+                (
+                    f"[link=https://github.com/bawbel/bawbel-ave"
+                    f"/blob/main/records/{f.ave_id}.md]"
+                    f"{f.ave_id}[/link]"
+                ),
             )
         table.add_row("Rule ID", f.rule_id)
         table.add_row("CVSS-AI", f"{f.cvss_ai:.1f} / 10.0")
@@ -575,9 +581,9 @@ def version_cmd() -> None:
         )
 
     try:
-        import subprocess  # nosec B404 # noqa: S404
+        import subprocess  # nosec B404  # noqa: S404
 
-        r = subprocess.run(  # nosec B603 B607 # noqa: S603 S607
+        r = subprocess.run(  # nosec B603 B607  # noqa: S603 S607
             ["semgrep", "--version"],
             capture_output=True,
             text=True,
@@ -588,7 +594,7 @@ def version_cmd() -> None:
             console.print(f"  [bold #1DB894]✓[/]  Semgrep     " f"[dim]v{ver}  ·  active[/]")
         else:
             raise FileNotFoundError
-    except Exception:  # noqa: B014
+    except Exception:
         console.print(
             "  [dim]✗  Semgrep     not installed  ·  " 'pip install "bawbel-scanner\\[semgrep]"[/]'
         )
@@ -615,6 +621,22 @@ def version_cmd() -> None:
     else:
         console.print(
             "  [dim]✗  LLM         not installed  ·  " r'pip install "bawbel-scanner\[llm]"[/]'
+        )
+
+    # ── Sandbox row ──────────────────────────────────────────────────────────
+    from scanner.engines.sandbox_engine import SANDBOX_ENABLED, is_docker_available
+
+    if SANDBOX_ENABLED:
+        if is_docker_available():
+            console.print(
+                "  [bold #1DB894]✓[/]  Sandbox     " "[dim]active  ·  Docker available[/]"
+            )
+        else:
+            console.print("  [dim]✗  Sandbox     Docker not running  ·  start Docker to enable[/]")
+    else:
+        console.print(
+            "  [dim]✗  Sandbox     disabled  ·  "
+            "set BAWBEL_SANDBOX_ENABLED=true to enable Stage 3[/]"
         )
 
     console.print()

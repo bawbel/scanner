@@ -107,7 +107,7 @@ LABEL org.opencontainers.image.title="Bawbel Scanner" \
       org.opencontainers.image.description="Agentic AI component security scanner — detects AVE vulnerabilities" \
       org.opencontainers.image.url="https://bawbel.io" \
       org.opencontainers.image.source="https://github.com/bawbel/bawbel-scanner" \
-      org.opencontainers.image.version="0.2.0" \
+      org.opencontainers.image.version="0.3.0" \
       org.opencontainers.image.licenses="Apache-2.0" \
       org.opencontainers.image.vendor="Bawbel"
 
