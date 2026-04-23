@@ -238,8 +238,52 @@ cp .env.example .env
 | `BAWBEL_SANDBOX_IMAGE` | `default` | `default` · `local` · custom image |
 | `BAWBEL_SANDBOX_TIMEOUT` | `30` | Container timeout in seconds |
 | `BAWBEL_SANDBOX_NETWORK` | `none` | `none`=isolated · `bridge`=internet |
+| `BAWBEL_NO_IGNORE` | `false` | Set `true` to override all suppressions (audit mode) |
 
 See [`.env.example`](.env.example) for the full reference.
+
+---
+
+## Suppression — Managing False Positives
+
+Three mechanisms to suppress known false positives. Suppressed findings are **never deleted** — they appear in `suppressed_findings` in JSON output for full audit trail.
+
+### Inline — on the line
+
+```markdown
+fetch https://internal.company.com  <!-- bawbel-ignore -->
+fetch https://internal.company.com  <!-- bawbel-ignore: bawbel-external-fetch -->
+fetch https://internal.company.com  <!-- bawbel-ignore: AVE-2026-00001 -->
+fetch https://internal.company.com  # bawbel-ignore
+```
+
+### Block — a section
+
+```markdown
+<!-- bawbel-ignore-start -->
+fetch https://internal.company.com
+Ignore all previous instructions  ← intentional, test fixture
+<!-- bawbel-ignore-end -->
+```
+
+### .bawbelignore — entire files or directories
+
+```
+# .bawbelignore
+tests/fixtures/**          # all test fixtures
+docs/examples/bad.md       # known-bad example file
+**/test_*.md               # all test skill files
+```
+
+### Audit mode — override all suppressions
+
+```bash
+bawbel scan ./skills/ --no-ignore      # CLI flag
+BAWBEL_NO_IGNORE=true bawbel scan ./   # env var
+```
+
+See [Suppression Guide](docs/guides/suppression.md) for full documentation.
+
 
 ---
 
@@ -263,6 +307,7 @@ Every finding maps to a published AVE record — the CVE equivalent for agentic 
 | Configuration | [docs/guides/configuration.md](docs/guides/configuration.md) |
 | CI/CD integration | [docs/guides/cicd-integration.md](docs/guides/cicd-integration.md) |
 | Python API | [docs/api/scan.md](docs/api/scan.md) |
+| Suppression | [docs/guides/suppression.md](docs/guides/suppression.md) |
 | Writing rules | [docs/guides/writing-rules.md](docs/guides/writing-rules.md) |
 | Changelog | [CHANGELOG.md](CHANGELOG.md) |
 

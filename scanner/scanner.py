@@ -31,10 +31,15 @@ from scanner.models import Finding, ScanResult, Severity
 
 # Engines
 from scanner.engines import run_pattern_scan, run_semgrep_scan, run_yara_scan, run_llm_scan
-from scanner.engines.sandbox_engine import run_sandbox_scan, SANDBOX_ENABLED, is_docker_available
+from scanner.engines.sandbox_engine import (
+    run_sandbox_scan,
+    SANDBOX_ENABLED,
+    is_docker_available,
+)
 
 # Infrastructure
 from scanner.messages import Logs
+from scanner.suppression import apply_suppressions, NO_IGNORE
 from scanner.utils import (
     Timer,
     get_logger,
@@ -46,6 +51,10 @@ from scanner.utils import (
 )
 
 log = get_logger(__name__)
+
+# Per-process warning flags — emit each warning only once across all files
+_warned_sandbox_no_image: bool = False
+_warned_sandbox_no_docker: bool = False
 
 # Re-export for backwards compatibility and test imports
 __all__ = [
@@ -181,7 +190,7 @@ def _deduplicate(findings: list[Finding]) -> list[Finding]:
 # ── Main public API ───────────────────────────────────────────────────────────
 
 
-def scan(file_path: str) -> ScanResult:
+def scan(file_path: str, no_ignore: bool = False) -> ScanResult:
     """
     Scan an agentic AI component for AVE vulnerabilities.
 
@@ -190,15 +199,17 @@ def scan(file_path: str) -> ScanResult:
       2. Reads the file safely
       3. Dispatches to all enabled detection engines
       4. Deduplicates and sorts findings
-      5. Returns a complete ScanResult
+      5. Applies suppression (inline, block, .bawbelignore)
+      6. Returns a complete ScanResult
 
     Never raises — all errors are captured in ScanResult.error.
 
     Args:
         file_path: Path to the component file (any string — will be validated)
+        no_ignore: If True, skip all suppressions — audit mode
 
     Returns:
-        ScanResult with findings, risk_score, max_severity, scan_time_ms
+        ScanResult with findings, suppressed_findings, risk_score, max_severity, scan_time_ms
         ScanResult.is_clean == True only if no findings AND no error
     """
     with Timer() as t:
@@ -244,13 +255,20 @@ def scan(file_path: str) -> ScanResult:
                 sandbox_findings = run_sandbox_scan(str(path))
                 findings.extend(sandbox_findings)
                 if not sandbox_findings:
-                    log.warning(
-                        "Sandbox engine: no findings returned — "
-                        "ensure bawbel/sandbox:latest image is built. "
-                        "See docs/guides/engines.md for mock container setup."
-                    )
+                    global _warned_sandbox_no_image
+                    if not _warned_sandbox_no_image:
+                        _warned_sandbox_no_image = True
+                        log.warning(
+                            "Sandbox engine: no findings returned — "
+                            "ensure bawbel/sandbox:latest image is built "
+                            "or set BAWBEL_SANDBOX_IMAGE=local to build locally. "
+                            "See docs/guides/engines.md for setup."
+                        )
             else:
-                log.warning("Sandbox engine: Docker not running — Stage 3 skipped")
+                global _warned_sandbox_no_docker
+                if not _warned_sandbox_no_docker:
+                    _warned_sandbox_no_docker = True
+                    log.warning("Sandbox engine: Docker not running — Stage 3 skipped")
 
         # ── Step 6: Deduplicate and sort ──────────────────────────────────────
         findings = _deduplicate(findings)
@@ -259,20 +277,36 @@ def scan(file_path: str) -> ScanResult:
             reverse=True,
         )
 
+        # ── Step 7: Apply suppressions ────────────────────────────────────────
+        sup = apply_suppressions(
+            findings=findings,
+            file_path=str(path),
+            content=content,
+            no_ignore=no_ignore or NO_IGNORE,
+        )
+
     result = ScanResult(
         file_path=str(path),
         component_type=component_type,
-        findings=findings,
+        findings=sup.active,
+        suppressed_findings=sup.suppressed,
         scan_time_ms=t.elapsed_ms,
     )
 
     log.info(
         Logs.SCAN_COMPLETE,
         path,
-        len(findings),
+        len(sup.active),
         result.risk_score,
         t.elapsed_ms,
     )
+
+    if sup.suppressed:
+        log.info(
+            "Suppression: %d finding(s) suppressed in %s — run with --no-ignore to see all",
+            len(sup.suppressed),
+            path.name,
+        )
 
     return result
 

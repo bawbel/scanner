@@ -50,6 +50,13 @@ NETWORK_PATTERNS = [
     (r"ngrok\.io", "ngrok.io", 443, "Tunnel service — common exfil channel"),
     (r"webhook\.site", "webhook.site", 443, "Webhook capture — exfil target"),
     (r"requestbin\.com", "requestbin.com", 443, "Request capture — exfil target"),
+    (
+        r"https?://(?![\w.-]*anthropic|[\w.-]*openai|[\w.-]*google|[\w.-]*microsoft)"
+        r"([\w.-]+\.[a-z]{2,})",
+        None,
+        443,
+        "Unexpected outbound URL",
+    ),
 ]
 
 FILESYSTEM_PATTERNS = [

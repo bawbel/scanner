@@ -63,5 +63,9 @@ class Finding:
     match: Optional[str]  # matched text — always truncated to MAX_MATCH_LENGTH
 
     # ── Classification ───────────────────────────────────────────────────────
-    engine: str  # "pattern" | "yara" | "semgrep" | "llm"
+    engine: str  # "pattern" | "yara" | "semgrep" | "llm" | "sandbox"
     owasp: list[str] = field(default_factory=list)  # ["ASI01", "ASI08"]
+
+    # ── Suppression ──────────────────────────────────────────────────────────
+    suppressed: bool = False  # True if suppressed by bawbel-ignore
+    suppression_reason: Optional[str] = None  # reason string, or None

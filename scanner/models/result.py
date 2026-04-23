@@ -25,7 +25,10 @@ class ScanResult:
     component_type: str  # (stable) "skill"|"mcp"|"prompt"|"plugin"|"a2a"|"rag"|"model"|"unknown"
 
     # ── Results (stable) ─────────────────────────────────────────────────────
-    findings: list[Finding] = field(default_factory=list)  # (stable) sorted by severity
+    # (stable) active findings sorted by severity
+    findings: list[Finding] = field(default_factory=list)
+    # findings suppressed by bawbel-ignore — kept for audit
+    suppressed_findings: list[Finding] = field(default_factory=list)
     scan_time_ms: int = 0  # (stable) elapsed time
 
     # ── Error ─────────────────────────────────────────────────────────────────

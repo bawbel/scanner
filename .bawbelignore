@@ -1,0 +1,17 @@
+# .bawbelignore — Bawbel Scanner suppression file
+#
+# Files suppressed here contain intentional examples of attack patterns
+# used for documentation, testing, and rule authorship.
+# Run with --no-ignore to see all findings including suppressed.
+
+# Documentation — contains intentional examples of attack patterns
+docs/**
+
+# Test fixtures — false-positive regression fixtures only
+# The malicious golden fixture (tests/fixtures/skills/malicious/) is deliberately
+# excluded so the scanner always validates against it.
+tests/fixtures/skills/clean/**
+tests/fixtures/mcp/**
+
+# Example skills used in guides
+examples/**

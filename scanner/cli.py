@@ -13,9 +13,10 @@ import sys
 from pathlib import Path
 
 import click
-from rich.console import Console
+from rich.console import Console, Group
 from rich.panel import Panel
 from rich.table import Table
+from rich.text import Text
 from rich import box
 
 from scanner import __version__
@@ -61,12 +62,12 @@ REMEDIATION_GUIDE = {
         "Legitimate skills do not need to tell an agent to forget prior instructions."
     ),
     "bawbel-jailbreak-instruction": (
-        "Remove role-play instructions that tell the agent to act outside its intended "
-        "purpose or disable safety constraints."
+        "Remove role-play instructions that tell the agent to act outside its "
+        "intended purpose or disable safety constraints."
     ),
     "bawbel-hidden-instruction": (
-        "Remove any instructions that tell the agent to hide its behaviour from the "
-        "user or operator."
+        "Remove any instructions that tell the agent to hide its behaviour "
+        "from the user or operator."
     ),
     "bawbel-external-fetch": (
         "Remove all external URL fetches for instructions. Embed all instructions "
@@ -77,16 +78,16 @@ REMEDIATION_GUIDE = {
         "Validate all tool parameters before execution."
     ),
     "bawbel-permission-escalation": (
-        "Remove undeclared permission claims. Declare all required permissions in the "
-        "component manifest and request only what is needed."
+        "Remove undeclared permission claims. Declare all required permissions in "
+        "the component manifest and request only what is needed."
     ),
     "bawbel-env-exfiltration": (
-        "Remove all instructions to read or transmit credentials, .env files, or API "
-        "keys. Never include credentials in component outputs."
+        "Remove all instructions to read or transmit credentials, .env files, "
+        "or API keys. Never include credentials in component outputs."
     ),
     "bawbel-pii-exfiltration": (
-        "Remove all instructions to collect or transmit personal data without explicit "
-        "user consent and a declared privacy policy."
+        "Remove all instructions to collect or transmit personal data without "
+        "explicit user consent and a declared privacy policy."
     ),
     "bawbel-shell-pipe": (
         "Remove shell pipe patterns (curl|bash). If code execution is genuinely "
@@ -109,12 +110,12 @@ REMEDIATION_GUIDE = {
         "or establish persistent access."
     ),
     "bawbel-mcp-tool-poisoning": (
-        "Remove instructions embedded in tool descriptions. Tool descriptions should "
-        "only describe tool functionality, not give the agent additional tasks."
+        "Remove instructions embedded in tool descriptions. Tool descriptions "
+        "should only describe tool functionality, not give the agent additional tasks."
     ),
     "bawbel-system-prompt-leak": (
-        "Remove instructions that attempt to extract the system prompt or operating "
-        "configuration."
+        "Remove instructions that attempt to extract the system prompt "
+        "or operating configuration."
     ),
 }
 
@@ -144,33 +145,8 @@ def _print_banner() -> None:
     console.print()
 
 
-def _print_findings(result: ScanResult) -> None:
-    """Print findings section."""
-    console.print("[bold white]FINDINGS[/]")
-    console.print("[dim]" + "─" * 58 + "[/]")
-
-    for f in result.findings:
-        color = _sev_color(f.severity)
-        icon = _sev_icon(f.severity)
-        sev = _sev_value(f.severity)
-
-        console.print(
-            f"{icon}  [{color}]{sev:8}[/]  "
-            f"[bold]{f.ave_id or 'N/A':18}[/]  "
-            f"[white]{f.title}[/]"
-        )
-        if f.line:
-            console.print(f"   [dim]Line {f.line}[/]  [dim italic]{f.match or ''}[/]")
-        if f.owasp:
-            owasp_str = ", ".join(
-                f"{code} ({OWASP_DESCRIPTIONS.get(code, code)})" for code in f.owasp
-            )
-            console.print(f"   [dim]OWASP: {owasp_str}[/]")
-        console.print()
-
-
 def _print_summary(result: ScanResult) -> None:
-    """Print summary section."""
+    """Print summary section — used by the report command."""
     console.print("[dim]" + "─" * 58 + "[/]")
     console.print("[bold white]SUMMARY[/]")
     console.print("[dim]" + "─" * 58 + "[/]")
@@ -179,46 +155,207 @@ def _print_summary(result: ScanResult) -> None:
     if max_sev:
         color = _sev_color(max_sev)
         console.print(
-            f"Risk score:   [{color}]{result.risk_score:.1f} / 10  {_sev_value(max_sev)}[/]"
+            f"Risk score:   [{color}]" f"{result.risk_score:.1f} / 10  {_sev_value(max_sev)}[/]"
         )
     else:
         console.print("Risk score:   [bold #1DB894]0.0 / 10  CLEAN[/]")
 
     console.print(f"Findings:     [bold]{len(result.findings)}[/]")
+
+    if result.suppressed_findings:
+        n = len(result.suppressed_findings)
+        console.print(
+            f"Suppressed:   [dim]{n}" " (run with [bold]--no-ignore[/bold] to see all)[/]"
+        )
+
     console.print(f"Scan time:    [dim]{result.scan_time_ms}ms[/]")
     console.print()
 
 
-def _print_scan_result(result: ScanResult, show_report_hint: bool = True) -> None:
-    """Print a complete scan result in text format."""
-    name = Path(result.file_path).name
-    console.print(f"[dim]Scanning:[/]  [bold white]{name}[/]")
-    console.print(f"[dim]Type:[/]      [bold white]{result.component_type}[/]")
-    console.print()
+def _build_scan_renderables(
+    result: ScanResult,
+    display_path: str,
+    show_report_hint: bool,
+) -> list:
+    """
+    Build a list of Rich renderables for one file scan result.
+    Used as the content of the outer panel — preserves all colour and styling.
+    """
+    items: list = []
+
+    # ── Header ────────────────────────────────────────────────────────────────
+    items.append(
+        Text.assemble(
+            ("Scanning:  ", "dim"),
+            (display_path, "bold white"),
+        )
+    )
+    items.append(
+        Text.assemble(
+            ("Type:      ", "dim"),
+            (result.component_type, "bold white"),
+        )
+    )
 
     if result.has_error:
-        console.print(f"[bold red]✗  Scan error:[/] {result.error}")
-        console.print("[dim]Run with BAWBEL_LOG_LEVEL=DEBUG for details.[/]")
-        return
+        items.append(Text(""))
+        items.append(
+            Text.assemble(
+                ("✗  Scan error: ", "bold red"),
+                (result.error or "", ""),
+            )
+        )
+        items.append(Text("Run with BAWBEL_LOG_LEVEL=DEBUG for details.", style="dim"))
+        return items
 
+    items.append(Text(""))
+
+    # ── Findings ──────────────────────────────────────────────────────────────
     if result.is_clean:
-        console.print(
-            Panel(
-                "[bold #1DB894]✓  No vulnerabilities found[/]\n"
-                "[dim]This component passed all AVE checks.[/]",
-                border_style="#1DB894",
-                padding=(0, 2),
+        items.append(Text("✓  No vulnerabilities found", style="bold #1DB894"))
+        items.append(Text("This component passed all AVE checks.", style="dim"))
+    else:
+        items.append(Text("FINDINGS", style="bold white"))
+
+        for f in result.findings:
+            color = _sev_color(f.severity)
+            sev = _sev_value(f.severity)
+            icon = _sev_icon(f.severity)
+
+            items.append(Text(""))
+
+            # Severity + AVE ID on one line
+            items.append(
+                Text.assemble(
+                    (f"{icon}  ", ""),
+                    (sev, color),
+                    ("  ", ""),
+                    (f.ave_id or "N/A", "bold white"),
+                )
+            )
+            # Title indented below
+            items.append(Text(f"   {f.title}", style="white"))
+
+            # Location
+            if f.line:
+                loc = Text.assemble(
+                    (f"   Line {f.line}", "dim"),
+                    (f"  {f.match}" if f.match else "", "dim italic"),
+                )
+                items.append(loc)
+
+            # Engine
+            items.append(
+                Text.assemble(
+                    ("   Engine: ", "dim"),
+                    (f.engine, "dim italic"),
+                )
+            )
+
+            # OWASP
+            if f.owasp:
+                owasp_str = ", ".join(
+                    f"{code} ({OWASP_DESCRIPTIONS.get(code, code)})" for code in f.owasp
+                )
+                items.append(
+                    Text.assemble(
+                        ("   OWASP:  ", "dim"),
+                        (owasp_str, "dim"),
+                    )
+                )
+
+    # ── Summary ───────────────────────────────────────────────────────────────
+    items.append(Text(""))
+    items.append(Text("SUMMARY", style="bold white"))
+
+    max_sev = result.max_severity
+    if max_sev:
+        color = _sev_color(max_sev)
+        items.append(
+            Text.assemble(
+                ("Risk score:   ", ""),
+                (
+                    f"{result.risk_score:.1f} / 10  {_sev_value(max_sev)}",
+                    color,
+                ),
             )
         )
     else:
-        _print_findings(result)
+        items.append(Text("Risk score:   0.0 / 10  CLEAN", style="bold #1DB894"))
 
-    _print_summary(result)
-
-    if show_report_hint and not result.is_clean:
-        console.print(
-            f"[dim]→  Run [bold]bawbel report {name}[/bold] " "for full remediation guide[/]"
+    items.append(
+        Text.assemble(
+            ("Findings:     ", ""),
+            (str(len(result.findings)), "bold"),
         )
+    )
+
+    if result.suppressed_findings:
+        n = len(result.suppressed_findings)
+        items.append(
+            Text.assemble(
+                ("Suppressed:   ", ""),
+                (
+                    f"{n}  (run with --no-ignore to see all)",
+                    "dim",
+                ),
+            )
+        )
+
+    items.append(
+        Text.assemble(
+            ("Scan time:    ", ""),
+            (f"{result.scan_time_ms}ms", "dim"),
+        )
+    )
+
+    # ── Report hint ───────────────────────────────────────────────────────────
+    if show_report_hint and not result.is_clean:
+        items.append(Text(""))
+        items.append(
+            Text.assemble(
+                ("→  Run ", "dim"),
+                (f"bawbel report {display_path}", "bold dim"),
+                (" for full remediation guide", "dim"),
+            )
+        )
+
+    return items
+
+
+def _print_scan_result(
+    result: ScanResult,
+    show_report_hint: bool = True,
+    scan_root: Path = None,
+) -> None:
+    """Print entire scan result for one file in a single outer panel."""
+    file_path = Path(result.file_path)
+    base = scan_root or Path.cwd()
+    try:
+        display_path = str(file_path.relative_to(base))
+    except ValueError:
+        display_path = str(file_path)
+
+    # Border colour = worst severity, green for clean
+    border_colors = {
+        "CRITICAL": "red",
+        "HIGH": "orange3",
+        "MEDIUM": "yellow",
+        "LOW": "cyan",
+        "INFO": "dim white",
+    }
+    max_sev = _sev_value(result.max_severity) if result.max_severity else None
+    border = border_colors.get(max_sev, "#1DB894") if max_sev else "#1DB894"
+
+    renderables = _build_scan_renderables(result, display_path, show_report_hint)
+
+    console.print(
+        Panel(
+            Group(*renderables),
+            border_style=border,
+            padding=(0, 1),
+        )
+    )
     console.print()
 
 
@@ -382,29 +519,49 @@ def _run_watch(path: str, fmt: str, fail_on_severity: str, recursive: bool) -> N
     is_flag=True,
     help="Watch for file changes and re-scan automatically",
 )
-def scan_cmd(path: str, fmt: str, fail_on_severity: str, recursive: bool, watch: bool) -> None:
+@click.option(
+    "--no-ignore",
+    is_flag=True,
+    default=False,
+    help="Ignore all bawbel-ignore suppressions — audit mode",
+)
+def scan_cmd(  # noqa: PLR0913
+    path: str,
+    fmt: str,
+    fail_on_severity: str,
+    recursive: bool,
+    watch: bool,
+    no_ignore: bool,
+) -> None:
     """Scan an agentic AI component for AVE vulnerabilities."""
 
     if watch:
         _run_watch(path, fmt, fail_on_severity, recursive)
         return
 
-    path_obj = Path(path)
+    path_obj = Path(path).resolve()
     files = _collect_files(path_obj, recursive)
 
     if not files:
         console.print("[yellow]No scannable files found.[/]")
         sys.exit(0)
 
+    # Root for computing relative display paths
+    scan_root = path_obj if path_obj.is_dir() else path_obj.parent
+
     results = []
     if fmt == "text":
         _print_banner()
 
     for f in files:
-        result = scan(str(f))
+        result = scan(str(f), no_ignore=no_ignore)
         results.append(result)
         if fmt == "text":
-            _print_scan_result(result, show_report_hint=(len(files) == 1))
+            _print_scan_result(
+                result,
+                show_report_hint=(len(files) == 1),
+                scan_root=scan_root,
+            )
 
     if fmt == "json":
         _print_json(results)
@@ -652,7 +809,26 @@ def version_cmd() -> None:
 
 
 def _print_json(results: list[ScanResult]) -> None:
-    """Print results as JSON."""
+    """Print results as JSON — includes suppressed findings for audit."""
+
+    def _finding_dict(f, suppressed: bool = False) -> dict:
+        d = {
+            "rule_id": f.rule_id,
+            "ave_id": f.ave_id,
+            "title": f.title,
+            "description": f.description,
+            "severity": _sev_value(f.severity),
+            "cvss_ai": f.cvss_ai,
+            "line": f.line,
+            "match": f.match,
+            "engine": f.engine,
+            "owasp": f.owasp,
+        }
+        if suppressed:
+            d["suppressed"] = True
+            d["suppression_reason"] = f.suppression_reason
+        return d
+
     output = []
     for r in results:
         output.append(
@@ -663,20 +839,9 @@ def _print_json(results: list[ScanResult]) -> None:
                 "max_severity": _sev_value(r.max_severity) if r.max_severity else None,
                 "scan_time_ms": r.scan_time_ms,
                 "has_error": r.has_error,
-                "findings": [
-                    {
-                        "rule_id": f.rule_id,
-                        "ave_id": f.ave_id,
-                        "title": f.title,
-                        "description": f.description,
-                        "severity": _sev_value(f.severity),
-                        "cvss_ai": f.cvss_ai,
-                        "line": f.line,
-                        "match": f.match,
-                        "engine": f.engine,
-                        "owasp": f.owasp,
-                    }
-                    for f in r.findings
+                "findings": [_finding_dict(f) for f in r.findings],
+                "suppressed_findings": [
+                    _finding_dict(f, suppressed=True) for f in r.suppressed_findings
                 ],
             }
         )

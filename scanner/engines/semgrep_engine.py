@@ -8,16 +8,16 @@ To add new Semgrep rules: edit ave_rules.yaml only.
 No Python code changes needed.
 """
 
+import re
 from pathlib import Path
 
-from scanner.messages import Errors, Logs  # noqa: F401
+from scanner.messages import Logs
 from scanner.models import Finding, Severity
-from scanner.utils import (  # noqa: F401
+from scanner.utils import (
     Timer,
     get_logger,
     parse_cvss,
     parse_json_safe,
-    parse_severity,
     run_subprocess,
     truncate_match,
 )
@@ -35,13 +35,48 @@ _SEV_MAP: dict[str, str] = {
     "INFO": "LOW",
 }
 
+# Strip "AVE-2026-XXXXX [SEV score] " or "[SEV] " prefix from messages
+_MSG_PREFIX = re.compile(
+    r"^(?:AVE-\d{4}-\d{5}\s+)?" r"\[(?:CRITICAL|HIGH|MEDIUM|LOW)(?:\s+[\d.]+)?\]\s*",
+    re.IGNORECASE,
+)
+
+
+def _clean_title(msg: str) -> str:
+    """
+    Extract a clean human-readable title from a semgrep message.
+
+    Strips AVE/severity prefix then takes the first sentence.
+    Splits on '. ' not '.' to avoid cutting decimal numbers like 8.4.
+    """
+    stripped = _MSG_PREFIX.sub("", msg).strip()
+    parts = stripped.split(". ")
+    return parts[0][:MAX_MATCH_LENGTH]
+
+
+def _match_from_file(file_path: str, line_no: int) -> str:
+    """
+    Read the actual matched line from the source file.
+
+    semgrep's extra.lines field returns content from the rules YAML itself
+    when scanning generic-language files — not the scanned file.
+    Reading the source file directly is always correct.
+    """
+    try:
+        lines = Path(file_path).read_text(encoding="utf-8", errors="ignore").splitlines()
+        if 1 <= line_no <= len(lines):
+            return truncate_match(lines[line_no - 1].strip(), MAX_MATCH_LENGTH)
+    except OSError:
+        pass
+    return ""
+
 
 def run_semgrep_scan(file_path: str) -> list[Finding]:
     """
     Run Semgrep rules against the component file.
 
     Requires semgrep CLI — skips silently if not installed.
-    All rule metadata is read from the YAML rules file.
+    All rule metadata (severity, ave_id, owasp) is read from ave_rules.yaml.
 
     Args:
         file_path: Resolved absolute path to the component file
@@ -51,36 +86,38 @@ def run_semgrep_scan(file_path: str) -> list[Finding]:
     """
     findings: list[Finding] = []
 
-    # ── Check rules file ──────────────────────────────────────────────────────
     if not SEMGREP_RULES_PATH.exists():
         log.warning(Logs.RULES_MISSING, "semgrep", SEMGREP_RULES_PATH)
         return findings
 
-    # ── Run semgrep via safe subprocess ───────────────────────────────────────
     log.debug(Logs.ENGINE_START, "semgrep", file_path)
 
     with Timer() as t:
         stdout, err = run_subprocess(
-            args=["semgrep", "--config", str(SEMGREP_RULES_PATH), "--json", "--quiet", file_path],
+            args=[
+                "semgrep",
+                "--config",
+                str(SEMGREP_RULES_PATH),
+                "--json",
+                "--quiet",
+                file_path,
+            ],
             timeout=MAX_SCAN_TIMEOUT_SEC,
             label="semgrep",
         )
 
     if stdout is None:
-        # Tool not installed — already logged in run_subprocess
         return findings
 
     if err:
         log.warning(Logs.ENGINE_ERROR, "semgrep", file_path, err)
         return findings
 
-    # ── Parse output ──────────────────────────────────────────────────────────
     data, parse_err = parse_json_safe(stdout, label="semgrep")
     if parse_err or not data:
         log.warning(Logs.ENGINE_ERROR, "semgrep", file_path, parse_err)
         return findings
 
-    # ── Map results to Findings ───────────────────────────────────────────────
     for r in data.get("results", []):
         try:
             extra = r.get("extra", {})
@@ -88,17 +125,22 @@ def run_semgrep_scan(file_path: str) -> list[Finding]:
             msg = extra.get("message", r.get("check_id", ""))
             sev_raw = extra.get("severity", "WARNING")
             sev_str = _SEV_MAP.get(sev_raw, "MEDIUM")
+            line_no = r.get("start", {}).get("line")
+
+            # Read match text from source file — extra.lines is unreliable
+            # for generic-language rules (returns rule file content, not skill)
+            match_text = _match_from_file(file_path, line_no) if line_no else ""
 
             findings.append(
                 Finding(
                     rule_id=r.get("check_id", "semgrep-unknown"),
                     ave_id=meta.get("ave_id") or None,
-                    title=msg.split(".")[0][:MAX_MATCH_LENGTH],
+                    title=_clean_title(msg),
                     description=msg,
                     severity=Severity(sev_str),
                     cvss_ai=parse_cvss(meta.get("cvss_ai_score", 5.0)),
-                    line=r.get("start", {}).get("line"),
-                    match=truncate_match(extra.get("lines", ""), MAX_MATCH_LENGTH),
+                    line=line_no,
+                    match=match_text,
                     engine="semgrep",
                     owasp=meta.get("owasp_mapping", []),
                 )
@@ -108,10 +150,10 @@ def run_semgrep_scan(file_path: str) -> list[Finding]:
                 r.get("check_id", ""),
                 sev_str,
                 "semgrep",
-                r.get("start", {}).get("line"),
+                line_no,
             )
 
-        except Exception as e:  # nosec B110 — bad result, skip and continue
+        except Exception as e:  # nosec B110  # noqa: S110
             log.warning(
                 "Semgrep result parse error: check_id=%s error_type=%s",
                 r.get("check_id", "unknown"),

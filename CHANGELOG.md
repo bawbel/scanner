@@ -8,6 +8,15 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- **Inline suppression** — add `<!-- bawbel-ignore -->` on any line to suppress all findings on that line. Rule-specific: `<!-- bawbel-ignore: bawbel-external-fetch -->` or by AVE ID: `<!-- bawbel-ignore: AVE-2026-00001 -->`. Also supports `# bawbel-ignore` and `// bawbel-ignore`.
+- **Block suppression** — wrap sections with `<!-- bawbel-ignore-start -->` / `<!-- bawbel-ignore-end -->` to suppress all findings in the block. Also supports `# bawbel-ignore-start/end`.
+- **`.bawbelignore` file** — gitignore-style path patterns to suppress entire files or directories (e.g. `tests/fixtures/**`, `docs/examples/bad.md`, `**/test_*.md`).
+- **`--no-ignore` flag** — `bawbel scan ./skills/ --no-ignore` overrides ALL suppressions for security audits. Also `BAWBEL_NO_IGNORE=true`.
+- Suppressed findings move to `ScanResult.suppressed_findings` — never hidden from JSON/SARIF output, always auditable.
+- Summary line shows suppressed count: `Suppressed: 2  (run with --no-ignore to see all)`
+- Every suppression logged at INFO level for audit trail.
+
 ---
 
 ## [0.3.0] — 2026-04-21

@@ -115,5 +115,5 @@ scripts/dev_*.sh
 
 # ── Build artifacts — never commit ───────────────────────────────────────────
 
-# local test
-tmp/
+# ignore bawbel scan on docs/
+# .bawbelignore
