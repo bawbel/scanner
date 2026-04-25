@@ -8,8 +8,10 @@ To add new Semgrep rules: edit ave_rules.yaml only.
 No Python code changes needed.
 """
 
+import contextlib
 import re
 from pathlib import Path
+from typing import Optional
 
 from scanner.messages import Logs
 from scanner.models import Finding, Severity
@@ -71,7 +73,7 @@ def _match_from_file(file_path: str, line_no: int) -> str:
     return ""
 
 
-def run_semgrep_scan(file_path: str) -> list[Finding]:
+def run_semgrep_scan(file_path: str, stripped_content: Optional[str] = None) -> list[Finding]:
     """
     Run Semgrep rules against the component file.
 
@@ -79,16 +81,40 @@ def run_semgrep_scan(file_path: str) -> list[Finding]:
     All rule metadata (severity, ave_id, owasp) is read from ave_rules.yaml.
 
     Args:
-        file_path: Resolved absolute path to the component file
+        file_path:        Resolved absolute path to the component file.
+        stripped_content: Pre-processed content with code fences blanked.
+                          If provided, Semgrep scans this content via a temp
+                          file instead of the raw file — reduces false
+                          positives from documentation examples inside fences.
+                          Line numbers in findings still map to the original
+                          file because blanked lines preserve line count.
 
     Returns:
         List of Findings, may be empty
     """
+    import tempfile
+    import os as _os
+
     findings: list[Finding] = []
 
     if not SEMGREP_RULES_PATH.exists():
         log.warning(Logs.RULES_MISSING, "semgrep", SEMGREP_RULES_PATH)
         return findings
+
+    # ── Resolve scan target ───────────────────────────────────────────────────
+    tmp_path = None
+    scan_target = file_path
+
+    if stripped_content is not None:
+        try:
+            fd, tmp_path = tempfile.mkstemp(suffix=".md", prefix="bawbel_")
+            with _os.fdopen(fd, "w", encoding="utf-8") as f:
+                f.write(stripped_content)
+            scan_target = tmp_path
+        except OSError as e:
+            log.warning("Semgrep: could not write temp file, scanning original — %s", e)
+            tmp_path = None
+            scan_target = file_path
 
     log.debug(Logs.ENGINE_START, "semgrep", file_path)
 
@@ -100,11 +126,16 @@ def run_semgrep_scan(file_path: str) -> list[Finding]:
                 str(SEMGREP_RULES_PATH),
                 "--json",
                 "--quiet",
-                file_path,
+                scan_target,
             ],
             timeout=MAX_SCAN_TIMEOUT_SEC,
             label="semgrep",
         )
+
+    # ── Clean up temp file ────────────────────────────────────────────────────
+    if tmp_path:
+        with contextlib.suppress(OSError):
+            _os.unlink(tmp_path)
 
     if stdout is None:
         return findings
@@ -127,8 +158,8 @@ def run_semgrep_scan(file_path: str) -> list[Finding]:
             sev_str = _SEV_MAP.get(sev_raw, "MEDIUM")
             line_no = r.get("start", {}).get("line")
 
-            # Read match text from source file — extra.lines is unreliable
-            # for generic-language rules (returns rule file content, not skill)
+            # Read match text from original source file — line numbers in
+            # findings map to the original file, not the temp file
             match_text = _match_from_file(file_path, line_no) if line_no else ""
 
             findings.append(

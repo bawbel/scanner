@@ -51,8 +51,8 @@ NO_IGNORE = os.environ.get("BAWBEL_NO_IGNORE", "false").lower() == "true"
 # Supports: <!-- bawbel-ignore -->, # bawbel-ignore, // bawbel-ignore
 _INLINE_PATTERN = re.compile(
     r"(?:<!--|#|//)\s*bawbel-ignore"
-    r"(?:\s*:\s*([^\-\->]+?))?"  # optional: rule-id or AVE-ID list
-    r"\s*(?:-->)?",
+    r"(?:\s*:\s*(.*?)\s*)?"  # optional: rule-id or AVE-ID list
+    r"\s*(?:-->|$)",
     re.IGNORECASE,
 )
 

@@ -8,10 +8,11 @@ To add new YARA rules: edit ave_rules.yar only.
 No Python code changes needed.
 """
 
+import contextlib
 from pathlib import Path
 from typing import Optional
 
-from scanner.messages import Errors, Logs  # noqa: F401
+from scanner.messages import Logs
 from scanner.models import Finding, Severity
 from scanner.utils import Timer, get_logger, parse_cvss, parse_severity, truncate_match
 
@@ -21,7 +22,7 @@ YARA_RULES_PATH = Path(__file__).parent.parent / "rules" / "yara" / "ave_rules.y
 MAX_MATCH_LENGTH = 80
 
 
-def run_yara_scan(file_path: str) -> list[Finding]:
+def run_yara_scan(file_path: str, stripped_content: Optional[str] = None) -> list[Finding]:
     """
     Run YARA rules against the component file.
 
@@ -30,11 +31,19 @@ def run_yara_scan(file_path: str) -> list[Finding]:
     YARA meta: block — no Python code changes needed to add rules.
 
     Args:
-        file_path: Resolved absolute path to the component file
+        file_path:        Resolved absolute path to the component file.
+        stripped_content: Pre-processed content with code fences blanked.
+                          If provided, YARA scans this content via a temp
+                          file instead of the raw file — reduces false
+                          positives from documentation examples inside fences.
+                          If None, scans file_path directly.
 
     Returns:
         List of Findings, may be empty
     """
+    import tempfile
+    import os
+
     findings: list[Finding] = []
 
     # ── Check optional dependency ─────────────────────────────────────────────
@@ -49,23 +58,49 @@ def run_yara_scan(file_path: str) -> list[Finding]:
         log.warning(Logs.RULES_MISSING, "yara", YARA_RULES_PATH)
         return findings
 
+    # ── Resolve scan target ───────────────────────────────────────────────────
+    # If stripped_content provided, write to a temp file for YARA to scan
+    tmp_path = None
+    scan_target = file_path
+
+    if stripped_content is not None:
+        try:
+            fd, tmp_path = tempfile.mkstemp(suffix=".md", prefix="bawbel_")
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
+                f.write(stripped_content)
+            scan_target = tmp_path
+        except OSError as e:
+            log.warning("YARA: could not write temp file, scanning original — %s", e)
+            tmp_path = None
+            scan_target = file_path
+
     # ── Compile and scan ──────────────────────────────────────────────────────
     log.debug(Logs.ENGINE_START, "yara", file_path)
 
     with Timer() as t:
         try:
             rules = yara.compile(str(YARA_RULES_PATH))
-            matches = rules.match(file_path)
+            matches = rules.match(scan_target)
 
         except yara.SyntaxError as e:
-            # Log type only — rule text may reveal detection IP
             log.error(Logs.ENGINE_ERROR, "yara", file_path, type(e).__name__)
             log.debug("YARA syntax error detail: %s", e)
+            if tmp_path:
+                with contextlib.suppress(OSError):
+                    os.unlink(tmp_path)
             return findings
 
         except Exception as e:  # nosec B110 — optional engine, broad catch intentional
             log.error(Logs.ENGINE_ERROR, "yara", file_path, type(e).__name__)
+            if tmp_path:
+                with contextlib.suppress(OSError):
+                    os.unlink(tmp_path)
             return findings
+
+    # ── Clean up temp file ────────────────────────────────────────────────────
+    if tmp_path:
+        with contextlib.suppress(OSError):
+            os.unlink(tmp_path)
 
     # ── Map matches to Findings ───────────────────────────────────────────────
     for match in matches:

@@ -4,14 +4,10 @@ Unit tests for scanner/utils.py
 Tests each utility class independently.
 """
 
-import pytest
-from pathlib import Path
-
 from scanner.utils import (
     Logger,
     PathValidator,
     FileReader,
-    SubprocessRunner,
     JsonParser,
     TextSanitiser,
     Timer,
@@ -37,7 +33,6 @@ class TestLogger:
         assert log is not None
 
     def test_namespaced_under_bawbel(self):
-        import logging
         log = Logger.get("mymodule")
         assert log.name == "bawbel.mymodule"
 
@@ -98,9 +93,7 @@ class TestPathValidator:
     def test_validate_oversized_file(self, tmp_path, monkeypatch):
         f = tmp_path / "big.md"
         f.write_text("x")
-        monkeypatch.setattr(
-            "config.default.MAX_FILE_SIZE_BYTES", 0
-        )
+        monkeypatch.setattr("config.default.MAX_FILE_SIZE_BYTES", 0)
         ok, err = PathValidator.validate(f.resolve())
         assert ok is False
         assert "E006" in err
@@ -124,7 +117,7 @@ class TestFileReader:
         f = tmp_path / "binary.md"
         f.write_bytes(b"valid\xff\xfeinvalid")
         content, err = FileReader.read_text(f)
-        assert err is None     # errors="ignore" — should not fail
+        assert err is None  # errors="ignore" — should not fail
         assert content is not None
 
     def test_read_file_safe_alias(self, tmp_path):
@@ -177,28 +170,28 @@ class TestTextSanitiser:
         assert truncate_match(None, 80) is None
 
     def test_parse_severity_valid(self):
-        assert TextSanitiser.parse_severity("HIGH")     == "HIGH"
-        assert TextSanitiser.parse_severity("critical")  == "CRITICAL"
-        assert TextSanitiser.parse_severity("medium")    == "MEDIUM"
+        assert TextSanitiser.parse_severity("HIGH") == "HIGH"
+        assert TextSanitiser.parse_severity("critical") == "CRITICAL"
+        assert TextSanitiser.parse_severity("medium") == "MEDIUM"
 
     def test_parse_severity_invalid_returns_fallback(self):
         assert TextSanitiser.parse_severity("UNKNOWN") == "HIGH"
-        assert TextSanitiser.parse_severity("")         == "HIGH"
+        assert TextSanitiser.parse_severity("") == "HIGH"
 
     def test_parse_severity_alias(self):
         assert parse_severity("HIGH") == "HIGH"
 
     def test_parse_cvss_valid_float(self):
-        assert TextSanitiser.parse_cvss(9.4)   == 9.4
+        assert TextSanitiser.parse_cvss(9.4) == 9.4
         assert TextSanitiser.parse_cvss("7.5") == 7.5
 
     def test_parse_cvss_clamped(self):
-        assert TextSanitiser.parse_cvss(99.9)  == 10.0
-        assert TextSanitiser.parse_cvss(-1.0)  == 0.0
+        assert TextSanitiser.parse_cvss(99.9) == 10.0
+        assert TextSanitiser.parse_cvss(-1.0) == 0.0
 
     def test_parse_cvss_invalid_returns_fallback(self):
         assert TextSanitiser.parse_cvss("bad") == 5.0
-        assert TextSanitiser.parse_cvss(None)  == 5.0
+        assert TextSanitiser.parse_cvss(None) == 5.0
 
     def test_parse_cvss_alias(self):
         assert parse_cvss(8.0) == 8.0
@@ -207,6 +200,7 @@ class TestTextSanitiser:
 class TestTimer:
     def test_measures_elapsed_time(self):
         import time
+
         with Timer() as t:
             time.sleep(0.01)
         assert t.elapsed_ms >= 10

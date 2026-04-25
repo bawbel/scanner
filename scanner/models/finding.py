@@ -67,5 +67,8 @@ class Finding:
     owasp: list[str] = field(default_factory=list)  # ["ASI01", "ASI08"]
 
     # ── Suppression ──────────────────────────────────────────────────────────
-    suppressed: bool = False  # True if suppressed by bawbel-ignore
-    suppression_reason: Optional[str] = None  # reason string, or None
+    suppressed: bool = False
+    suppression_reason: Optional[str] = None
+
+    # ── Confidence (FP-3) ────────────────────────────────────────────────────
+    confidence: float = 1.0  # 0.0–1.0, scored after dedup

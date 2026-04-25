@@ -18,8 +18,10 @@ Environment variables:
 
 from __future__ import annotations
 
+import contextlib
 import json
 import os
+import tempfile
 from pathlib import Path
 from typing import Optional
 
@@ -169,12 +171,18 @@ def _resolve_image() -> Optional[str]:
 # ── Main engine entry ─────────────────────────────────────────────────────────
 
 
-def run_sandbox_scan(file_path: str) -> list[Finding]:
+def run_sandbox_scan(file_path: str, stripped_content: Optional[str] = None) -> list[Finding]:
     """
     Stage 3 — behavioural sandbox scan.
 
     Resolves image (Hub cache → Hub pull → local build), runs the component
     in an isolated container, parses JSON behaviour report, returns findings.
+
+    Args:
+        file_path:        Original file path (used as fallback and for logging).
+        stripped_content: Code-fence-stripped content. When provided, written to
+                          a temp file so the container sees de-fenced input —
+                          preventing false positives from documentation examples.
     """
     findings: list[Finding] = []
 
@@ -193,7 +201,23 @@ def run_sandbox_scan(file_path: str) -> list[Finding]:
 
     log.debug(Logs.ENGINE_START, "sandbox", file_path)
     with Timer() as t:
-        findings = _run_container(file_path, image)
+        if stripped_content is not None:
+            suffix = Path(file_path).suffix or ".md"
+            with tempfile.NamedTemporaryFile(
+                mode="w",
+                suffix=suffix,
+                delete=False,
+                encoding="utf-8",
+            ) as tmp:
+                tmp.write(stripped_content)
+                tmp_path = tmp.name
+            try:
+                findings = _run_container(tmp_path, image)
+            finally:
+                with contextlib.suppress(OSError):
+                    os.unlink(tmp_path)
+        else:
+            findings = _run_container(file_path, image)
     log.debug(Logs.ENGINE_COMPLETE, "sandbox", len(findings), t.elapsed_ms)
     return findings
 

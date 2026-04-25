@@ -308,6 +308,7 @@ Every finding maps to a published AVE record — the CVE equivalent for agentic 
 | CI/CD integration | [docs/guides/cicd-integration.md](docs/guides/cicd-integration.md) |
 | Python API | [docs/api/scan.md](docs/api/scan.md) |
 | Suppression | [docs/guides/suppression.md](docs/guides/suppression.md) |
+| False positive reduction | [docs/guides/false-positive-reduction.md](docs/guides/false-positive-reduction.md) |
 | Writing rules | [docs/guides/writing-rules.md](docs/guides/writing-rules.md) |
 | Changelog | [CHANGELOG.md](CHANGELOG.md) |
 

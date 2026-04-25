@@ -4,7 +4,6 @@ Unit tests for scanner/models/
 Tests Finding, ScanResult, and Severity in isolation.
 """
 
-import pytest
 from scanner.models import Finding, ScanResult, Severity, SEVERITY_SCORES
 
 
@@ -21,17 +20,18 @@ class TestSeverity:
 
     def test_ordering_is_correct(self):
         assert SEVERITY_SCORES["CRITICAL"] > SEVERITY_SCORES["HIGH"]
-        assert SEVERITY_SCORES["HIGH"]     > SEVERITY_SCORES["MEDIUM"]
-        assert SEVERITY_SCORES["MEDIUM"]   > SEVERITY_SCORES["LOW"]
-        assert SEVERITY_SCORES["LOW"]      > SEVERITY_SCORES["INFO"]
+        assert SEVERITY_SCORES["HIGH"] > SEVERITY_SCORES["MEDIUM"]
+        assert SEVERITY_SCORES["MEDIUM"] > SEVERITY_SCORES["LOW"]
+        assert SEVERITY_SCORES["LOW"] > SEVERITY_SCORES["INFO"]
 
     def test_str_comparison(self):
         """Severity extends str — can compare to string literals."""
         assert Severity.CRITICAL == "CRITICAL"
-        assert Severity.HIGH     == "HIGH"
+        assert Severity.HIGH == "HIGH"
 
     def test_json_serialisable(self):
         import json
+
         result = json.dumps({"severity": Severity.HIGH})
         assert '"HIGH"' in result
 
@@ -41,16 +41,16 @@ class TestFinding:
 
     def _make(self, **kwargs) -> Finding:
         defaults = dict(
-            rule_id     = "test-rule",
-            ave_id      = None,
-            title       = "Test finding",
-            description = "Test description",
-            severity    = Severity.HIGH,
-            cvss_ai     = 7.5,
-            line        = 1,
-            match       = "matched text",
-            engine      = "pattern",
-            owasp       = ["ASI01"],
+            rule_id="test-rule",
+            ave_id=None,
+            title="Test finding",
+            description="Test description",
+            severity=Severity.HIGH,
+            cvss_ai=7.5,
+            line=1,
+            match="matched text",
+            engine="pattern",
+            owasp=["ASI01"],
         )
         defaults.update(kwargs)
         return Finding(**defaults)
@@ -86,16 +86,16 @@ class TestScanResult:
 
     def _make_finding(self, severity: Severity, cvss: float) -> Finding:
         return Finding(
-            rule_id     = f"rule-{severity.value.lower()}",
-            ave_id      = None,
-            title       = "Test",
-            description = "Test",
-            severity    = severity,
-            cvss_ai     = cvss,
-            line        = None,
-            match       = None,
-            engine      = "pattern",
-            owasp       = [],
+            rule_id=f"rule-{severity.value.lower()}",
+            ave_id=None,
+            title="Test",
+            description="Test",
+            severity=severity,
+            cvss_ai=cvss,
+            line=None,
+            match=None,
+            engine="pattern",
+            owasp=[],
         )
 
     def test_is_clean_with_no_findings_no_error(self):
@@ -125,9 +125,9 @@ class TestScanResult:
 
     def test_max_severity_returns_highest(self):
         findings = [
-            self._make_finding(Severity.LOW,      2.0),
-            self._make_finding(Severity.CRITICAL,  9.4),
-            self._make_finding(Severity.HIGH,      7.0),
+            self._make_finding(Severity.LOW, 2.0),
+            self._make_finding(Severity.CRITICAL, 9.4),
+            self._make_finding(Severity.HIGH, 7.0),
         ]
         r = ScanResult(file_path="/f.md", component_type="skill", findings=findings)
         assert r.max_severity == Severity.CRITICAL
@@ -138,7 +138,7 @@ class TestScanResult:
 
     def test_risk_score_returns_max_cvss(self):
         findings = [
-            self._make_finding(Severity.LOW,  2.0),
+            self._make_finding(Severity.LOW, 2.0),
             self._make_finding(Severity.HIGH, 8.5),
         ]
         r = ScanResult(file_path="/f.md", component_type="skill", findings=findings)

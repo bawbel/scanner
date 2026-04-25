@@ -21,6 +21,7 @@ vulnerabilities mapped to the [AVE standard](https://github.com/bawbel/bawbel-av
 | [Publishing](guides/publishing.md) | Publish to PyPI — step by step |
 | [Writing Rules](guides/writing-rules.md) | All 15 built-in rules, OWASP mapping, adding new rules |
 | [Suppression](guides/suppression.md) | bawbel-ignore inline, block, .bawbelignore, --no-ignore |
+| [False Positive Reduction](guides/false-positive-reduction.md) | 8-point strategy — code fences, confidence scoring, LLM filter, registry |
 | [Detection Engines](guides/engines.md) | All 5 engines explained — purpose, how it works, what it detects, how to use |
 | [Adding an Engine](guides/adding-engine.md) | Add a new detection stage |
 

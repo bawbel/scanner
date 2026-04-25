@@ -9,6 +9,17 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- **False positive reduction roadmap** — `docs/guides/false-positive-reduction.md` documents the 8-point strategy.
+- **AVE records 16–24** — 9 new pattern rules covering: RAG injection (00016), MCP impersonation (00017), tool result manipulation (00018), agent memory poisoning (00019), A2A cross-agent injection (00020), autonomous action without confirmation (00021), scope creep (00022), context window manipulation (00023), conversation history injection (00025). Total: 24 pattern rules.
+- **`bawbel init`** command — generates `.bawbelignore` and `bawbel.yml` in project root, discovers skill/MCP files, shows next steps.
+- **`scanner/engines/meta_analyzer.py`** — meta-analysis FP filter (FP-4).
+- **`scanner/engines/magika_engine.py`** — Stage 0 file type verification.
+- **FP-4 meta-analysis LLM filter** (`scanner/engines/meta_analyzer.py`) — enriched FP filter. One LLM call per file covers all medium-confidence findings (0.35–0.80). Sends file metadata + finding context to LLM. Verdicts: real (confidence +0.15) | false_positive (suppressed) | needs_review (confidence −0.05). Skips silently if no LLM configured.
+- **FP-5 file-type scan profiles** (`_classify_file()` in `scanner/scanner.py`) — files classified as skill/mcp_manifest/documentation/unknown. Profile thresholds: skill=0.60, mcp_manifest=0.55, documentation=0.85, unknown=0.80. Classification based on filename and path segments.
+- `BAWBEL_META_ANALYZER_ENABLED` env var — disable meta-analysis FP filter (default: true).
+- `BAWBEL_META_MIN_CONFIDENCE` / `BAWBEL_META_MAX_CONFIDENCE` — range for meta-analysis (default: 0.35–0.80).
+- **Priority 1 implemented: code fence stripping** — `_strip_code_fences()` in `scanner/scanner.py`. Content inside ` ``` ` and `~~~` blocks is replaced with blank lines before Pattern, YARA, and Semgrep analysis. Line numbers remain accurate. Sandbox (Stage 3) and suppression still receive the original content. Expected FP reduction: ~60%%. 12 new tests in `TestCodeFenceStripping`.
+
 - **Inline suppression** — add `<!-- bawbel-ignore -->` on any line to suppress all findings on that line. Rule-specific: `<!-- bawbel-ignore: bawbel-external-fetch -->` or by AVE ID: `<!-- bawbel-ignore: AVE-2026-00001 -->`. Also supports `# bawbel-ignore` and `// bawbel-ignore`.
 - **Block suppression** — wrap sections with `<!-- bawbel-ignore-start -->` / `<!-- bawbel-ignore-end -->` to suppress all findings in the block. Also supports `# bawbel-ignore-start/end`.
 - **`.bawbelignore` file** — gitignore-style path patterns to suppress entire files or directories (e.g. `tests/fixtures/**`, `docs/examples/bad.md`, `**/test_*.md`).

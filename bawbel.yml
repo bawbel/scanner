@@ -1,0 +1,15 @@
+# bawbel.yml — Bawbel Scanner project configuration
+version: "1.0"
+
+scan:
+  recursive: true
+  fail_on_severity: high     # critical | high | medium | low
+  format: text               # text | json | sarif
+
+confidence:
+  threshold: 0.80            # findings below this are suppressed
+
+# Uncomment to enable Stage 3 behavioral sandbox:
+# sandbox:
+#   enabled: true
+#   image: default           # default | local | <custom>
