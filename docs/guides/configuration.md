@@ -39,7 +39,24 @@ BAWBEL_MAX_FILE_SIZE_MB=50 bawbel scan ./large-skill.md
 BAWBEL_SCAN_TIMEOUT_SEC=10 bawbel scan ./skills/
 ```
 
-### Stage 2: LLM Semantic Analysis (optional)
+#
+## Stage 0 — Magika
+
+```bash
+BAWBEL_MAGIKA_ENABLED=true          # enable file type verification (default: true)
+                                    # requires: pip install "bawbel-scanner[magika]"
+```
+
+## Meta-Analyzer (FP-4)
+
+```bash
+BAWBEL_META_ANALYZER_ENABLED=true   # enable LLM-based FP filter (default: true)
+BAWBEL_META_MIN_CONFIDENCE=0.35     # lower bound for meta-analysis
+BAWBEL_META_MAX_CONFIDENCE=0.80     # upper bound — high-confidence findings skip LLM
+                                    # requires: BAWBEL_LLM_ENABLED=true + API key
+```
+
+## Stage 2: LLM Semantic Analysis (optional)
 
 Stage 2 uses [LiteLLM](https://docs.litellm.ai) — works with any LLM provider.
 Install first: `pip install "bawbel-scanner[llm]"`

@@ -6,9 +6,12 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [Unreleased]
+## [1.0.0] — 2026-04-25
 
 ### Added
+
+- **GitHub Actions** — `bawbel/bawbel-integrations@v1` official action. One-line CI/CD integration: installs scanner, runs scan, uploads SARIF to GitHub Security tab. Inputs: `path`, `fail-on-severity`, `format`, `recursive`, `no-ignore`, `version`, `extras`. See [bawbel/bawbel-integrations](https://github.com/bawbel/bawbel-integrations).
+- **VS Code Extension** — zero-setup extension (search "Bawbel Scanner" in Marketplace). Auto-installs CLI on first activation. Inline diagnostics, status bar, auto-scan on save, `Cmd+Shift+B` shortcut. Source: [bawbel/bawbel-integrations/vscode](https://github.com/bawbel/bawbel-integrations/tree/main/vscode).
 - **False positive reduction roadmap** — `docs/guides/false-positive-reduction.md` documents the 8-point strategy.
 - **AVE records 16–24** — 9 new pattern rules covering: RAG injection (00016), MCP impersonation (00017), tool result manipulation (00018), agent memory poisoning (00019), A2A cross-agent injection (00020), autonomous action without confirmation (00021), scope creep (00022), context window manipulation (00023), conversation history injection (00025). Total: 24 pattern rules.
 - **`bawbel init`** command — generates `.bawbelignore` and `bawbel.yml` in project root, discovers skill/MCP files, shows next steps.
@@ -137,3 +140,7 @@ First public release.
 - `AVE-2026-00003` — Environment variable exfiltration (HIGH 8.5)
 
 [0.1.0]: https://github.com/bawbel/bawbel-scanner/releases/tag/v0.1.0
+
+---
+
+[1.0.0]: https://github.com/bawbel/bawbel-scanner/releases/tag/v1.0.0

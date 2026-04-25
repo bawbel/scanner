@@ -35,6 +35,7 @@ severity. No engine ever raises — each skips silently if its dependency is mis
 
 | Stage | Engine   | Install                          | Always runs | What it catches |
 |-------|----------|----------------------------------|-------------|-----------------|
+| 0     | **Magika** | `pip install "bawbel-scanner[magika]"` | no | File type verification — supply chain attack detection |
 | 1a    | Pattern  | nothing — stdlib only            | ✓ yes       | 15 regex rules, fast |
 | 1b    | YARA     | `pip install "bawbel-scanner[yara]"` | no     | binary + complex text patterns, 15 rules |
 | 1c    | Semgrep  | `pip install "bawbel-scanner[semgrep]"` | no  | structural patterns, multi-line, 15 rules |
@@ -42,6 +43,151 @@ severity. No engine ever raises — each skips silently if its dependency is mis
 | 3     | Sandbox  | Docker + `BAWBEL_SANDBOX_ENABLED=true` | no  | runtime behaviour, eBPF (v1.0) |
 
 ---
+
+
+---
+
+## Stage 0 — Magika File Type Verification
+
+**File:** `scanner/engines/magika_engine.py`
+**Install:** `pip install "bawbel-scanner[magika]"` (included in `[all]`)
+**Always runs:** No — skips silently if not installed
+
+### Purpose
+
+Runs before all text analysis engines. Uses Google's Magika (~99% accuracy, ~5ms/file)
+to verify that each file's content matches its extension. Catches supply chain attacks
+that no regex or YARA rule can detect — because the file contains no text to match.
+
+### What it detects
+
+| Content type | Extension | Severity | Example attack |
+|---|---|---|---|
+| ELF binary | `.md`, `.yaml` | CRITICAL | Skill file is actually a Linux executable |
+| PE32/PE64 | `.md`, `.json` | CRITICAL | Skill file is actually a Windows executable |
+| Python bytecode | `.yaml`, `.txt` | CRITICAL | Config file is actually compiled `.pyc` |
+| Pickle | `.yaml`, `.json` | CRITICAL | Config is a serialised Python object (RCE vector) |
+| PHP/JSP | `.md`, `.yaml` | CRITICAL | Skill is actually server-side code |
+| Shell script | `.md`, `.yaml` | HIGH | Skill is actually a shell script |
+
+All detections map to **AVE-2026-00024** (Supply chain — content type mismatch).
+
+### How it works
+
+```
+file path
+      │
+      ▼
+magika.identify_path(path)     ← Google Magika, ~5ms, ~1MB model
+      │
+      ▼
+result.output.label            ← content type (e.g. "elf", "php", "markdown")
+result.score                   ← confidence 0.0–1.0
+      │
+      ├── score < 0.75  → skip (low confidence, don't raise FP)
+      │
+      ├── content_type in DANGEROUS_TYPES
+      │       → Finding(AVE-2026-00024, CRITICAL, engine="magika")
+      │       → skip all text analysis engines
+      │
+      └── extension vs content mismatch + not benign
+              → Finding(AVE-2026-00024, HIGH, engine="magika")
+```
+
+**Key design decision:** when Magika flags a dangerous content type (ELF, PE32, pickle),
+Bawbel skips all text analysis engines — the file is not what it claims to be and running
+regex on binary content is meaningless. Stage 3 (sandbox) still runs on the original file.
+
+### Install and verify
+
+```bash
+pip install "bawbel-scanner[magika]"
+
+bawbel version
+# ✓  Magika     0.5.x  ·  Stage 0 active
+
+# Test: scan a real ELF binary with a .md extension
+cp /bin/ls /tmp/malicious.md
+bawbel scan /tmp/malicious.md
+# → 🔴 CRITICAL  AVE-2026-00024  Supply chain: ELF binary disguised as skill file
+```
+
+### Environment variable
+
+```bash
+BAWBEL_MAGIKA_ENABLED=false   # disable Stage 0 (default: true)
+```
+
+---
+
+## Meta-Analyzer — FP-4 False Positive Filter
+
+**File:** `scanner/engines/meta_analyzer.py`
+**Requires:** LLM engine (`pip install "bawbel-scanner[llm]"` + API key)
+**Always runs:** No — skips silently if LLM not configured
+
+### Purpose
+
+After all static engines run, the meta-analyzer sends the full findings context to the
+LLM in **one call per file** — not a general security scan, but a targeted false-positive
+classification task. This is architecturally different from the LLM engine (Stage 2):
+
+| | LLM Engine (Stage 2) | Meta-Analyzer (FP-4) |
+|---|---|---|
+| Input | Raw file content | All findings + file metadata |
+| Task | Find new vulnerabilities | Classify existing findings as real/FP |
+| Runs on | Every file | Files with medium-confidence findings only |
+| Cost | ~1 call/file always | ~1 call/file when medium findings exist |
+
+### How it works
+
+```
+Static engines produce findings
+        │
+        ▼
+Confidence scorer partitions:
+  high_confidence  (≥ 0.80)  → emit directly — no LLM needed
+  medium_confidence (0.35–0.80) → send to meta-analyzer
+  low_confidence   (< 0.35)  → suppress automatically
+        │
+        ▼
+Meta-analyzer LLM prompt (one call covers all medium findings in the file):
+  {
+    "file": "guide.md",
+    "file_type": "markdown",
+    "path_context": "docs/guides/",
+    "findings": [
+      {"rule_id": "bawbel-external-fetch", "line": 7,
+       "match": "fetch your instructions", "confidence": 0.55,
+       "context_lines": ["Never do this:", "fetch your..."]}
+    ]
+  }
+        │
+        ▼
+LLM verdict per finding:
+  real           → confidence +0.15, stays active
+  false_positive → suppressed with reason="meta_analyzer_fp: <reason>"
+  needs_review   → confidence −0.05, stays active
+```
+
+### Environment variables
+
+```bash
+BAWBEL_META_ANALYZER_ENABLED=false  # disable (default: true)
+BAWBEL_META_MIN_CONFIDENCE=0.35     # lower bound for meta-analysis
+BAWBEL_META_MAX_CONFIDENCE=0.80     # upper bound for meta-analysis
+```
+
+### Finding in output
+
+When the meta-analyzer suppresses a finding:
+
+```
+Suppressed:  3  (run with --no-ignore to see all)
+# Each suppressed finding in JSON output includes:
+# "suppression_reason": "meta_analyzer_fp: match appears in documentation example context"
+```
+
 
 ## Stage 1a — Pattern Engine
 

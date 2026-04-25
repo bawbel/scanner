@@ -1,5 +1,10 @@
 # False Positive Reduction — Strategy & Roadmap
 
+> **Also implemented:** Stage 0 Magika file type verification catches a different
+> class of false positives entirely — not FPs from pattern matching on documentation,
+> but supply chain attacks where the file *is* genuinely malicious but the wrong kind
+> (ELF binary disguised as a skill file). See [engines.md](engines.md) for details.
+
 False positives are the single biggest reason people stop using a security scanner.
 If the first scan of a legitimate codebase returns 12 findings and 10 of them are wrong,
 the tool loses all credibility immediately — users dismiss real findings along with the noise.
@@ -143,10 +148,10 @@ containing both skill files and documentation.
 
 ---
 
-### Priority 4 — LLM as false-positive filter (Month 2)
+### ✅ Priority 4 — Meta-analysis FP filter (implemented)
 
-**What:** After static engines run, send low-confidence findings (0.35–0.65) to the LLM
-engine with a specific false-positive filter prompt — not a general security analysis,
+**What:** After static engines run, send medium-confidence findings (0.35–0.80) to the
+LLM as enriched context — one call per file, not per finding — not a general security analysis,
 but a targeted question: *"Is this finding real given this context?"*
 
 **Why it works:** The LLM can read the surrounding paragraph, understand that

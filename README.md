@@ -5,7 +5,7 @@
 [![PyPI version](https://badge.fury.io/py/bawbel-scanner.svg)](https://pypi.org/project/bawbel-scanner/)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://pypi.org/project/bawbel-scanner/)
-[![AVE Standard](https://img.shields.io/badge/AVE_Records-15-teal.svg)](https://github.com/bawbel/bawbel-ave)
+[![AVE Standard](https://img.shields.io/badge/AVE_Records-24-teal.svg)](https://github.com/bawbel/bawbel-ave)
 
 Bawbel Scanner scans agentic AI components — SKILL.md files, MCP server manifests,
 system prompts, and agent plugins — for security vulnerabilities mapped to the
@@ -25,8 +25,9 @@ With optional engines:
 pip install "bawbel-scanner[yara]"      # Stage 1b — YARA rules (15 rules)
 pip install "bawbel-scanner[semgrep]"   # Stage 1c — Semgrep rules (15 rules)
 pip install "bawbel-scanner[llm]"       # Stage 2  — LLM semantic analysis
+pip install "bawbel-scanner[magika]"    # Stage 0  — file type verification (Google Magika)
 pip install "bawbel-scanner[watch]"     # Watch mode — re-scan on file change
-pip install "bawbel-scanner[all]"       # Everything above
+pip install "bawbel-scanner[all]"       # Everything: yara + semgrep + llm + magika + watch
 ```
 
 Stage 3 (behavioral sandbox) requires Docker — see [Stage 3](#stage-3--behavioral-sandbox).
@@ -52,7 +53,7 @@ bawbel scan ./skills/ --format sarif              # SARIF for GitHub Security ta
 **Example output:**
 
 ```
-Bawbel Scanner v0.3.0  ·  github.com/bawbel/bawbel-scanner
+Bawbel Scanner v1.0.0  ·  github.com/bawbel/bawbel-scanner
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Scanning:  malicious-skill.md
@@ -78,12 +79,34 @@ Scan time:    5ms
 
 ---
 
+
+## False Positive Reduction
+
+Bawbel v1.0 ships a 5-layer false positive reduction system — the result of real-world
+feedback from scanning production skill files:
+
+| Layer | Mechanism | FP reduction |
+|---|---|---|
+| FP-1 | Code fence stripping — ` ``` ` blocks skipped before static analysis | ~60% |
+| FP-2 | Preceding-line context — "Never do this:" suppresses the line below | ~15% |
+| FP-3 | Confidence scoring — table rows, headings, `docs/` paths penalised | ~10% |
+| FP-4 | **Meta-analyzer** — one LLM call per file validates medium-confidence findings | ~7% |
+| FP-5 | File-type profiles — documentation scanned at higher threshold (0.85) | ~3% |
+
+The meta-analyzer (FP-4) sends all findings as enriched context to the LLM in a single
+call — not a general security scan, but a targeted false-positive filter. Requires
+`BAWBEL_LLM_ENABLED=true` and an API key. Skips silently if not configured.
+
+See [False Positive Reduction guide](docs/guides/false-positive-reduction.md) for full details.
+
+---
 ## Detection Pipeline
 
 Five stages run in sequence — each adds an independent layer:
 
 | Stage | Engine | Install | What it catches |
 |---|---|---|---|
+| 0  | **Magika** | `pip install "bawbel-scanner[magika]"` | Content-type verification — catches supply chain attacks (ELF disguised as .md, pickle as .yaml) |
 | 1a | **Pattern** | nothing — always active | 15 regex rules, all AVE IDs |
 | 1b | **YARA** | `pip install "bawbel-scanner[yara]"` | Binary + complex text combinations, 15 rules |
 | 1c | **Semgrep** | `pip install "bawbel-scanner[semgrep]"` | Structural + multi-line patterns, 15 rules |
@@ -168,33 +191,58 @@ else:
 
 ## CI/CD Integration
 
-### GitHub Actions — fail on findings
+### GitHub Actions — official action ✅
+
+The recommended way to integrate Bawbel into CI/CD.
+One line — installs the scanner, runs the scan, uploads findings to the
+GitHub Security tab automatically.
 
 ```yaml
+# .github/workflows/bawbel.yml
 name: Bawbel Security Scan
 on: [push, pull_request]
+
 jobs:
   scan:
     runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      contents: read
     steps:
       - uses: actions/checkout@v4
-      - name: Scan for AVE vulnerabilities
-        run: |
-          pip install bawbel-scanner
-          bawbel scan . --recursive --fail-on-severity high
+
+      - uses: bawbel/bawbel-integrations@v1
+        id: bawbel
+        with:
+          path: .
+          fail-on-severity: high
+          format: sarif
+
+      - uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: ${{ steps.bawbel.outputs.sarif-file }}
 ```
 
-### GitHub Actions — SARIF to Security tab
+**Action inputs:** `path`, `fail-on-severity`, `format`, `recursive`, `no-ignore`, `version`, `extras`
+**Action outputs:** `sarif-file`, `findings-count`, `risk-score`, `result`
+
+See [bawbel/bawbel-integrations](https://github.com/bawbel/bawbel-integrations) for
+full documentation and examples.
+
+### VS Code Extension
+
+Install **Bawbel Scanner** from the VS Code Marketplace. Auto-installs
+the CLI on first activation — no manual setup required. Inline diagnostics,
+status bar, auto-scan on save.
+
+### Manual GitHub Actions (without official action)
 
 ```yaml
-      - name: Bawbel SARIF scan
+      - name: Scan for AVE vulnerabilities
         run: |
-          pip install bawbel-scanner
-          bawbel scan . --recursive --format sarif > bawbel.sarif
-      - name: Upload to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: bawbel.sarif
+          pip install "bawbel-scanner[all]"
+          bawbel scan . --recursive --fail-on-severity high
 ```
 
 ### Pre-commit

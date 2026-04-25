@@ -104,13 +104,13 @@ jobs:
       - name: Smoke test Docker image
         run: |
           docker run --rm \
-            -v ${{ github.workspace }}/tests:/scan:ro \
+            -v ${{ github.workspace }}/tests/fixtures/skills/malicious:/scan:ro \
             bawbel/scanner:test scan /scan/malicious_skill.md
 
       - name: Verify Docker finds CRITICAL finding
         run: |
           output=$(docker run --rm \
-            -v ${{ github.workspace }}/tests:/scan:ro \
+            -v ${{ github.workspace }}/tests/fixtures/skills/malicious:/scan:ro \
             bawbel/scanner:test scan /scan/malicious_skill.md --format json)
           echo "$output" | python3 -c "
           import json, sys

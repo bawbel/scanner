@@ -24,7 +24,7 @@ pip install "bawbel-scanner[yara]"
 pip install "bawbel-scanner[semgrep]"
 
 # Everything
-pip install "bawbel-scanner[all]"
+pip install "bawbel-scanner[all]"       # recommended: includes magika + all engines
 ```
 
 ---
@@ -46,7 +46,7 @@ Detection Engines:
   ✓  Pattern     15 rules  ·  stdlib only  ·  always active
   ✗  YARA        not installed  ·  pip install "bawbel-scanner[yara]"
   ✗  Semgrep     not installed  ·  pip install "bawbel-scanner[semgrep]"
-  ✗  LLM         not installed  ·  pip install "bawbel-scanner[llm]"
+  ✗  LLM         no API key  ·  set ANTHROPIC_API_KEY to enable Stage 2
 ```
 
 ---
