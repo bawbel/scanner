@@ -80,7 +80,8 @@ def run_yara_scan(file_path: str, stripped_content: Optional[str] = None) -> lis
     with Timer() as t:
         try:
             rules = yara.compile(str(YARA_RULES_PATH))
-            matches = rules.match(scan_target)
+            file_data = Path(scan_target).read_bytes()
+            matches = rules.match(data=file_data)
 
         except yara.SyntaxError as e:
             log.error(Logs.ENGINE_ERROR, "yara", file_path, type(e).__name__)
