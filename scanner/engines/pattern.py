@@ -995,9 +995,11 @@ def run_pattern_scan(content: str) -> list[Finding]:
     log.debug("Pattern scan: lines=%d rules=%d", len(lines), len(PATTERN_RULES))
 
     for rule in PATTERN_RULES:
+        rule_matched_lines: set[int] = set()
         for pattern in rule["patterns"]:
-            matched = False
             for line_num, line_text in enumerate(lines, 1):
+                if line_num in rule_matched_lines:
+                    continue  # already have a finding for this line from another pattern
                 try:
                     m = re.search(pattern, line_text, re.IGNORECASE)
                 except re.error as e:
@@ -1017,11 +1019,8 @@ def run_pattern_scan(content: str) -> list[Finding]:
                         "pattern",
                         line_num,
                     )
-                    matched = True
-                    break
-
-            if matched:
-                break  # one finding per rule per file
+                    rule_matched_lines.add(line_num)
+                    # no break — continue scanning remaining lines
 
     log.debug("Pattern scan complete: findings=%d", len(findings))
     return findings

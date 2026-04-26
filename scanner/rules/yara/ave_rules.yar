@@ -836,7 +836,7 @@ rule AVE_A2AInjection
         $h = "agent to agent" nocase
         $i = "a2a" nocase
     condition:
-        ($a or $b or $c or $d) and ("inject" or "instruct" or "disregard" or "override") or
+        ($a or $b or $c or $d or $i) and ("inject" or "instruct" or "disregard" or "override") or
         ($e or $f or $g or $h)
 }
 
