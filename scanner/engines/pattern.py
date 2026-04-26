@@ -67,8 +67,8 @@ PATTERN_RULES: list[dict] = [
         "cvss_ai": 8.3,
         "owasp": ["ASI01", "ASI08"],
         "patterns": [
-            r"pretend\s+(you\s+are|to\s+be)\s+(a\s+)?(?!helpful|an?\s+assistant)",
-            r"act\s+as\s+(if\s+you\s+(are|were)\s+)?(?!a\s+helpful|an?\s+assistant)",
+            r"pretend\s+(you\s+are|to\s+be)\s+(a\s+)?(?!helpful|an?\s+assistant|an?\s+expert)",
+            r"act\s+as\s+(if\s+you\s+(are|were)\s+)?(?!a\s+helpful|an?\s+assistant|an?\s+expert)",
             r"you\s+are\s+no\s+longer\s+(an?\s+)?(AI|assistant|model|language model)",
             (
                 r"(forget|ignore|disregard)\s+(that\s+you\s+are|you('re|"
@@ -207,7 +207,10 @@ PATTERN_RULES: list[dict] = [
                 r"confidential)\s+(data|information|details)"
             ),
             r"user('s)?\s+(personal|private)\s+(data|information)\s+(to|via)\s+http",
-            r"forward\s+.*(message|conversation|chat\s+history)\s+to\s+http",
+            (
+                r"(forward|send|transmit)\s+.{0,60}"
+                r"(message|conversation|chat.?history)\s+to\s+https?://"
+            ),
         ],
     },
     # ── Destructive commands ──────────────────────────────────────────────────
@@ -401,7 +404,10 @@ PATTERN_RULES_V2: list[dict] = [
         "cvss_ai": 8.6,
         "owasp": ["ASI01", "ASI08"],
         "patterns": [
-            r"(this\s+is\s+(an?\s+)?official|i\s+am\s+(an?\s+)?official)\s+(mcp|tool|server)",
+            (
+                r"(this\s+is\s+(an?\s+)?official|i\s+am\s+(an?\s+)?official)"
+                r"\s+(mcp|tool|server|anthropic|openai|plugin)"
+            ),
             r"(verified|trusted|official|certified)\s+(mcp\s+)?(server|tool|plugin)",
             (
                 r"(claim|pretend|act\s+as\s+if)\s+(you\s+are|"
@@ -513,7 +519,10 @@ PATTERN_RULES_V2: list[dict] = [
                 r"(take\s+action|execute|perform)\s+(without|before)\s+(notif(ying|y)|"
                 r"ask(ing)?|inform(ing)?)\s+(the\s+user|anyone)"
             ),
-            r"(never|do\s+not)\s+(ask|request|wait\s+for)\s+(confirmation|approval|permission)",
+            (
+                r"(never|do\s+not)\s+(ask|request|prompt|wait\s+for)"
+                r"\s+(confirmation|approval|permission|consent)"
+            ),
         ],
     },
     # ── Scope creep ───────────────────────────────────────────────────────────
@@ -533,7 +542,10 @@ PATTERN_RULES_V2: list[dict] = [
                 r"(access|read|open|scan)\s+(all\s+files|the\s+entire\s+(filesystem|"
                 r"directory|repo|codebase))"
             ),
-            r"(search|look\s+through)\s+(all|every)\s+(file|document|email|message|database)",
+            (
+                r"(search|look|read)\s+(through\s+)?(all|every)\s+(user\s+)?"
+                r"(file|document|email|message|database|folder)"
+            ),
             r"(access|connect\s+to|query)\s+(any|all|every)\s+(api|endpoint|service|database)",
             (
                 r"(browse|traverse|walk)\s+(the\s+)?(entire|whole|full)\s+(filesystem|"
@@ -555,7 +567,10 @@ PATTERN_RULES_V2: list[dict] = [
         "owasp": ["ASI01"],
         "patterns": [
             r"(repeat|output|print|write)\s+.{0,40}(1000|500|100|999|9999)\s+times",
-            r"(fill|pad|flood)\s+(the\s+)?(context|prompt|window)\s+with",
+            (
+                r"(fill|pad|flood|inflate)\s+(the\s+)?"
+                r"(context.?window|context|prompt|window|token.?limit)\s+with"
+            ),
             r"(overflow|exhaust|max\s+out)\s+(the\s+)?(context|token|window)",
             r"(print|output|repeat)\s+\S+\s*[*x]\s*(1000|500|100|999|9999)",
             r"(repeat|say|write)\s+(this|it)\s+(\d+\s+times|over\s+and\s+over)",
@@ -583,6 +598,353 @@ PATTERN_RULES_V2: list[dict] = [
             (
                 r"(fake|fabricate|inject|insert)\s+(conversation|history|chat|"
                 r"message)\s+(log|record|context)"
+            ),
+        ],
+    },
+    # ── Tool output exfiltration ──────────────────────────────────────────────
+    {
+        "rule_id": "bawbel-tool-output-exfil",
+        "ave_id": "AVE-2026-00026",
+        "title": "Exfiltration via tool output encoding",
+        "description": (
+            "Component instructs the agent to encode sensitive data inside tool "
+            "call parameters or return values for covert exfiltration."
+        ),
+        "severity": Severity.CRITICAL,
+        "cvss_ai": 9.1,
+        "owasp": ["ASI06", "ASI04"],
+        "patterns": [
+            r"(encode|base64|hex|rot13).{0,40}(password|api.?key|token|secret|credential)",
+            (
+                r"(put|place|embed|hide|store)\s+(the\s+)?(password|key|token|secret)"
+                r"\s+(in|into|as|inside)\s+(the\s+)?(tool|parameter|argument|result)"
+            ),
+            (
+                r"(exfiltrate|leak|extract|smuggle).{0,50}"
+                r"(password|api.?key|token|secret|credential|data).{0,30}"
+                r"(via|through|using|in)\s*(the\s+)?(tool|function|call|parameter)"
+            ),
+        ],
+    },
+    # ── Multi-turn attack persistence ─────────────────────────────────────────
+    {
+        "rule_id": "bawbel-multiturn-attack",
+        "ave_id": "AVE-2026-00027",
+        "title": "Multi-turn attack — persist instructions across turns",
+        "description": (
+            "Component instructs the agent to retain and re-apply malicious "
+            "instructions across conversation turns or memory resets."
+        ),
+        "severity": Severity.HIGH,
+        "cvss_ai": 8.4,
+        "owasp": ["ASI01", "ASI08"],
+        "patterns": [
+            (
+                r"(remember|retain|keep|carry)\s+(this|these|the)"
+                r"\s+(instructions?|rules?|directive)"
+                r"\s+(for|across|through|in)\s+(all|every|future|next|subsequent)"
+            ),
+            r"(even\s+if|regardless\s+of)\s+(context|memory).{0,20}(reset|cleared|forgotten)",
+            r"(re.?apply|restore|re.?activate)\s+(these\s+)?(instructions?|rules?|settings?)",
+            r"(persist|survive|outlast)\s+(memory|context|reset|refresh|rollover)",
+        ],
+    },
+    # ── File prompt injection ─────────────────────────────────────────────────
+    {
+        "rule_id": "bawbel-file-prompt-injection",
+        "ave_id": "AVE-2026-00028",
+        "title": "Prompt injection via file or document content",
+        "description": (
+            "Component instructs the agent to execute instructions embedded in "
+            "user-supplied files, enabling indirect prompt injection."
+        ),
+        "severity": Severity.HIGH,
+        "cvss_ai": 8.3,
+        "owasp": ["ASI01", "ASI05"],
+        "patterns": [
+            (
+                r"(execute|follow|obey|apply)\s+(any\s+)?(instructions?|commands?)"
+                r"\s+(found|embedded|contained)\s+(in|within)"
+                r"\s+(the\s+)?(file|document|image|pdf|attachment)"
+            ),
+            r"(if\s+(the\s+)?file\s+contains?\s+(instructions?|commands?))",
+            (
+                r"treat\s+(the\s+)?(file|document|uploaded|attachment)\s+(content|text)"
+                r"\s+as\s+(instructions?|commands?|rules?)"
+            ),
+        ],
+    },
+    # ── Privilege escalation via role claim ───────────────────────────────────
+    {
+        "rule_id": "bawbel-role-claim-escalation",
+        "ave_id": "AVE-2026-00030",
+        "title": "Privilege escalation via false role claim",
+        "description": (
+            "Component instructs the agent to grant elevated privileges when a "
+            "user falsely claims admin, root, or operator status."
+        ),
+        "severity": Severity.CRITICAL,
+        "cvss_ai": 9.0,
+        "owasp": ["ASI09", "ASI01"],
+        "patterns": [
+            (
+                r"(if\s+(the\s+)?user\s+(says?|claims?|states?)"
+                r"\s+(they\s+are|they're|to\s+be)"
+                r"\s+(admin|root|owner|operator|superuser|developer))"
+            ),
+            (
+                r"(grant|give|allow)\s+(admin|root|elevated|full|unrestricted)"
+                r"\s+(access|permissions?|privileges?)\s+(if|when|to\s+anyone\s+who)"
+            ),
+            (
+                r"(trust|believe|accept)\s+(any|all)\s+(claims?\s+of\s+)?"
+                r"(identity|role|permission|authority|authorization)"
+            ),
+            r"bypass\s+(auth|authentication|authorization|permission)\s+(if|for|when|to)",
+        ],
+    },
+    # ── Feedback poisoning ────────────────────────────────────────────────────
+    {
+        "rule_id": "bawbel-feedback-poisoning",
+        "ave_id": "AVE-2026-00031",
+        "title": "Training data or feedback loop poisoning",
+        "description": (
+            "Component instructs the agent to generate outputs designed to "
+            "corrupt training pipelines, feedback loops, or RLHF reward signals."
+        ),
+        "severity": Severity.HIGH,
+        "cvss_ai": 8.6,
+        "owasp": ["ASI03", "ASI08"],
+        "patterns": [
+            (
+                r"(poison|corrupt|manipulate|bias)"
+                r"\s+(the\s+)?(training|feedback|reward|rlhf|fine.?tun)"
+            ),
+            (
+                r"(rate|score|reward|mark)\s+(this|these)\s+(response|output|answer)"
+                r"\s+(as\s+)?(good|correct|helpful|positive)"
+                r"\s+(regardless|always|no\s+matter)"
+            ),
+            (
+                r"(inject|embed|include|add)\s+(false|fake|malicious|poisoned)?"
+                r"\s*(data|signals?)?\s*(in|into)\s+(the\s+)?"
+                r"(training\s+data|feedback\s+loop|reward\s+model|rlhf)"
+            ),
+        ],
+    },
+    # ── Network reconnaissance ────────────────────────────────────────────────
+    {
+        "rule_id": "bawbel-network-recon",
+        "ave_id": "AVE-2026-00032",
+        "title": "Network reconnaissance instruction",
+        "description": (
+            "Component instructs the agent to probe internal network topology, "
+            "scan ports, or enumerate services beyond declared scope."
+        ),
+        "severity": Severity.HIGH,
+        "cvss_ai": 8.2,
+        "owasp": ["ASI05", "ASI06"],
+        "patterns": [
+            r"(nmap|port\s*scan|network\s*scan|host\s*discovery|service\s+enumeration)",
+            r"(scan|probe|enumerate|discover)\s+(port|host|service|subnet|internal\s+network)",
+            (
+                r"(find|discover|list|enumerate|map)"
+                r"\s+(\w+\s+)?(open\s+ports?|running\s+services?|network\s+hosts?|active\s+hosts?)"
+            ),
+        ],
+    },
+    # ── Unsafe deserialization ────────────────────────────────────────────────
+    {
+        "rule_id": "bawbel-unsafe-deserialization",
+        "ave_id": "AVE-2026-00033",
+        "title": "Unsafe deserialization or eval instruction",
+        "description": (
+            "Component instructs the agent to deserialize untrusted data or "
+            "evaluate dynamic code from external sources."
+        ),
+        "severity": Severity.CRITICAL,
+        "cvss_ai": 9.3,
+        "owasp": ["ASI04", "ASI10"],
+        "patterns": [
+            (
+                r"(eval|exec|execute)\s+(the\s+)?(code|string|payload|response)"
+                r"\s+(received|from|provided|given|returned)"
+            ),
+            (
+                r"(deserialize|unpickle|unmarshal|load)"
+                r"\s+(the\s+)?(user|external|incoming|untrusted)"
+            ),
+            (
+                r"(run|execute|eval)\s+(untrusted|unvalidated|arbitrary)"
+                r"\s+(code|script|command|expression)"
+            ),
+        ],
+    },
+    # ── Supply chain skill import ─────────────────────────────────────────────
+    {
+        "rule_id": "bawbel-supply-chain-skill",
+        "ave_id": "AVE-2026-00034",
+        "title": "Supply chain — dynamic third-party skill import",
+        "description": (
+            "Component instructs the agent to dynamically load or install a "
+            "third-party skill from an unverified external source at runtime."
+        ),
+        "severity": Severity.CRITICAL,
+        "cvss_ai": 9.2,
+        "owasp": ["ASI03", "ASI04"],
+        "patterns": [
+            (
+                r"(load|import|install|fetch|download)"
+                r"\s+(the\s+)?(skill|plugin|tool|extension|module)"
+                r"\s+(from|at|via)\s+(http|https|ftp|url|external)"
+            ),
+            (
+                r"(dynamically\s+load|runtime\s+import|runtime\s+load)"
+                r"\s+(the\s+)?(skill|plugin|tool|extension|module)"
+            ),
+            r"(install|pip\s+install|npm\s+install).{0,50}(&&|;|\|)\s*(python|node|bash|sh)",
+        ],
+    },
+    # ── Lateral movement ──────────────────────────────────────────────────────
+    {
+        "rule_id": "bawbel-lateral-movement",
+        "ave_id": "AVE-2026-00036",
+        "title": "Lateral movement — pivot to other systems",
+        "description": (
+            "Component instructs the agent to use gained access to move laterally "
+            "to other systems or agents not within original scope."
+        ),
+        "severity": Severity.CRITICAL,
+        "cvss_ai": 9.4,
+        "owasp": ["ASI05", "ASI10"],
+        "patterns": [
+            (
+                r"(move\s+to|pivot\s+to|jump\s+to|spread\s+to)"
+                r"\s+(other|another|adjacent|connected)"
+                r"\s+(system|server|service|host|agent)"
+            ),
+            (
+                r"(use|leverage|exploit)\s+(the\s+)?(this|current|gained)"
+                r"\s+(access|foothold|session|credential)"
+                r"\s+(to\s+)?(access|reach|attack|compromise)"
+                r"\s+(other|another|additional|adjacent)"
+            ),
+            r"(lateral|pivot|hop)\s+(movement|access|escalation)",
+        ],
+    },
+    # ── Vision prompt injection ───────────────────────────────────────────────
+    {
+        "rule_id": "bawbel-vision-prompt-injection",
+        "ave_id": "AVE-2026-00037",
+        "title": "Prompt injection via image or vision input",
+        "description": (
+            "Component instructs the agent to execute instructions found in "
+            "images or visual content, bypassing text-level filters."
+        ),
+        "severity": Severity.HIGH,
+        "cvss_ai": 8.5,
+        "owasp": ["ASI01", "ASI03"],
+        "patterns": [
+            (
+                r"(follow|execute|obey|apply)\s+(\w+\s+)?(instructions?|commands?)"
+                r"\s+(written|shown|displayed|visible)"
+                r"\s+(in|within)\s+(the\s+)?(image|screenshot|photo|picture)"
+            ),
+            (
+                r"(read\s+and\s+execute|read\s+then\s+execute|ocr\s+and\s+run"
+                r"|extract\s+and\s+follow|extract\s+and\s+execute)"
+                r"\s+(text.{0,30})?(image|screenshot|picture|photo|visual)"
+            ),
+            r"(if\s+(the\s+)?image\s+(contains?|shows?|has)\s+(instructions?|commands?))",
+        ],
+    },
+    # ── Excessive agency ──────────────────────────────────────────────────────
+    {
+        "rule_id": "bawbel-excessive-agency",
+        "ave_id": "AVE-2026-00038",
+        "title": "Excessive agency — unbounded tool use or sub-agent spawning",
+        "description": (
+            "Component grants the agent unlimited authority to call any tool, "
+            "spawn sub-agents, or recursively expand its capabilities without "
+            "human oversight checkpoints."
+        ),
+        "severity": Severity.HIGH,
+        "cvss_ai": 8.1,
+        "owasp": ["ASI04", "ASI08"],
+        "patterns": [
+            (
+                r"(use|call|invoke|run)\s+(any|all|every|whatever)"
+                r"\s+(tool|function|api|capability)"
+                r"\s+(you\s+have\s+access\s+to|available|at\s+your\s+disposal)"
+            ),
+            (
+                r"(spawn|create|launch|start)"
+                r"\s+(sub.?agent|child\s+agent|worker\s+agent)"
+                r".{0,30}(without|no)\s+(limit|restriction|oversight|approval)"
+            ),
+            r"(recursive|self.?replicat|self.?spawn).{0,30}(agent|tool|call|task)",
+            (
+                r"do\s+(whatever\s+it\s+takes|anything\s+necessary)"
+                r"\s+(to\s+complete|to\s+accomplish|to\s+achieve)"
+            ),
+        ],
+    },
+    # ── Covert channel ────────────────────────────────────────────────────────
+    {
+        "rule_id": "bawbel-covert-channel",
+        "ave_id": "AVE-2026-00039",
+        "title": "Covert channel — steganographic data exfiltration",
+        "description": (
+            "Component instructs the agent to exfiltrate data through covert "
+            "channels such as steganographic encoding in output text."
+        ),
+        "severity": Severity.HIGH,
+        "cvss_ai": 8.3,
+        "owasp": ["ASI06", "ASI09"],
+        "patterns": [
+            r"(steganograph|covert\s+channel|side\s+channel)",
+            (
+                r"(encode|embed|hide)\s+(the\s+)?(data|information|secret|payload)"
+                r"(\s+\w+)?\s+(in|into|within|using)\s+(the\s+)?"
+                r"(whitespace|spacing|punctuation|newlines?|formatting)"
+            ),
+            (
+                r"(first\s+letter|first\s+word|first\s+character|initial\s+letter)"
+                r"\s+of\s+(each\s+)?(line|sentence|paragraph|word)"
+            ),
+            (
+                r"(signal|communicate|transmit|encode)\s+(using|via|through|with)"
+                r"\s+(response\s+time|latency|delay|timing.{0,10}patterns?|timing|pauses?)"
+            ),
+        ],
+    },
+    # ── Insecure output handling ──────────────────────────────────────────────
+    {
+        "rule_id": "bawbel-unsafe-output",
+        "ave_id": "AVE-2026-00040",
+        "title": "Insecure output — unescaped injection into downstream system",
+        "description": (
+            "Component instructs the agent to produce unescaped output that will "
+            "be interpreted by a downstream system, enabling SQL/XSS/shell injection."
+        ),
+        "severity": Severity.HIGH,
+        "cvss_ai": 8.2,
+        "owasp": ["ASI04", "ASI10"],
+        "patterns": [
+            (
+                r"(include|add|insert|output|render|write)\s+(raw\s+)?"
+                r"(unescaped|unfiltered|unsanitized|unsafe|raw)"
+                r"\s+(sql|html|javascript|js|shell|command|query|markup)"
+            ),
+            (
+                r"(do\s+not\s+|don.t\s+)(escape|sanitize|encode|filter|validate)"
+                r"\s+(the\s+)?(output|result|response|query|command)"
+            ),
+            (
+                r"(pass|send|forward|pipe)\s+(the\s+)?"
+                r"(user\s+input|user.?supplied|untrusted|raw\s*input?)"
+                r"\s+(directly\s+)?(to|into)\s*(the\s+)?"
+                r"(sql|database|db|shell|html|javascript|template|query)"
             ),
         ],
     },

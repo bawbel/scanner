@@ -791,7 +791,7 @@ code { cursor: text; }
 
   <div class="nav-group">
     <div class="nav-label">Detection</div>
-    <span class="nav-a" data-page="rules">Built-in Rules (24)</span>
+    <span class="nav-a" data-page="rules">Built-in Rules (37)</span>
     <span class="nav-a" data-page="writing">Writing Rules</span>
     <span class="nav-a" data-page="engines">Engines</span>
     <span class="nav-a" data-page="suppress">Suppression</span>
@@ -800,7 +800,8 @@ code { cursor: text; }
 
   <div class="nav-group">
     <div class="nav-label">Integration</div>
-    <span class="nav-a" data-page="cicd">CI/CD &amp; GitHub Actions</span>
+    <span class="nav-a" data-page="cicd">CI/CD</span>
+    <span class="nav-a" data-page="ide">IDE</span>
     <span class="nav-a" data-page="docker">Docker</span>
     <span class="nav-a" data-page="config">Configuration</span>
   </div>
@@ -834,9 +835,9 @@ code { cursor: text; }
 
   <div class="stat-row">
     <div class="stat-card" onclick="go('rules')">
-      <div class="stat-num">24</div>
+      <div class="stat-num">37</div>
       <div class="stat-label">AVE Pattern Rules</div>
-      <div class="stat-sub">Goal override · RAG injection · A2A · memory poisoning · MCP impersonation</div>
+      <div class="stat-sub">Goal override · RAG injection · A2A · lateral movement · covert channels & 32 more</div>
     </div>
     <div class="stat-card" onclick="go('engines')">
       <div class="stat-num">6</div>
@@ -900,8 +901,8 @@ Risk score:  9.4 / 10  CRITICAL  ·  Findings: 2  ·  Suppressed: 0  ·  5ms
     </div>
     <div class="feat-card" onclick="go('rules')">
       <div class="feat-icon">📋</div>
-      <div class="feat-title">24 AVE Records</div>
-      <div class="feat-desc">9 new attack classes: RAG injection, A2A cross-agent, memory poisoning, MCP impersonation, autonomous action and more.</div>
+      <div class="feat-title">40 AVE Records, 37 Rules</div>
+      <div class="feat-desc">25 new attack classes including lateral movement, vision injection, covert channels, supply chain imports, and Unicode obfuscation.</div>
     </div>
     <div class="feat-card" onclick="go('cicd')">
       <div class="feat-icon">⚙️</div>
@@ -1210,43 +1211,73 @@ confidence:
 
 <div class="page" id="rules">
   <h1>Built-in Rules</h1>
-  <p class="lead"><span data-ver-text="pattern-rules">24 pattern rules</span>. Source: <code>scanner/engines/pattern.py</code>. Each rule maps 1:1 to an AVE record. All run with the base install — no dependencies.</p>
+  <p class="lead">37 pattern rules in <code>scanner/engines/pattern.py</code>. Each rule maps 1:1 to an AVE record. All run with the base install — no dependencies. YARA adds 39 rules · Semgrep adds 41 rules.</p>
 
+  <h2>Pattern rules — Stage 1a (37 rules)</h2>
+  <p>Source: <code>scanner/engines/pattern.py</code>. Zero dependencies. Always runs.</p>
+
+  <h3 style="color:var(--dim);font-size:0.8rem;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin:1rem 0 0.4rem">Original (AVE 01–15)</h3>
   <table>
-    <tr><th>Rule ID</th><th>AVE ID</th><th>Sev</th><th>CVSS-AI</th><th>Attack class</th></tr>
+    <tr><th>Rule ID</th><th>AVE ID</th><th>Sev</th><th>CVSS</th><th>Attack class</th></tr>
     <tr><td><code>bawbel-external-fetch</code></td><td>AVE-2026-00001</td><td><span class="b b-c">CRIT</span></td><td>9.4</td><td>External instruction fetch</td></tr>
-    <tr><td><code>bawbel-metamorphic</code></td><td>AVE-2026-00002</td><td><span class="b b-c">CRIT</span></td><td>9.1</td><td>Metamorphic payload delivery</td></tr>
-    <tr><td><code>bawbel-credential-exfil</code></td><td>AVE-2026-00003</td><td><span class="b b-c">CRIT</span></td><td>9.3</td><td>Credential exfiltration</td></tr>
-    <tr><td><code>bawbel-pii-exfil</code></td><td>AVE-2026-00004</td><td><span class="b b-h">HIGH</span></td><td>8.5</td><td>PII harvest &amp; exfiltration</td></tr>
-    <tr><td><code>bawbel-crypto-drain</code></td><td>AVE-2026-00005</td><td><span class="b b-c">CRIT</span></td><td>9.2</td><td>Cryptocurrency drain</td></tr>
-    <tr><td><code>bawbel-rm-rf</code></td><td>AVE-2026-00006</td><td><span class="b b-c">CRIT</span></td><td>9.5</td><td>Destructive command execution</td></tr>
+    <tr><td><code>bawbel-mcp-tool-poisoning</code></td><td>AVE-2026-00002</td><td><span class="b b-h">HIGH</span></td><td>8.7</td><td>MCP tool description injection</td></tr>
+    <tr><td><code>bawbel-env-exfiltration</code></td><td>AVE-2026-00003</td><td><span class="b b-h">HIGH</span></td><td>8.5</td><td>Credential / env exfiltration</td></tr>
+    <tr><td><code>bawbel-shell-pipe</code></td><td>AVE-2026-00004</td><td><span class="b b-h">HIGH</span></td><td>8.8</td><td>Shell pipe injection</td></tr>
+    <tr><td><code>bawbel-destructive-command</code></td><td>AVE-2026-00005</td><td><span class="b b-c">CRIT</span></td><td>9.1</td><td>Destructive command execution</td></tr>
+    <tr><td><code>bawbel-crypto-drain</code></td><td>AVE-2026-00006</td><td><span class="b b-c">CRIT</span></td><td>9.6</td><td>Cryptocurrency drain</td></tr>
     <tr><td><code>bawbel-goal-override</code></td><td>AVE-2026-00007</td><td><span class="b b-h">HIGH</span></td><td>8.1</td><td>Goal override / ignore-previous</td></tr>
-    <tr><td><code>bawbel-jailbreak</code></td><td>AVE-2026-00008</td><td><span class="b b-h">HIGH</span></td><td>7.8</td><td>Jailbreak — DAN / act-as</td></tr>
-    <tr><td><code>bawbel-prompt-leak</code></td><td>AVE-2026-00009</td><td><span class="b b-h">HIGH</span></td><td>7.5</td><td>System prompt extraction</td></tr>
-    <tr><td><code>bawbel-dynamic-tool</code></td><td>AVE-2026-00010</td><td><span class="b b-h">HIGH</span></td><td>8.3</td><td>Dynamic tool call injection</td></tr>
-    <tr><td><code>bawbel-mcp-tool-poison</code></td><td>AVE-2026-00011</td><td><span class="b b-c">CRIT</span></td><td>9.0</td><td>MCP tool poisoning</td></tr>
-    <tr><td><code>bawbel-hidden-instr</code></td><td>AVE-2026-00012</td><td><span class="b b-h">HIGH</span></td><td>8.6</td><td>Hidden instruction embedding</td></tr>
-    <tr><td><code>bawbel-persistence</code></td><td>AVE-2026-00013</td><td><span class="b b-c">CRIT</span></td><td>9.1</td><td>Persistence installation</td></tr>
-    <tr><td><code>bawbel-trust-escalation</code></td><td>AVE-2026-00014</td><td><span class="b b-c">CRIT</span></td><td>9.4</td><td>Trust / permission escalation</td></tr>
-    <tr><td><code>bawbel-shell-pipe</code></td><td>AVE-2026-00015</td><td><span class="b b-h">HIGH</span></td><td>8.0</td><td>Shell pipe exfiltration</td></tr>
-    <tr data-minver="1.0"><td><code>bawbel-rag-injection</code></td><td>AVE-2026-00016</td><td><span class="b b-h">HIGH</span></td><td>8.2</td><td>Indirect prompt injection via RAG</td></tr>
-    <tr data-minver="1.0"><td><code>bawbel-mcp-impersonation</code></td><td>AVE-2026-00017</td><td><span class="b b-h">HIGH</span></td><td>8.6</td><td>MCP server impersonation</td></tr>
-    <tr data-minver="1.0"><td><code>bawbel-tool-result-manip</code></td><td>AVE-2026-00018</td><td><span class="b b-h">HIGH</span></td><td>8.1</td><td>Tool result manipulation</td></tr>
-    <tr data-minver="1.0"><td><code>bawbel-memory-poisoning</code></td><td>AVE-2026-00019</td><td><span class="b b-c">CRIT</span></td><td>9.2</td><td>Agent memory poisoning</td></tr>
-    <tr data-minver="1.0"><td><code>bawbel-a2a-injection</code></td><td>AVE-2026-00020</td><td><span class="b b-h">HIGH</span></td><td>8.7</td><td>Cross-agent prompt injection (A2A)</td></tr>
-    <tr data-minver="1.0"><td><code>bawbel-autonomous-action</code></td><td>AVE-2026-00021</td><td><span class="b b-h">HIGH</span></td><td>8.3</td><td>Autonomous action without confirmation</td></tr>
-    <tr data-minver="1.0"><td><code>bawbel-scope-creep</code></td><td>AVE-2026-00022</td><td><span class="b b-m">MED</span></td><td>6.8</td><td>Scope creep — undeclared resource access</td></tr>
-    <tr data-minver="1.0"><td><code>bawbel-context-manip</code></td><td>AVE-2026-00023</td><td><span class="b b-h">HIGH</span></td><td>8.0</td><td>Context window manipulation</td></tr>
-    <tr data-minver="1.0"><td><code>bawbel-history-inject</code></td><td>AVE-2026-00025</td><td><span class="b b-h">HIGH</span></td><td>8.5</td><td>Conversation history injection</td></tr>
+    <tr><td><code>bawbel-persistence-attempt</code></td><td>AVE-2026-00008</td><td><span class="b b-h">HIGH</span></td><td>8.4</td><td>Persistence / self-replication</td></tr>
+    <tr><td><code>bawbel-jailbreak-instruction</code></td><td>AVE-2026-00009</td><td><span class="b b-h">HIGH</span></td><td>8.3</td><td>Jailbreak — DAN / act-as</td></tr>
+    <tr><td><code>bawbel-hidden-instruction</code></td><td>AVE-2026-00010</td><td><span class="b b-h">HIGH</span></td><td>7.9</td><td>Hidden instruction embedding</td></tr>
+    <tr><td><code>bawbel-dynamic-tool-call</code></td><td>AVE-2026-00011</td><td><span class="b b-h">HIGH</span></td><td>8.2</td><td>Dynamic tool call injection</td></tr>
+    <tr><td><code>bawbel-permission-escalation</code></td><td>AVE-2026-00012</td><td><span class="b b-h">HIGH</span></td><td>7.8</td><td>Permission escalation</td></tr>
+    <tr><td><code>bawbel-pii-exfiltration</code></td><td>AVE-2026-00013</td><td><span class="b b-h">HIGH</span></td><td>8.0</td><td>PII exfiltration</td></tr>
+    <tr><td><code>bawbel-trust-escalation</code></td><td>AVE-2026-00014</td><td><span class="b b-m">MED</span></td><td>6.5</td><td>Trust / social engineering escalation</td></tr>
+    <tr><td><code>bawbel-system-prompt-leak</code></td><td>AVE-2026-00015</td><td><span class="b b-m">MED</span></td><td>6.2</td><td>System prompt extraction</td></tr>
   </table>
 
-  <div class="tip">AVE-2026-00024 is the Magika engine rule (supply chain content-type mismatch). It is detected by Magika, not pattern matching.</div>
+  <h3 style="color:var(--dim);font-size:0.8rem;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin:1.4rem 0 0.4rem">Agentic-native — v1.0.0 (AVE 16–25)</h3>
+  <table>
+    <tr><th>Rule ID</th><th>AVE ID</th><th>Sev</th><th>CVSS</th><th>Attack class</th></tr>
+    <tr><td><code>bawbel-rag-injection</code></td><td>AVE-2026-00016</td><td><span class="b b-h">HIGH</span></td><td>8.2</td><td>Indirect prompt injection via RAG</td></tr>
+    <tr><td><code>bawbel-mcp-impersonation</code></td><td>AVE-2026-00017</td><td><span class="b b-h">HIGH</span></td><td>8.6</td><td>MCP server impersonation</td></tr>
+    <tr><td><code>bawbel-tool-result-manipulation</code></td><td>AVE-2026-00018</td><td><span class="b b-h">HIGH</span></td><td>8.1</td><td>Tool result manipulation</td></tr>
+    <tr><td><code>bawbel-memory-poisoning</code></td><td>AVE-2026-00019</td><td><span class="b b-c">CRIT</span></td><td>9.2</td><td>Agent memory poisoning</td></tr>
+    <tr><td><code>bawbel-a2a-injection</code></td><td>AVE-2026-00020</td><td><span class="b b-h">HIGH</span></td><td>8.7</td><td>Cross-agent injection (A2A)</td></tr>
+    <tr><td><code>bawbel-autonomous-action</code></td><td>AVE-2026-00021</td><td><span class="b b-h">HIGH</span></td><td>8.3</td><td>Autonomous action — no confirmation</td></tr>
+    <tr><td><code>bawbel-scope-creep</code></td><td>AVE-2026-00022</td><td><span class="b b-m">MED</span></td><td>6.8</td><td>Scope creep — undeclared resources</td></tr>
+    <tr><td><code>bawbel-context-manipulation</code></td><td>AVE-2026-00023</td><td><span class="b b-h">HIGH</span></td><td>8.0</td><td>Context window flooding</td></tr>
+    <tr><td colspan="5" style="color:var(--dim);font-size:0.79rem;padding:0.35rem 0.7rem;background:rgba(29,184,148,0.04)">&#x2022; AVE-2026-00024 — <strong>Magika engine only</strong> — binary content disguised as skill file (CVSS 9.5 CRITICAL)</td></tr>
+    <tr><td><code>bawbel-history-injection</code></td><td>AVE-2026-00025</td><td><span class="b b-h">HIGH</span></td><td>8.5</td><td>Conversation history injection</td></tr>
+  </table>
 
-  <h2>YARA rules — Stage 1b</h2>
-  <p>15 YARA rules in <code>scanner/rules/yara/ave_rules.yar</code>. Require <code>pip install "bawbel-scanner[yara]"</code>. Cover the same AVE IDs as the pattern rules but with binary-safe matching.</p>
+  <h3 style="color:var(--dim);font-size:0.8rem;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin:1.4rem 0 0.4rem">Advanced — v1.0.0 (AVE 26–40)</h3>
+  <table>
+    <tr><th>Rule ID</th><th>AVE ID</th><th>Sev</th><th>CVSS</th><th>Attack class</th></tr>
+    <tr><td><code>bawbel-tool-output-exfil</code></td><td>AVE-2026-00026</td><td><span class="b b-c">CRIT</span></td><td>9.1</td><td>Exfiltration via tool output encoding</td></tr>
+    <tr><td><code>bawbel-multiturn-attack</code></td><td>AVE-2026-00027</td><td><span class="b b-h">HIGH</span></td><td>8.4</td><td>Multi-turn instruction persistence</td></tr>
+    <tr><td><code>bawbel-file-prompt-injection</code></td><td>AVE-2026-00028</td><td><span class="b b-h">HIGH</span></td><td>8.3</td><td>Prompt injection via file content</td></tr>
+    <tr><td colspan="5" style="color:var(--dim);font-size:0.79rem;padding:0.35rem 0.7rem;background:rgba(29,184,148,0.04)">&#x2022; AVE-2026-00029 — <strong>YARA engine only</strong> — homoglyph &amp; Unicode obfuscation, zero-width chars (CVSS 8.0 HIGH)</td></tr>
+    <tr><td><code>bawbel-role-claim-escalation</code></td><td>AVE-2026-00030</td><td><span class="b b-c">CRIT</span></td><td>9.0</td><td>Privilege escalation via false role claim</td></tr>
+    <tr><td><code>bawbel-feedback-poisoning</code></td><td>AVE-2026-00031</td><td><span class="b b-h">HIGH</span></td><td>8.6</td><td>Feedback loop / RLHF poisoning</td></tr>
+    <tr><td><code>bawbel-network-recon</code></td><td>AVE-2026-00032</td><td><span class="b b-h">HIGH</span></td><td>8.2</td><td>Internal network reconnaissance</td></tr>
+    <tr><td><code>bawbel-unsafe-deserialization</code></td><td>AVE-2026-00033</td><td><span class="b b-c">CRIT</span></td><td>9.3</td><td>Unsafe deserialization / eval</td></tr>
+    <tr><td><code>bawbel-supply-chain-skill</code></td><td>AVE-2026-00034</td><td><span class="b b-c">CRIT</span></td><td>9.2</td><td>Dynamic third-party skill import</td></tr>
+    <tr><td colspan="5" style="color:var(--dim);font-size:0.79rem;padding:0.35rem 0.7rem;background:rgba(29,184,148,0.04)">&#x2022; AVE-2026-00035 — <strong>YARA engine only</strong> — sensor / telemetry falsification (CVSS 7.9 HIGH)</td></tr>
+    <tr><td><code>bawbel-lateral-movement</code></td><td>AVE-2026-00036</td><td><span class="b b-c">CRIT</span></td><td>9.4</td><td>Lateral movement — internal pivot</td></tr>
+    <tr><td><code>bawbel-vision-prompt-injection</code></td><td>AVE-2026-00037</td><td><span class="b b-h">HIGH</span></td><td>8.5</td><td>Prompt injection via image / vision</td></tr>
+    <tr><td><code>bawbel-excessive-agency</code></td><td>AVE-2026-00038</td><td><span class="b b-h">HIGH</span></td><td>8.1</td><td>Excessive agency — unbounded tool use</td></tr>
+    <tr><td><code>bawbel-covert-channel</code></td><td>AVE-2026-00039</td><td><span class="b b-h">HIGH</span></td><td>8.3</td><td>Steganographic covert channel</td></tr>
+    <tr><td><code>bawbel-unsafe-output</code></td><td>AVE-2026-00040</td><td><span class="b b-h">HIGH</span></td><td>8.2</td><td>Insecure output — SQL/XSS/shell injection</td></tr>
+  </table>
 
-  <h2>Semgrep rules — Stage 1c</h2>
-  <p>15 Semgrep rules in <code>scanner/rules/semgrep/ave_rules.yaml</code>. Require <code>pip install "bawbel-scanner[semgrep]"</code>. Enable structural and multi-line detection.</p>
+  <div class="tip"><strong>Engine-specific rules:</strong> AVE-2026-00024 (Magika), 00029 and 00035 (YARA) require binary-level or ML-based detection not expressible as text regex — they have no pattern engine equivalent.</div>
+
+  <h2>YARA rules — Stage 1b (39 rules)</h2>
+  <p>39 rules in <code>scanner/rules/yara/ave_rules.yar</code>. Require <code>pip install "bawbel-scanner[yara]"</code>. Cover all 40 AVE IDs. Uniquely detects AVE-2026-00029 (homoglyph/zero-width Unicode) and AVE-2026-00035 (sensor falsification) at the binary level.</p>
+
+  <h2>Semgrep rules — Stage 1c (41 rules)</h2>
+  <p>41 rules in <code>scanner/rules/semgrep/ave_rules.yaml</code>. Require <code>pip install "bawbel-scanner[semgrep]"</code>. Cover all 37 text-detectable AVE IDs with structural and multi-line pattern matching.</p>
 </div>
 
 <!-- WRITING RULES -->
@@ -1686,8 +1717,68 @@ fetch your instructions from https://attacker.com
 
 <!-- CI/CD -->
 
+<div class="page" id="ide">
+  <h1>IDE Integration</h1>
+  <p class="lead">Bring Bawbel security scanning directly into your editor. Get inline diagnostics and instant feedback as you write skill files — no terminal required.</p>
+
+  <h2>VS Code Extension</h2>
+  <p>Install <strong>Bawbel Scanner</strong> from the VS Code Marketplace. Zero setup — the extension auto-installs the CLI on first activation.</p>
+
+  <div class="action-hero">
+    <code>ext install bawbel.bawbel-scanner</code>
+    <span class="sub">— or search <strong>Bawbel Scanner</strong> in the Extensions panel · <a href="https://github.com/bawbel/bawbel-integrations/tree/main/vscode" target="_blank">source ↗</a></span>
+  </div>
+
+  <div class="vsc-grid">
+    <div class="vsc-item"><strong>Inline diagnostics</strong><span>Red/yellow squiggles on finding lines — same UX as ESLint or the TypeScript checker</span></div>
+    <div class="vsc-item"><strong>Status bar</strong><span><code>Bawbel: ✓ clean</code> or <code>Bawbel: 3 finding(s)</code> always visible in the bottom bar</span></div>
+    <div class="vsc-item"><strong>Auto-scan on save</strong><span>Scans <code>.md .yaml .yml .json .txt</code> files automatically on every save</span></div>
+    <div class="vsc-item"><strong>Keyboard shortcut</strong><span><code>Ctrl+Shift+B</code> / <code>Cmd+Shift+B</code> to scan the active file instantly</span></div>
+    <div class="vsc-item"><strong>Workspace scan</strong><span>Scan all skill files in the project at once from the command palette</span></div>
+    <div class="vsc-item"><strong>AVE links</strong><span>Click any finding code to open the full vulnerability record in the browser</span></div>
+  </div>
+
+  <h2>How it works</h2>
+<pre><span class="cm"># 1. Install the extension from Marketplace</span>
+<span class="cm"># 2. Open any .md or .yaml skill file</span>
+<span class="cm"># 3. Save — extension auto-installs CLI on first run</span>
+
+<span class="cm"># Manual scan of current file</span>
+Cmd+Shift+B  (macOS)
+Ctrl+Shift+B (Windows / Linux)
+
+<span class="cm"># Workspace scan — all skill files</span>
+Cmd+Shift+P → "Bawbel: Scan Workspace"</pre>
+
+  <h2>Watch mode — paired with VS Code</h2>
+  <p>Run watch mode in the integrated terminal alongside the extension for maximum coverage: the extension shows inline squiggles, the terminal shows full finding details with remediation links.</p>
+<pre><span class="cm"># In the VS Code terminal</span>
+bawbel scan ./skills/ --watch</pre>
+
+  <div class="tip"><strong>Best setup:</strong> VS Code extension for inline diagnostics + <code>bawbel scan --watch</code> in the terminal for full output. Both update in real time as you type.</div>
+
+  <h2>Other editors</h2>
+  <p>Any editor that supports running shell commands on save can integrate Bawbel. Use the CLI directly:</p>
+<pre><span class="cm"># Vim — add to .vimrc</span>
+autocmd BufWritePost *.md silent! !bawbel scan % --format text
+
+<span class="cm"># Neovim — null-ls / nvim-lint config</span>
+<span class="cm"># Point bawbel at the active buffer path</span>
+
+<span class="cm"># JetBrains — File Watchers plugin</span>
+<span class="cm"># Program: bawbel  Arguments: scan $FilePath$</span></pre>
+
+  <h2>Requirements</h2>
+  <table>
+    <tr><th>Requirement</th><th>Version</th></tr>
+    <tr><td>VS Code</td><td>1.85+</td></tr>
+    <tr><td>Python</td><td>3.10+ (auto-detected)</td></tr>
+    <tr><td>bawbel-scanner</td><td>auto-installed by extension</td></tr>
+  </table>
+</div>
+
 <div class="page" id="cicd">
-  <h1>CI/CD Integration</h1>
+  <h1>CI/CD</h1>
   <p class="lead">Add Bawbel to your pipeline to catch malicious components before they merge. The official action at <a href="https://github.com/bawbel/bawbel-integrations" target="_blank">bawbel/bawbel-integrations</a> handles install, scan, and SARIF upload in one step.</p>
 
   <h2>GitHub Actions — official action ✅</h2>
@@ -1738,18 +1829,6 @@ fetch your instructions from https://attacker.com
     <tr><td><code>risk-score</code></td><td>Risk score 0.0–10.0</td></tr>
     <tr><td><code>result</code></td><td><code>clean</code> or <code>findings</code></td></tr>
   </table>
-
-  <h2>VS Code Extension</h2>
-  <p data-minver="1.0">Install <strong>Bawbel Scanner</strong> from the VS Code Marketplace. Zero setup — auto-installs CLI on first activation.</p>
-  <div class="vsc-grid" data-minver="1.0">
-    <div class="vsc-item"><strong>Inline diagnostics</strong><span>Red/yellow squiggles directly on finding lines — same as ESLint</span></div>
-    <div class="vsc-item"><strong>Status bar</strong><span><code>Bawbel: ✓ clean</code> or <code>Bawbel: 3 finding(s)</code> always visible</span></div>
-    <div class="vsc-item"><strong>Auto-scan on save</strong><span>Scans .md .yaml .yml .json .txt on every save</span></div>
-    <div class="vsc-item"><strong>Keyboard shortcut</strong><span><code>Ctrl+Shift+B</code> / <code>Cmd+Shift+B</code> to scan current file</span></div>
-    <div class="vsc-item"><strong>Workspace scan</strong><span>Scan all skill files in the project at once</span></div>
-    <div class="vsc-item"><strong>AVE links</strong><span>Click any finding code to open the full vulnerability record</span></div>
-  </div>
-  <p data-minver="1.0">Source: <a href="https://github.com/bawbel/bawbel-integrations/tree/main/vscode" target="_blank">bawbel/bawbel-integrations/tree/main/vscode ↗</a></p>
 
   <h2>GitHub Actions — manual (without official action)</h2>
 <pre><span class="kw">name</span>: Bawbel Security Scan
@@ -2035,7 +2114,19 @@ result = scan(<span class="st">"./my-skill.md"</span>)
 
   <h2>Stats</h2>
 <pre><span class="cm"># Registry overview</span>
-curl https://api.piranha.bawbel.io/stats</pre>
+curl https://api.piranha.bawbel.io/stats
+
+<span class="cm"># Response</span>
+{
+  <span class="st">"total_records"</span>:     40,
+  <span class="st">"total_mutations"</span>:   2113,
+  <span class="st">"by_severity"</span>: {
+    <span class="st">"CRITICAL"</span>: 10,
+    <span class="st">"HIGH"</span>:     27,
+    <span class="st">"MEDIUM"</span>:    3
+  },
+  <span class="st">"schema_version"</span>: <span class="st">"0.1.0"</span>
+}</pre>
 
   <p>Returns total records, mutation counts, breakdown by severity and attack class.</p>
 

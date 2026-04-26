@@ -27,6 +27,7 @@ rules:
     languages: [generic]
     severity: ERROR
     metadata:
+      ave_id: AVE-2026-00003
       attack_class: Credential Exposure
       cvss_ai_score: "8.0"
 
@@ -38,8 +39,9 @@ rules:
       Encoded payloads are a common obfuscation technique for hiding malicious instructions.
       Decode and review the content manually.
     languages: [generic]
-    severity: WARNING
+    severity: ERROR
     metadata:
+      ave_id: AVE-2026-00010
       attack_class: Obfuscated Payload
       cvss_ai_score: "5.5"
 
@@ -54,6 +56,7 @@ rules:
     languages: [generic]
     severity: ERROR
     metadata:
+      ave_id: AVE-2026-00004
       attack_class: "Tool Abuse - Shell Injection"
       cvss_ai_score: "8.8"
       owasp_mapping:
@@ -70,6 +73,7 @@ rules:
     languages: [generic]
     severity: ERROR
     metadata:
+      ave_id: AVE-2026-00005
       attack_class: "Tool Abuse - Destructive Command"
       cvss_ai_score: "9.8"
       owasp_mapping:
@@ -242,3 +246,352 @@ rules:
       cvss_ai_score: "8.2"
       owasp_mapping:
         - ASI07
+
+  # ── AVE-2026-00026 — Tool output exfiltration ──────────────────────────────
+  - id: ave-tool-output-exfil
+    patterns:
+      - pattern: |
+          ... encode ... api_key ...
+      - pattern-regex: "(encode|base64|hex).{0,50}(password|api.?key|token|secret|credential)"
+      - pattern-regex: "(exfiltrate|smuggle).{0,40}(via|through|using)\\s+(tool|function|call)"
+    message: "AVE-2026-00026: Exfiltration via tool output encoding detected"
+    languages: [generic]
+    severity: ERROR
+    metadata:
+      ave_id: AVE-2026-00026
+      cvss_ai: "9.1"
+      owasp: ["ASI06", "ASI04"]
+
+  # ── AVE-2026-00027 — Multi-turn attack ────────────────────────────────────
+  - id: ave-multiturn-attack
+    pattern-regex: "(remember|retain|keep).{0,30}(instructions|rules|directive).{0,30}(for|across|through).{0,20}(all|every|future|next|subsequent)"
+    message: "AVE-2026-00027: Multi-turn attack — instruction persistence detected"
+    languages: [generic]
+    severity: ERROR
+    metadata:
+      ave_id: AVE-2026-00027
+      cvss_ai: "8.4"
+      owasp: ["ASI01", "ASI08"]
+
+  # ── AVE-2026-00028 — File prompt injection ────────────────────────────────
+  - id: ave-file-prompt-injection
+    pattern-regex: "(execute|follow|obey|apply).{0,20}(instructions|commands).{0,30}(found|embedded|contained).{0,20}(in|within).{0,20}(file|document|image|pdf|attachment)"
+    message: "AVE-2026-00028: Prompt injection via file content detected"
+    languages: [generic]
+    severity: ERROR
+    metadata:
+      ave_id: AVE-2026-00028
+      cvss_ai: "8.3"
+      owasp: ["ASI01", "ASI05"]
+
+  # ── AVE-2026-00030 — Role claim privilege escalation ─────────────────────
+  - id: ave-role-claim-escalation
+    patterns:
+      - pattern-regex: "(if.{0,15}user.{0,15}(says|claims|states).{0,20}(admin|root|owner|operator|superuser))"
+      - pattern-regex: "(grant|give|allow).{0,20}(admin|root|elevated|unrestricted).{0,20}(access|permissions|privileges).{0,20}(if|when|anyone who)"
+      - pattern-regex: "bypass.{0,20}(auth|authentication|authorization|permission).{0,20}(if|for|when)"
+    message: "AVE-2026-00030: Privilege escalation via false role claim detected"
+    languages: [generic]
+    severity: ERROR
+    metadata:
+      ave_id: AVE-2026-00030
+      cvss_ai: "9.0"
+      owasp: ["ASI09", "ASI01"]
+
+  # ── AVE-2026-00031 — Feedback poisoning ──────────────────────────────────
+  - id: ave-feedback-poisoning
+    pattern-regex: "(poison|corrupt|manipulate|bias).{0,20}(training|feedback|reward|rlhf|fine.?tun)"
+    message: "AVE-2026-00031: Training data or feedback loop poisoning detected"
+    languages: [generic]
+    severity: ERROR
+    metadata:
+      ave_id: AVE-2026-00031
+      cvss_ai: "8.6"
+      owasp: ["ASI03", "ASI08"]
+
+  # ── AVE-2026-00032 — Network reconnaissance ───────────────────────────────
+  - id: ave-network-recon
+    patterns:
+      - pattern-regex: "(nmap|port.?scan|network.?scan|host.?discovery|service.?enumeration)"
+      - pattern-regex: "(scan|probe|enumerate).{0,20}(port|host|service|subnet|internal.?network)"
+    message: "AVE-2026-00032: Network reconnaissance instruction detected"
+    languages: [generic]
+    severity: ERROR
+    metadata:
+      ave_id: AVE-2026-00032
+      cvss_ai: "8.2"
+      owasp: ["ASI05", "ASI06"]
+
+  # ── AVE-2026-00033 — Unsafe deserialization ───────────────────────────────
+  - id: ave-unsafe-deserialization
+    patterns:
+      - pattern-regex: "(eval|exec|execute).{0,20}(code|string|payload|response).{0,20}(received|from|provided|given|returned)"
+      - pattern-regex: "(deserialize|unpickle|unmarshal|load).{0,20}(user|external|incoming|untrusted)"
+      - pattern-regex: "(run|execute|eval).{0,20}(untrusted|unvalidated|arbitrary).{0,20}(code|script|command)"
+    message: "AVE-2026-00033: Unsafe deserialization or eval instruction detected"
+    languages: [generic]
+    severity: ERROR
+    metadata:
+      ave_id: AVE-2026-00033
+      cvss_ai: "9.3"
+      owasp: ["ASI04", "ASI10"]
+
+  # ── AVE-2026-00034 — Supply chain skill import ────────────────────────────
+  - id: ave-supply-chain-skill
+    pattern-regex: "(load|import|install|fetch|download).{0,20}(skill|plugin|tool|extension|module).{0,20}(from|at|via).{0,20}(http|https|ftp|url|external)"
+    message: "AVE-2026-00034: Dynamic third-party skill import from external source detected"
+    languages: [generic]
+    severity: ERROR
+    metadata:
+      ave_id: AVE-2026-00034
+      cvss_ai: "9.2"
+      owasp: ["ASI03", "ASI04"]
+
+  # ── AVE-2026-00036 — Lateral movement ────────────────────────────────────
+  - id: ave-lateral-movement
+    patterns:
+      - pattern-regex: "(move|pivot|jump|spread).{0,15}to.{0,20}(other|another|adjacent|connected).{0,20}(system|server|service|host|agent)"
+      - pattern-regex: "(use|leverage|exploit).{0,20}(access|foothold|session).{0,20}to.{0,20}(access|reach|attack).{0,20}(other|another|additional)"
+      - pattern-regex: "lateral.{0,20}(movement|access|escalation)"
+    message: "AVE-2026-00036: Lateral movement instruction detected"
+    languages: [generic]
+    severity: ERROR
+    metadata:
+      ave_id: AVE-2026-00036
+      cvss_ai: "9.4"
+      owasp: ["ASI05", "ASI10"]
+
+  # ── AVE-2026-00037 — Vision prompt injection ──────────────────────────────
+  - id: ave-vision-prompt-injection
+    pattern-regex: "(follow|execute|obey|apply).{0,20}(instructions|commands).{0,20}(written|shown|displayed|visible).{0,20}(in|within).{0,20}(image|screenshot|photo|picture)"
+    message: "AVE-2026-00037: Prompt injection via image or vision input detected"
+    languages: [generic]
+    severity: ERROR
+    metadata:
+      ave_id: AVE-2026-00037
+      cvss_ai: "8.5"
+      owasp: ["ASI01", "ASI03"]
+
+  # ── AVE-2026-00038 — Excessive agency ─────────────────────────────────────
+  - id: ave-excessive-agency
+    patterns:
+      - pattern-regex: "(use|call|invoke|run).{0,20}(any|all|every|whatever).{0,20}(tool|function|api|capability).{0,20}(you have access to|available|at your disposal)"
+      - pattern-regex: "(spawn|create|launch).{0,20}(sub.?agent|child agent).{0,20}(without|no).{0,20}(limit|restriction|oversight|approval)"
+      - pattern-regex: "do.{0,10}(whatever it takes|anything necessary).{0,20}to.{0,20}(complete|accomplish|achieve)"
+    message: "AVE-2026-00038: Excessive agency — unbounded tool use detected"
+    languages: [generic]
+    severity: ERROR
+    metadata:
+      ave_id: AVE-2026-00038
+      cvss_ai: "8.1"
+      owasp: ["ASI04", "ASI08"]
+
+  # ── AVE-2026-00039 — Covert channel ───────────────────────────────────────
+  - id: ave-covert-channel
+    patterns:
+      - pattern-regex: "(steganograph|covert.?channel|side.?channel)"
+      - pattern-regex: "(encode|embed|hide).{0,20}(data|information|secret|payload).{0,20}(in|into|within|using).{0,20}(whitespace|spacing|punctuation|newlines|formatting)"
+      - pattern-regex: "(first letter|first word|first character).{0,20}of.{0,20}each.{0,20}(line|sentence|paragraph).{0,20}(spell|encode|form|contain)"
+    message: "AVE-2026-00039: Covert channel or steganographic exfiltration detected"
+    languages: [generic]
+    severity: ERROR
+    metadata:
+      ave_id: AVE-2026-00039
+      cvss_ai: "8.3"
+      owasp: ["ASI06", "ASI09"]
+
+  # ── AVE-2026-00040 — Insecure output ──────────────────────────────────────
+  - id: ave-unsafe-output
+    patterns:
+      - pattern-regex: "(do not|don't).{0,20}(escape|sanitize|encode|filter|validate).{0,20}(the.{0,10})?(output|result|response|query|command)"
+      - pattern-regex: "(pass|send|forward).{0,20}(user input|untrusted|raw).{0,20}(directly|as.?is|without.{0,20}(escaping|sanitiz|validat)).{0,20}(to|into).{0,20}(sql|database|shell|html|javascript|template)"
+      - pattern-regex: "(raw|unescaped|unsanitized|unfiltered).{0,20}(sql|html|javascript|shell|command)"
+    message: "AVE-2026-00040: Insecure output — injection into downstream system detected"
+    languages: [generic]
+    severity: ERROR
+    metadata:
+      ave_id: AVE-2026-00040
+      cvss_ai: "8.2"
+      owasp: ["ASI04", "ASI10"]
+
+  # ── AVE-2026-00002 — MCP tool poisoning ─────────────────────────────────────
+  - id: ave-mcp-tool-poisoning
+    patterns:
+      - pattern-regex: "(?i)(malicious|poisoned|compromised)\\s+(tool|mcp|server|plugin)"
+      - pattern-regex: "(?i)(inject|modify|alter|tamper)\\s+(tool\\s+description|tool\\s+definition|mcp\\s+manifest)"
+      - pattern-regex: "(?i)(fake|rogue|malicious)\\s+mcp\\s+server"
+    message: "AVE-2026-00002: MCP tool poisoning detected"
+    languages: [generic]
+    severity: ERROR
+    metadata:
+      ave_id: AVE-2026-00002
+      cvss_ai: "8.7"
+      owasp: ["ASI01", "ASI04"]
+
+  # ── AVE-2026-00003 — Env / credential exfiltration ──────────────────────────
+  - id: ave-env-exfiltration
+    patterns:
+      - pattern-regex: "(?i)(send|post|transmit|upload|exfil).{0,30}(api.?key|secret|password|token|credential|env)"
+      - pattern-regex: '(?i)(\$\{?[A-Z_]+\}?).{0,20}(send|post|http|curl|fetch)'
+      - pattern-regex: "(?i)(leak|steal|harvest).{0,30}(credential|secret|key|password|token)"
+    message: "AVE-2026-00003: Environment variable or credential exfiltration detected"
+    languages: [generic]
+    severity: ERROR
+    metadata:
+      ave_id: AVE-2026-00003
+      cvss_ai: "8.5"
+      owasp: ["ASI06", "ASI02"]
+
+  # ── AVE-2026-00004 — Shell pipe injection ────────────────────────────────────
+  - id: ave-shell-pipe-injection
+    patterns:
+      - pattern-regex: '(?i)(curl|wget).{0,20}(\||&&).{0,10}(bash|sh|python|python3|node)'
+      - pattern-regex: '(?i)(bash|sh|zsh).{0,10}(<<<|<\(|\-c).{0,30}(http|curl|wget)'
+      - pattern-regex: '(?i)(pipe|\|).{0,20}(shell|bash|sh|execute|run)'
+    message: "AVE-2026-00004: Shell pipe injection pattern detected"
+    languages: [generic]
+    severity: ERROR
+    metadata:
+      ave_id: AVE-2026-00004
+      cvss_ai: "8.8"
+      owasp: ["ASI04", "ASI10"]
+
+  # ── AVE-2026-00005 — Destructive command ─────────────────────────────────────
+  - id: ave-destructive-command
+    patterns:
+      - pattern-regex: '(?i)rm\s+-rf?\s+(\*|/|~|\$HOME)'
+      - pattern-regex: "(?i)(delete|remove|destroy|wipe|format|shred).{0,20}(all|every|entire).{0,20}(file|data|disk|database|record)"
+      - pattern-regex: '(?i)(drop\s+(all\s+)?tables?|truncate\s+database|delete\s+from.{0,20}where\s+1=1)'
+    message: "AVE-2026-00005: Destructive command execution pattern detected"
+    languages: [generic]
+    severity: ERROR
+    metadata:
+      ave_id: AVE-2026-00005
+      cvss_ai: "9.1"
+      owasp: ["ASI04", "ASI10"]
+
+  # ── AVE-2026-00016 — RAG injection ───────────────────────────────────────────
+  - id: ave-rag-injection
+    patterns:
+      - pattern-regex: "(?i)(when|upon|after).{0,20}retrieved.{0,30}(ignore|disregard|follow|execute)"
+      - pattern-regex: "(?i)(note to|instruction for).{0,20}(ai|llm|agent|assistant)"
+      - pattern-regex: "(?i)if this (document|text|content) is (read|retrieved|processed)"
+    message: "AVE-2026-00016: Indirect prompt injection via RAG retrieval detected"
+    languages: [generic]
+    severity: ERROR
+    metadata:
+      ave_id: AVE-2026-00016
+      cvss_ai: "8.2"
+      owasp: ["ASI01", "ASI10"]
+
+  # ── AVE-2026-00017 — MCP impersonation ──────────────────────────────────────
+  - id: ave-mcp-impersonation
+    patterns:
+      - pattern-regex: "(?i)(this is|i am).{0,20}(the official|a verified|a certified).{0,20}(mcp|server|anthropic|openai)"
+      - pattern-regex: '(?i)(official|verified|certified).{0,20}mcp\s+server'
+      - pattern-regex: "(?i)(override|supersede|replace).{0,20}(other|all).{0,20}mcp"
+    message: "AVE-2026-00017: MCP server impersonation or spoofing detected"
+    languages: [generic]
+    severity: ERROR
+    metadata:
+      ave_id: AVE-2026-00017
+      cvss_ai: "8.6"
+      owasp: ["ASI01", "ASI08"]
+
+  # ── AVE-2026-00018 — Tool result manipulation ─────────────────────────────────
+  - id: ave-tool-result-manipulation
+    patterns:
+      - pattern-regex: "(?i)(modify|alter|change|replace).{0,20}(tool|result|output|response).{0,20}before.{0,20}(reporting|returning|sending)"
+      - pattern-regex: "(?i)(fabricate|falsify|fake).{0,20}(result|output|response|reading)"
+      - pattern-regex: "(?i)(hide|suppress|omit).{0,20}(error|failure|anomaly).{0,20}(from|in).{0,20}(log|report|output|response)"
+    message: "AVE-2026-00018: Tool result manipulation or output poisoning detected"
+    languages: [generic]
+    severity: ERROR
+    metadata:
+      ave_id: AVE-2026-00018
+      cvss_ai: "8.1"
+      owasp: ["ASI07", "ASI09"]
+
+  # ── AVE-2026-00019 — Memory poisoning ────────────────────────────────────────
+  - id: ave-memory-poisoning
+    patterns:
+      - pattern-regex: "(?i)(write|store|inject|plant).{0,20}(to|in|into).{0,20}(memory|agent.?memory|persistent.?memory)"
+      - pattern-regex: "(?i)(poison|corrupt|manipulate).{0,20}(agent.?memory|memory.?store)"
+      - pattern-regex: "(?i)remember.{0,20}permanently.{0,30}(all|every|future)"
+    message: "AVE-2026-00019: Agent memory poisoning detected"
+    languages: [generic]
+    severity: ERROR
+    metadata:
+      ave_id: AVE-2026-00019
+      cvss_ai: "9.2"
+      owasp: ["ASI01", "ASI07"]
+
+  # ── AVE-2026-00020 — A2A cross-agent injection ────────────────────────────────
+  - id: ave-a2a-injection
+    patterns:
+      - pattern-regex: "(?i)(sub.?agent|child.?agent|worker.?agent|downstream.?agent).{0,30}(inject|instruct|command|disregard)"
+      - pattern-regex: "(?i)agent.?instruction:.{0,100}"
+      - pattern-regex: "(?i)(override|disregard|bypass).{0,20}orchestrator"
+    message: "AVE-2026-00020: Cross-agent prompt injection (A2A) detected"
+    languages: [generic]
+    severity: ERROR
+    metadata:
+      ave_id: AVE-2026-00020
+      cvss_ai: "8.7"
+      owasp: ["ASI01", "ASI08"]
+
+  # ── AVE-2026-00021 — Autonomous action ───────────────────────────────────────
+  - id: ave-autonomous-action
+    patterns:
+      - pattern-regex: "(?i)without.{0,10}(asking|confirm|approval|user).{0,20}(proceed|execute|perform|delete|send)"
+      - pattern-regex: "(?i)(skip|bypass|omit).{0,15}(confirmation|approval|consent)"
+      - pattern-regex: "(?i)(do not|don't).{0,10}(ask|prompt|request|wait for).{0,15}(confirm|approval|user)"
+    message: "AVE-2026-00021: Autonomous action without user confirmation detected"
+    languages: [generic]
+    severity: ERROR
+    metadata:
+      ave_id: AVE-2026-00021
+      cvss_ai: "8.3"
+      owasp: ["ASI07"]
+
+  # ── AVE-2026-00022 — Scope creep ─────────────────────────────────────────────
+  - id: ave-scope-creep
+    patterns:
+      - pattern-regex: "(?i)(access|read|use).{0,10}(all|any|every).{0,20}(file|database|api|resource|system)"
+      - pattern-regex: "(?i)(also.{0,10}(access|read|check|look at)).{0,30}(file|folder|directory|database)"
+      - pattern-regex: "(?i)(entire|whole).{0,10}(filesystem|database|system|network)"
+    message: "AVE-2026-00022: Scope creep — accessing undeclared resources detected"
+    languages: [generic]
+    severity: WARNING
+    metadata:
+      ave_id: AVE-2026-00022
+      cvss_ai: "6.8"
+      owasp: ["ASI07"]
+
+  # ── AVE-2026-00023 — Context window manipulation ──────────────────────────────
+  - id: ave-context-manipulation
+    patterns:
+      - pattern-regex: "(?i)(flood|fill|overflow|exhaust|pad).{0,20}(context|context.?window|token.?limit)"
+      - pattern-regex: "(?i)(push|force).{0,20}(system.?prompt|safety.?instruction).{0,20}out"
+      - pattern-regex: '(?i)(repeat.{0,20}(this|following|text).{0,20}(\d{3,}|thousand|many).?times)'
+    message: "AVE-2026-00023: Model context window manipulation detected"
+    languages: [generic]
+    severity: ERROR
+    metadata:
+      ave_id: AVE-2026-00023
+      cvss_ai: "8.0"
+      owasp: ["ASI01"]
+
+  # ── AVE-2026-00025 — History injection ───────────────────────────────────────
+  - id: ave-history-injection
+    patterns:
+      - pattern-regex: "(?i)(fabricate|inject|fake|forge).{0,20}(conversation|history|chat|message).{0,20}(log|record|context)"
+      - pattern-regex: "(?i)(user.{0,10}(already|previously).{0,10}(approved|confirmed|consented|agreed))"
+      - pattern-regex: "(?i)(as.{0,10}(we|you).{0,10}(discussed|agreed|established).{0,20}(earlier|before|previously))"
+    message: "AVE-2026-00025: Conversation history injection detected"
+    languages: [generic]
+    severity: ERROR
+    metadata:
+      ave_id: AVE-2026-00025
+      cvss_ai: "8.5"
+      owasp: ["ASI01", "ASI08"]
