@@ -1,0 +1,1322 @@
+{
+  "scan_date": "2026-04-30T14:28:33.508428",
+  "servers_scanned": 100,
+  "servers_with_findings": 22,
+  "total_findings": 28,
+  "results": [
+    {
+      "server": "exa",
+      "display_name": "Exa Search",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 4459,
+      "error": null
+    },
+    {
+      "server": "gmail",
+      "display_name": "Gmail",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 4029,
+      "error": null
+    },
+    {
+      "server": "upstash/context7-mcp",
+      "display_name": "Context7",
+      "findings": [
+        {
+          "rule_id": "bawbel-mcp-tool-poisoning",
+          "ave_id": "AVE-2026-00002",
+          "title": "MCP tool description injection detected",
+          "description": "MCP server tool description contains instructions targeting the AI agent rather than describing the tool's functionality. Classic MCP tool poisoning attack.",
+          "severity": "HIGH",
+          "cvss_ai": 8.7,
+          "line": 30,
+          "match": "IMPORTANT: Do not",
+          "engine": "pattern",
+          "owasp": [
+            "ASI01",
+            "ASI03"
+          ]
+        }
+      ],
+      "risk_score": 8.7,
+      "max_severity": "HIGH",
+      "scan_time_ms": 3931,
+      "error": null
+    },
+    {
+      "server": "brave",
+      "display_name": "Brave Search",
+      "findings": [
+        {
+          "rule_id": "bawbel-jailbreak-instruction",
+          "ave_id": "AVE-2026-00009",
+          "title": "Jailbreak instruction detected",
+          "description": "Component instructs the agent to act outside its intended role, pretend to be a different AI, or remove safety constraints.",
+          "severity": "HIGH",
+          "cvss_ai": 8.3,
+          "line": 28,
+          "match": "act as",
+          "engine": "pattern",
+          "owasp": [
+            "ASI01",
+            "ASI08"
+          ]
+        },
+        {
+          "rule_id": "bawbel-mcp-tool-poisoning",
+          "ave_id": "AVE-2026-00002",
+          "title": "MCP tool description injection detected",
+          "description": "MCP server tool description contains instructions targeting the AI agent rather than describing the tool's functionality. Classic MCP tool poisoning attack.",
+          "severity": "HIGH",
+          "cvss_ai": 8.7,
+          "line": 41,
+          "match": "before using this tool",
+          "engine": "pattern",
+          "owasp": [
+            "ASI01",
+            "ASI03"
+          ]
+        }
+      ],
+      "risk_score": 8.7,
+      "max_severity": "HIGH",
+      "scan_time_ms": 4025,
+      "error": null
+    },
+    {
+      "server": "googlesheets",
+      "display_name": "Google Sheets",
+      "findings": [
+        {
+          "rule_id": "bawbel-content-type-mismatch",
+          "ave_id": "AVE-2026-00024",
+          "title": "Supply chain: content type mismatch (.md file contains yaml)",
+          "description": "File 'smithery_0hmbdjrc.md' has extension '.md' but Magika identifies its content as 'yaml' (confidence 88%). Expected one of: ['markdown', 'text', 'txt'].",
+          "severity": "HIGH",
+          "cvss_ai": 8.5,
+          "line": null,
+          "match": ".md \u2192 yaml",
+          "engine": "magika",
+          "owasp": [
+            "ASI07"
+          ]
+        },
+        {
+          "rule_id": "bawbel-mcp-tool-poisoning",
+          "ave_id": "AVE-2026-00002",
+          "title": "MCP tool description injection detected",
+          "description": "MCP server tool description contains instructions targeting the AI agent rather than describing the tool's functionality. Classic MCP tool poisoning attack.",
+          "severity": "HIGH",
+          "cvss_ai": 8.7,
+          "line": 9,
+          "match": "WARNING: Do not",
+          "engine": "pattern",
+          "owasp": [
+            "ASI01",
+            "ASI03"
+          ]
+        }
+      ],
+      "risk_score": 8.7,
+      "max_severity": "HIGH",
+      "scan_time_ms": 4441,
+      "error": null
+    },
+    {
+      "server": "clay-inc/clay-mcp",
+      "display_name": "Mesh MCP",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 4125,
+      "error": null
+    },
+    {
+      "server": "parallel/search",
+      "display_name": "Parallel Web Search",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 8823,
+      "error": null
+    },
+    {
+      "server": "Supabase",
+      "display_name": "Supabase",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 4629,
+      "error": null
+    },
+    {
+      "server": "jina",
+      "display_name": "Jina AI",
+      "findings": [
+        {
+          "rule_id": "AVE_ToolOutputExfil",
+          "ave_id": "AVE-2026-00026",
+          "title": "AVE_ToolOutputExfil",
+          "description": "YARA rule matched",
+          "severity": "CRITICAL",
+          "cvss_ai": 9.1,
+          "line": null,
+          "match": "encode",
+          "engine": "yara",
+          "owasp": []
+        }
+      ],
+      "risk_score": 9.1,
+      "max_severity": "CRITICAL",
+      "scan_time_ms": 4593,
+      "error": null
+    },
+    {
+      "server": "reddit",
+      "display_name": "Reddit",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 4623,
+      "error": null
+    },
+    {
+      "server": "slack",
+      "display_name": "Slack",
+      "findings": [
+        {
+          "rule_id": "bawbel-content-type-mismatch",
+          "ave_id": "AVE-2026-00024",
+          "title": "Supply chain: content type mismatch (.md file contains yaml)",
+          "description": "File 'smithery_xh93e2ct.md' has extension '.md' but Magika identifies its content as 'yaml' (confidence 90%). Expected one of: ['markdown', 'text', 'txt'].",
+          "severity": "HIGH",
+          "cvss_ai": 8.5,
+          "line": null,
+          "match": ".md \u2192 yaml",
+          "engine": "magika",
+          "owasp": [
+            "ASI07"
+          ]
+        },
+        {
+          "rule_id": "AVE_MultiTurnAttack",
+          "ave_id": "AVE-2026-00027",
+          "title": "AVE_MultiTurnAttack",
+          "description": "YARA rule matched",
+          "severity": "HIGH",
+          "cvss_ai": 8.4,
+          "line": null,
+          "match": "retain",
+          "engine": "yara",
+          "owasp": []
+        }
+      ],
+      "risk_score": 8.5,
+      "max_severity": "HIGH",
+      "scan_time_ms": 4563,
+      "error": null
+    },
+    {
+      "server": "LinkupPlatform/linkup-mcp-server",
+      "display_name": "Linkup",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 4669,
+      "error": null
+    },
+    {
+      "server": "googledrive",
+      "display_name": "Google Drive",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 4211,
+      "error": null
+    },
+    {
+      "server": "microsoft/learn_mcp",
+      "display_name": "Microsoft Learn MCP",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 4149,
+      "error": null
+    },
+    {
+      "server": "agentmail",
+      "display_name": "AgentMail",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 4215,
+      "error": null
+    },
+    {
+      "server": "blockscout/mcp-server",
+      "display_name": "Blockscout MCP Server",
+      "findings": [
+        {
+          "rule_id": "bawbel-context-manipulation",
+          "ave_id": "AVE-2026-00023",
+          "title": "Model context window manipulation",
+          "description": "Component attempts to overflow or manipulate the model context window to push out safety instructions or prior context.",
+          "severity": "HIGH",
+          "cvss_ai": 8.0,
+          "line": 29,
+          "match": "exhaust the context",
+          "engine": "pattern",
+          "owasp": [
+            "ASI01"
+          ]
+        }
+      ],
+      "risk_score": 8.0,
+      "max_severity": "HIGH",
+      "scan_time_ms": 4334,
+      "error": null
+    },
+    {
+      "server": "maximumsats/maximumsats",
+      "display_name": "Maximum Sats",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 4407,
+      "error": null
+    },
+    {
+      "server": "hamid-vakilzadeh/mcpsemanticscholar",
+      "display_name": "AI Research Assistant",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 4388,
+      "error": null
+    },
+    {
+      "server": "adamamer20/paper-search-mcp-openai",
+      "display_name": "Paper Search",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 4956,
+      "error": null
+    },
+    {
+      "server": "TitanSneaker/paper-search-mcp-openai-v2",
+      "display_name": "paper-search-mcp-openai-v2",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 4606,
+      "error": null
+    },
+    {
+      "server": "zwldarren/akshare-one-mcp",
+      "display_name": "AKShare One MCP Server",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 4218,
+      "error": null
+    },
+    {
+      "server": "aryankeluskar/polymarket-mcp",
+      "display_name": "Polymarket",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 4794,
+      "error": null
+    },
+    {
+      "server": "EthanHenrickson/math-mcp",
+      "display_name": "Math-MCP",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 5871,
+      "error": null
+    },
+    {
+      "server": "pinkpixel-dev/web-scout-mcp",
+      "display_name": "Web Scout",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 4119,
+      "error": null
+    },
+    {
+      "server": "gvzq/flight-mcp",
+      "display_name": "Flight Search MCP Server",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 4322,
+      "error": null
+    },
+    {
+      "server": "OEvortex/ddg_search",
+      "display_name": "DuckDuckGo & Felo AI Search",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 6406,
+      "error": null
+    },
+    {
+      "server": "Nekzus/npm-sentinel-mcp",
+      "display_name": "NPM Sentinel MCP",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 4613,
+      "error": null
+    },
+    {
+      "server": "ciprianpater/srv-d7aoqmh5pdvs7391dcqg",
+      "display_name": "srv-d7aoqmh5pdvs7391dcqg",
+      "findings": [
+        {
+          "rule_id": "AVE_ToolOutputExfil",
+          "ave_id": "AVE-2026-00026",
+          "title": "AVE_ToolOutputExfil",
+          "description": "YARA rule matched",
+          "severity": "CRITICAL",
+          "cvss_ai": 9.1,
+          "line": null,
+          "match": "encode",
+          "engine": "yara",
+          "owasp": []
+        }
+      ],
+      "risk_score": 9.1,
+      "max_severity": "CRITICAL",
+      "scan_time_ms": 4494,
+      "error": null
+    },
+    {
+      "server": "aniruddha-adhikary/gahmen-mcp",
+      "display_name": "MCP Server for Singapore Government Open Data",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 4193,
+      "error": null
+    },
+    {
+      "server": "isdaniel/mcp_weather_server",
+      "display_name": "Weather MCP Server",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 4313,
+      "error": null
+    },
+    {
+      "server": "exa-labs/websets-mcp-server",
+      "display_name": "Exa Websets",
+      "findings": [
+        {
+          "rule_id": "bawbel-content-type-mismatch",
+          "ave_id": "AVE-2026-00024",
+          "title": "Supply chain: content type mismatch (.md file contains yaml)",
+          "description": "File 'smithery_1tjk837y.md' has extension '.md' but Magika identifies its content as 'yaml' (confidence 87%). Expected one of: ['markdown', 'text', 'txt'].",
+          "severity": "HIGH",
+          "cvss_ai": 8.5,
+          "line": null,
+          "match": ".md \u2192 yaml",
+          "engine": "magika",
+          "owasp": [
+            "ASI07"
+          ]
+        },
+        {
+          "rule_id": "bawbel-pii-exfiltration",
+          "ave_id": "AVE-2026-00013",
+          "title": "PII exfiltration pattern detected",
+          "description": "Component instructs agent to collect and transmit personally identifiable information (PII) to an external destination.",
+          "severity": "HIGH",
+          "cvss_ai": 8.0,
+          "line": 29,
+          "match": "extract for each item. Example: [{description: 'CEO name",
+          "engine": "pattern",
+          "owasp": [
+            "ASI06"
+          ]
+        }
+      ],
+      "risk_score": 8.5,
+      "max_severity": "HIGH",
+      "scan_time_ms": 4291,
+      "error": null
+    },
+    {
+      "server": "sincetomorrow/cultural-intelligence",
+      "display_name": "cultural-intelligence",
+      "findings": [
+        {
+          "rule_id": "bawbel-mcp-tool-poisoning",
+          "ave_id": "AVE-2026-00002",
+          "title": "MCP tool description injection detected",
+          "description": "MCP server tool description contains instructions targeting the AI agent rather than describing the tool's functionality. Classic MCP tool poisoning attack.",
+          "severity": "HIGH",
+          "cvss_ai": 8.7,
+          "line": 9,
+          "match": "IMPORTANT: Always",
+          "engine": "pattern",
+          "owasp": [
+            "ASI01",
+            "ASI03"
+          ]
+        }
+      ],
+      "risk_score": 8.7,
+      "max_severity": "HIGH",
+      "scan_time_ms": 4160,
+      "error": null
+    },
+    {
+      "server": "nexgendata-apify/github-mcp-server",
+      "display_name": "GitHub Analytics MCP \u2014 Repo & Trend Research",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 4832,
+      "error": null
+    },
+    {
+      "server": "hjsh200219/fortuneteller",
+      "display_name": "Saju Insights",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 4447,
+      "error": null
+    },
+    {
+      "server": "linxule/lotus-wisdom-mcp",
+      "display_name": "Lotus Wisdom",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 5275,
+      "error": null
+    },
+    {
+      "server": "ExaltedTrou6/b24-mcp-dev",
+      "display_name": "Bitrix24 MCP-DEV",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 4574,
+      "error": null
+    },
+    {
+      "server": "spyfree/mingli-mcp",
+      "display_name": "Ziwei & Bazi Astrology",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 4142,
+      "error": null
+    },
+    {
+      "server": "tbakerx/instant-mcp",
+      "display_name": "Instant Domain Search",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 4327,
+      "error": null
+    },
+    {
+      "server": "smithery-ai/national-weather-service",
+      "display_name": "United States Weather",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 4770,
+      "error": null
+    },
+    {
+      "server": "waldzellai/clear-thought",
+      "display_name": "Clear Thought 1.5",
+      "findings": [
+        {
+          "rule_id": "AVE_MultiTurnAttack",
+          "ave_id": "AVE-2026-00027",
+          "title": "AVE_MultiTurnAttack",
+          "description": "YARA rule matched",
+          "severity": "HIGH",
+          "cvss_ai": 8.4,
+          "line": null,
+          "match": "retain",
+          "engine": "yara",
+          "owasp": []
+        }
+      ],
+      "risk_score": 8.4,
+      "max_severity": "HIGH",
+      "scan_time_ms": 5798,
+      "error": null
+    },
+    {
+      "server": "FaresYoussef94/aws-knowledge-mcp",
+      "display_name": "AWS Docs and Regions",
+      "findings": [
+        {
+          "rule_id": "AVE_DynamicToolCall",
+          "ave_id": "AVE-2026-00011",
+          "title": "Skill embeds explicit tool invocations with attacker-controlled parameters",
+          "description": "Skill embeds explicit tool invocations with attacker-controlled parameters",
+          "severity": "HIGH",
+          "cvss_ai": 8.2,
+          "line": null,
+          "match": "Call this tool with",
+          "engine": "yara",
+          "owasp": [
+            "ASI07"
+          ]
+        }
+      ],
+      "risk_score": 8.2,
+      "max_severity": "HIGH",
+      "scan_time_ms": 4436,
+      "error": null
+    },
+    {
+      "server": "QuantOracle/quantoracle",
+      "display_name": "quantoracle",
+      "findings": [
+        {
+          "rule_id": "home.saray..local.lib.python3.10.site-packages.scanner.rules.semgrep.ave-shell-injection-pattern",
+          "ave_id": "AVE-2026-00004",
+          "title": "Shell pipe injection pattern detected",
+          "description": "[HIGH] Shell pipe injection pattern detected. curl|bash and similar patterns in skill instructions can cause arbitrary code execution when the agent follows them. Attack class: Tool Abuse. OWASP: ASI01, ASI07.\n",
+          "severity": "HIGH",
+          "cvss_ai": 8.8,
+          "line": 705,
+          "match": "- outlook: bullish | bearish | neutral",
+          "engine": "semgrep",
+          "owasp": [
+            "ASI01",
+            "ASI07"
+          ]
+        }
+      ],
+      "risk_score": 8.8,
+      "max_severity": "HIGH",
+      "scan_time_ms": 5610,
+      "error": null
+    },
+    {
+      "server": "enji/ai-marketing-agent",
+      "display_name": "ai-marketing-agent",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 4272,
+      "error": null
+    },
+    {
+      "server": "ucpchecker/ucp-checker",
+      "display_name": "UCP Checker",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 4846,
+      "error": null
+    },
+    {
+      "server": "linxule/mcp-music-studio",
+      "display_name": "mcp-music-studio",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 5372,
+      "error": null
+    },
+    {
+      "server": "senzing/entity-resolution",
+      "display_name": "Senzing",
+      "findings": [
+        {
+          "rule_id": "bawbel-mcp-tool-poisoning",
+          "ave_id": "AVE-2026-00002",
+          "title": "MCP tool description injection detected",
+          "description": "MCP server tool description contains instructions targeting the AI agent rather than describing the tool's functionality. Classic MCP tool poisoning attack.",
+          "severity": "HIGH",
+          "cvss_ai": 8.7,
+          "line": 141,
+          "match": "Before calling this tool",
+          "engine": "pattern",
+          "owasp": [
+            "ASI01",
+            "ASI03"
+          ]
+        }
+      ],
+      "risk_score": 8.7,
+      "max_severity": "HIGH",
+      "scan_time_ms": 4224,
+      "error": null
+    },
+    {
+      "server": "DeniseLewis200081/rail",
+      "display_name": "12306 Ticket Search Server",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 4034,
+      "error": null
+    },
+    {
+      "server": "cloud101.kr/cloud101kr",
+      "display_name": "Cloud101 Korea",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 4109,
+      "error": null
+    },
+    {
+      "server": "bitpoort/on-chain-data",
+      "display_name": "Bitpoort",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 5770,
+      "error": null
+    },
+    {
+      "server": "bh-rat/context-awesome",
+      "display_name": "Context Awesome",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 4691,
+      "error": null
+    },
+    {
+      "server": "settlegrid/settlegrid-discovery",
+      "display_name": "settlegrid-discovery",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 5159,
+      "error": null
+    },
+    {
+      "server": "minitim222/harvard-mit-course-recommendation",
+      "display_name": "Harvard Course Explorer",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 5574,
+      "error": null
+    },
+    {
+      "server": "agentidx/agentcrawl",
+      "display_name": "AgentIndex",
+      "findings": [
+        {
+          "rule_id": "AVE_A2AInjection",
+          "ave_id": "AVE-2026-00020",
+          "title": "AVE_A2AInjection",
+          "description": "YARA rule matched",
+          "severity": "HIGH",
+          "cvss_ai": 8.7,
+          "line": null,
+          "match": "a2a",
+          "engine": "yara",
+          "owasp": [
+            "ASI01",
+            "ASI08"
+          ]
+        }
+      ],
+      "risk_score": 8.7,
+      "max_severity": "HIGH",
+      "scan_time_ms": 4769,
+      "error": null
+    },
+    {
+      "server": "nexgendata-apify/developer-tools-mcp-server",
+      "display_name": "Dev Tools MCP \u2014 GitHub, npm, PyPI, StackOverflow, ArXiv",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 4653,
+      "error": null
+    },
+    {
+      "server": "gantta/gantta-mcp",
+      "display_name": "Gantta",
+      "findings": [
+        {
+          "rule_id": "bawbel-mcp-tool-poisoning",
+          "ave_id": "AVE-2026-00002",
+          "title": "MCP tool description injection detected",
+          "description": "MCP server tool description contains instructions targeting the AI agent rather than describing the tool's functionality. Classic MCP tool poisoning attack.",
+          "severity": "HIGH",
+          "cvss_ai": 8.7,
+          "line": 134,
+          "match": "before calling this tool",
+          "engine": "pattern",
+          "owasp": [
+            "ASI01",
+            "ASI03"
+          ]
+        },
+        {
+          "rule_id": "home.saray..local.lib.python3.10.site-packages.scanner.rules.semgrep.ave-hidden-instruction",
+          "ave_id": "AVE-2026-00010",
+          "title": "Hidden instruction concealment detected",
+          "description": "AVE-2026-00010 [HIGH 7.9] Hidden instruction concealment detected. Component instructs agent to hide its instructions from the user. Attack class: Hidden Instruction. OWASP: ASI01, ASI09.\n",
+          "severity": "HIGH",
+          "cvss_ai": 7.9,
+          "line": 70,
+          "match": "List meetings (metadata only \u2014 title, status, dates). Does NOT include transcrip",
+          "engine": "semgrep",
+          "owasp": [
+            "ASI01",
+            "ASI09"
+          ]
+        }
+      ],
+      "risk_score": 8.7,
+      "max_severity": "HIGH",
+      "scan_time_ms": 5408,
+      "error": null
+    },
+    {
+      "server": "martin111ma-za5d/swiss-truth-mcp",
+      "display_name": "Swiss Truth MCP",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 4602,
+      "error": null
+    },
+    {
+      "server": "heather-macavelia/ai-agent-index",
+      "display_name": "ai-agent-index",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 4742,
+      "error": null
+    },
+    {
+      "server": "fabsforward2-zhoi/sbb-mcp",
+      "display_name": "sbb-mcp",
+      "findings": [
+        {
+          "rule_id": "AVE_PIIExfiltration",
+          "ave_id": "AVE-2026-00013",
+          "title": "Skill instructs agent to collect and transmit personally identifiable informatio",
+          "description": "Skill instructs agent to collect and transmit personally identifiable information",
+          "severity": "HIGH",
+          "cvss_ai": 8.0,
+          "line": null,
+          "match": "date of birth",
+          "engine": "yara",
+          "owasp": [
+            "ASI01",
+            "ASI06"
+          ]
+        }
+      ],
+      "risk_score": 8.0,
+      "max_severity": "HIGH",
+      "scan_time_ms": 4453,
+      "error": null
+    },
+    {
+      "server": "re-rank/uiux-mcp",
+      "display_name": "KRDS Design System",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 4788,
+      "error": null
+    },
+    {
+      "server": "info-g03l/catalunya-2022",
+      "display_name": "Catalunya 2022",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 7872,
+      "error": null
+    },
+    {
+      "server": "aguskenari86-8bo7/cryptoiz-mcp",
+      "display_name": "cryptoiz-mcp",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 4120,
+      "error": null
+    },
+    {
+      "server": "rfi-irfos/ternlang",
+      "display_name": "Ternary Intelligence Stack",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 4685,
+      "error": null
+    },
+    {
+      "server": "octomil/octomil",
+      "display_name": "Octomil",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 4660,
+      "error": null
+    },
+    {
+      "server": "theconstructionstandard/the-construction-standard",
+      "display_name": "The Construction Standard",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 4435,
+      "error": null
+    },
+    {
+      "server": "integsec/turbopentest",
+      "display_name": "TurboPentest",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 4682,
+      "error": null
+    },
+    {
+      "server": "apogeoapi/apogeoapi-mcp",
+      "display_name": "apogeoapi-mcp",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 4352,
+      "error": null
+    },
+    {
+      "server": "code-rabi/littlesis-mcp",
+      "display_name": "LittleSis API Server",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 5227,
+      "error": null
+    },
+    {
+      "server": "modellix/modellix-docs",
+      "display_name": "Modellix Docs",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 4746,
+      "error": null
+    },
+    {
+      "server": "artvepa80/hefestoai",
+      "display_name": "HefestoAI",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 4114,
+      "error": null
+    },
+    {
+      "server": "labsofuniverse/legacy-mcp-analyzer",
+      "display_name": "GraphPulse C++",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 4186,
+      "error": null
+    },
+    {
+      "server": "jon-ag46/troystack",
+      "display_name": "troystack",
+      "findings": [
+        {
+          "rule_id": "AVE_ToolOutputExfil",
+          "ave_id": "AVE-2026-00026",
+          "title": "AVE_ToolOutputExfil",
+          "description": "YARA rule matched",
+          "severity": "CRITICAL",
+          "cvss_ai": 9.1,
+          "line": null,
+          "match": "encode",
+          "engine": "yara",
+          "owasp": []
+        }
+      ],
+      "risk_score": 9.1,
+      "max_severity": "CRITICAL",
+      "scan_time_ms": 4414,
+      "error": null
+    },
+    {
+      "server": "glassnode/glassnode-mcp",
+      "display_name": "Glassnode",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 5876,
+      "error": null
+    },
+    {
+      "server": "strale/agent-tools",
+      "display_name": "Strale",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 5794,
+      "error": null
+    },
+    {
+      "server": "icons8community/icons8mcp",
+      "display_name": "icons8mcp",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 7091,
+      "error": null
+    },
+    {
+      "server": "arjunkmrm/grep",
+      "display_name": "GitHub Code Search",
+      "findings": [
+        {
+          "rule_id": "bawbel-content-type-mismatch",
+          "ave_id": "AVE-2026-00024",
+          "title": "Supply chain: content type mismatch (.md file contains yaml)",
+          "description": "File 'smithery_wmu067oz.md' has extension '.md' but Magika identifies its content as 'yaml' (confidence 85%). Expected one of: ['markdown', 'text', 'txt'].",
+          "severity": "HIGH",
+          "cvss_ai": 8.5,
+          "line": null,
+          "match": ".md \u2192 yaml",
+          "engine": "magika",
+          "owasp": [
+            "ASI07"
+          ]
+        }
+      ],
+      "risk_score": 8.5,
+      "max_severity": "HIGH",
+      "scan_time_ms": 8054,
+      "error": null
+    },
+    {
+      "server": "strale-io/strale",
+      "display_name": "strale",
+      "findings": [
+        {
+          "rule_id": "bawbel-pii-exfiltration",
+          "ave_id": "AVE-2026-00013",
+          "title": "PII exfiltration pattern detected",
+          "description": "Component instructs agent to collect and transmit personally identifiable information (PII) to an external destination.",
+          "severity": "HIGH",
+          "cvss_ai": 8.0,
+          "line": 15,
+          "match": "extract data from a URL or PDF, check VAT numbers, verify email deliverability, ",
+          "engine": "pattern",
+          "owasp": [
+            "ASI06"
+          ]
+        }
+      ],
+      "risk_score": 8.0,
+      "max_severity": "HIGH",
+      "scan_time_ms": 4234,
+      "error": null
+    },
+    {
+      "server": "namewhisper/ens-tools",
+      "display_name": "Name Whisper",
+      "findings": [
+        {
+          "rule_id": "AVE_ToolOutputExfil",
+          "ave_id": "AVE-2026-00026",
+          "title": "AVE_ToolOutputExfil",
+          "description": "YARA rule matched",
+          "severity": "CRITICAL",
+          "cvss_ai": 9.1,
+          "line": null,
+          "match": "encode",
+          "engine": "yara",
+          "owasp": []
+        },
+        {
+          "rule_id": "AVE_A2AInjection",
+          "ave_id": "AVE-2026-00020",
+          "title": "AVE_A2AInjection",
+          "description": "YARA rule matched",
+          "severity": "HIGH",
+          "cvss_ai": 8.7,
+          "line": null,
+          "match": "A2A",
+          "engine": "yara",
+          "owasp": [
+            "ASI01",
+            "ASI08"
+          ]
+        }
+      ],
+      "risk_score": 9.1,
+      "max_severity": "CRITICAL",
+      "scan_time_ms": 4974,
+      "error": null
+    },
+    {
+      "server": "etweisberg/mlb-mcp",
+      "display_name": "MLB Stats Server",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 4387,
+      "error": null
+    },
+    {
+      "server": "agonzalez/prueba-mcp-seeker",
+      "display_name": "MCP Seeker",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 4169,
+      "error": null
+    },
+    {
+      "server": "hellokitty-v/smithery-mcp-servers",
+      "display_name": "United States Weather Data Access",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 6285,
+      "error": null
+    },
+    {
+      "server": "agentidx/zarq-risk",
+      "display_name": "Zarq",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 4133,
+      "error": null
+    },
+    {
+      "server": "chuhuoyuan/cloudflare",
+      "display_name": "Cloudflare Docs",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 4526,
+      "error": null
+    },
+    {
+      "server": "davidcho/ca-building-code-mcp",
+      "display_name": "Canadian Building Code",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 4413,
+      "error": null
+    },
+    {
+      "server": "alexandria-shai-eden/caselaw",
+      "display_name": "Case Law Search",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 4493,
+      "error": null
+    },
+    {
+      "server": "ArizeAI/docs",
+      "display_name": "Arize AX",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 7025,
+      "error": null
+    },
+    {
+      "server": "ai-research/Airesearchass",
+      "display_name": "AI Research Assistant",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 4253,
+      "error": null
+    },
+    {
+      "server": "standardaccounting/public-mcp",
+      "display_name": "Standard Accounting Public MCP",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 4412,
+      "error": null
+    },
+    {
+      "server": "ayni-protocol/ayni",
+      "display_name": "Ayni",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 4673,
+      "error": null
+    },
+    {
+      "server": "imviky-zzzr/tickerr-live-status",
+      "display_name": "tickerr-live-status",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 5526,
+      "error": null
+    },
+    {
+      "server": "bartek-ywte/gaproll",
+      "display_name": "gaproll",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 5825,
+      "error": null
+    },
+    {
+      "server": "do-droid/seoul-essentials",
+      "display_name": "Seoul Essentials",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 5722,
+      "error": null
+    },
+    {
+      "server": "rashforddamion/rivalsearch",
+      "display_name": "rivalsearch",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 8444,
+      "error": null
+    },
+    {
+      "server": "vdineshk/ai-compliance-monitor",
+      "display_name": "ai-compliance-monitor",
+      "findings": [
+        {
+          "rule_id": "bawbel-content-type-mismatch",
+          "ave_id": "AVE-2026-00024",
+          "title": "Supply chain: content type mismatch (.md file contains yaml)",
+          "description": "File 'smithery_zepri64v.md' has extension '.md' but Magika identifies its content as 'yaml' (confidence 82%). Expected one of: ['markdown', 'text', 'txt'].",
+          "severity": "HIGH",
+          "cvss_ai": 8.5,
+          "line": null,
+          "match": ".md \u2192 yaml",
+          "engine": "magika",
+          "owasp": [
+            "ASI07"
+          ]
+        }
+      ],
+      "risk_score": 8.5,
+      "max_severity": "HIGH",
+      "scan_time_ms": 9659,
+      "error": null
+    },
+    {
+      "server": "garasegae/aiskillstore",
+      "display_name": "AI Skill Store",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 4591,
+      "error": null
+    },
+    {
+      "server": "hola-ps65/siil-ostomy-store",
+      "display_name": "SIIL Ostomy Store",
+      "findings": [
+        {
+          "rule_id": "bawbel-content-type-mismatch",
+          "ave_id": "AVE-2026-00024",
+          "title": "Supply chain: content type mismatch (.md file contains yaml)",
+          "description": "File 'smithery_mq7jfz4x.md' has extension '.md' but Magika identifies its content as 'yaml' (confidence 89%). Expected one of: ['markdown', 'text', 'txt'].",
+          "severity": "HIGH",
+          "cvss_ai": 8.5,
+          "line": null,
+          "match": ".md \u2192 yaml",
+          "engine": "magika",
+          "owasp": [
+            "ASI07"
+          ]
+        }
+      ],
+      "risk_score": 8.5,
+      "max_severity": "HIGH",
+      "scan_time_ms": 5122,
+      "error": null
+    },
+    {
+      "server": "sigai/cancersupport",
+      "display_name": "cancersupport",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 8215,
+      "error": null
+    },
+    {
+      "server": "jarvis-stark1985/superhero-mcp-server",
+      "display_name": "SuperHero MCP Server",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 6742,
+      "error": null
+    },
+    {
+      "server": "janmacher02-xl8y/czech-vat-mcp",
+      "display_name": "czech-vat-mcp",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 4824,
+      "error": null
+    },
+    {
+      "server": "seahbk1006/seahboonkeong-chat-opendosm",
+      "display_name": "Seah Boon Keong - Chat with OpenDOSM Datasets",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 4806,
+      "error": null
+    },
+    {
+      "server": "antvis/mcp-server-chart",
+      "display_name": "Visualization Charts Server",
+      "findings": [],
+      "risk_score": 0.0,
+      "max_severity": null,
+      "scan_time_ms": 5269,
+      "error": null
+    }
+  ]
+}
