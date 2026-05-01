@@ -22,7 +22,6 @@ from scanner.cli.shared import (
 )
 from scanner.cli.shared.utils import collect_files
 
-
 # ── Watch helper ──────────────────────────────────────────────────────────────
 
 

@@ -31,7 +31,6 @@ from scanner.cli.cmd_report import report_cmd
 from scanner.cli.cmd_version import version_cmd
 from scanner.cli.cmd_init import init_cmd
 
-
 # ── CLI group ─────────────────────────────────────────────────────────────────
 
 
