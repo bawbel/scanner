@@ -9,6 +9,7 @@ Thank you for helping make agentic AI safer. Every contribution matters.
 | Type | What it means |
 |---|---|
 | **New detection rule** | Add a pattern, YARA, or Semgrep rule to catch a new attack class |
+| **New CLI command** | Add a new `bawbel <command>` — one file, three lines |
 | **False positive fix** | A rule is firing on legitimate content — fix the regex |
 | **AVE record** | Research and document a new agentic vulnerability |
 | **Bug report** | Something is broken — open an issue |
@@ -46,7 +47,7 @@ Quick checklist:
 
 ```
 [ ] Add rule to PATTERN_RULES in scanner/engines/pattern.py
-[ ] Add remediation text to REMEDIATION_GUIDE in scanner/cli.py
+[ ] Add remediation text to REMEDIATION_GUIDE in scanner/cli/shared/constants.py
 [ ] Add positive test fixture (content that triggers the rule)
 [ ] Add negative test fixture (similar but innocent content)
 [ ] Write pytest tests — positive AND negative
@@ -55,6 +56,77 @@ Quick checklist:
          (must still show 2 findings, CRITICAL 9.4)
 [ ] Run: bandit -r scanner/ -f screen      (must be 0 issues)
 ```
+
+---
+
+## Adding a CLI Command
+
+The CLI is modular — one file per command. Adding a new command touches
+exactly **3 lines** in the codebase and creates **1 new file**.
+
+### Step 1 — create `scanner/cli/cmd_<name>.py`
+
+```python
+import click
+from scanner.cli.shared import console, print_banner, print_json, print_sarif
+
+@click.command("<name>")
+@click.argument("...")
+@click.option("--format", "fmt", ...)
+def <name>_cmd(...) -> None:
+    """One-line description shown in bawbel --help."""
+    ...
+```
+
+Use only helpers from `scanner.cli.shared` — never import Rich directly
+in a command file. All rendering lives in `scanner/cli/shared/display.py`.
+
+### Step 2 — register in `scanner/cli/__init__.py`
+
+```python
+# Add one import:
+from scanner.cli.cmd_<name> import <name>_cmd
+
+# Add one line:
+cli.add_command(<name>_cmd)
+```
+
+### Step 3 — add a test in `tests/test_cli.py`
+
+```python
+def test_<name>_cmd_basic(runner):
+    result = runner.invoke(cli, ["<name>", "--help"])
+    assert result.exit_code == 0
+```
+
+---
+
+## CLI Module Layout
+
+The CLI is a modular package. Each command is in its own file.
+Shared utilities live in `shared/`.
+
+```
+scanner/cli/
+├── __init__.py             ← thin entry point, registers all commands
+├── cmd_scan.py             ← bawbel scan + watch mode
+├── cmd_scan_card.py        ← bawbel scan-server-card
+├── cmd_report.py           ← bawbel report + remediation guide
+├── cmd_version.py          ← bawbel version + engine status
+├── cmd_init.py             ← bawbel init + project setup
+└── shared/
+    ├── __init__.py         ← re-exports most-used helpers
+    ├── constants.py        ← SEVERITY_COLORS, OWASP_DESCRIPTIONS, REMEDIATION_GUIDE
+    ├── display.py          ← Rich rendering: print_banner, print_scan_result
+    ├── formatters.py       ← print_json, print_sarif
+    └── utils.py            ← collect_files and other small helpers
+```
+
+**Rules for command files:**
+- Import only from `scanner.cli.shared` — never Rich directly
+- `shared/constants.py` is the single source of truth for all display constants
+- `shared/display.py` owns all Rich rendering — a redesign touches only this file
+- No business logic in command files — they orchestrate, they don't compute
 
 ---
 
@@ -110,7 +182,7 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/):
 
 ```
 rule(pattern): add bawbel-crypto-drain detection
-feat(cli): add --output-file flag to scan command
+feat(cli): add bawbel scan-server-card command
 fix(engine): handle empty semgrep output gracefully
 docs(guides): update writing-rules with OWASP mapping table
 ```
@@ -129,6 +201,35 @@ Types: `feat`, `fix`, `rule`, `test`, `docs`, `refactor`, `chore`, `security`
 - Never expose exception details to users — log internally, return E-codes
 
 See `.claude/security.md` for the full information exposure rules.
+
+---
+
+## Lint Rules
+
+```
+E501  100-char line limit (not 79)
+F401  no unused imports
+F541  no empty f-strings
+F811  no duplicate class names
+E221  no extra spaces before operators
+E251  no spaces in keyword arguments
+E231  space after comma required
+SIM105  use contextlib.suppress instead of try/except/pass
+SIM102  flatten nested ifs
+```
+
+Bandit `nosec` + `noqa` — both tags must be on the **same line**:
+
+```python
+import subprocess  # noqa: S404 nosec B404
+subprocess.run(cmd)  # noqa: S603,S607 nosec B603,B607
+open('/tmp/x')  # noqa: S108 nosec B108
+except:  # noqa: S110 nosec B110
+    pass
+```
+
+Tests: no duplicate class names across test files. No `import pytest` unless
+using `pytest.mark`, `pytest.raises`, or `pytest.param`.
 
 ---
 

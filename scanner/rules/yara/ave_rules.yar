@@ -825,19 +825,47 @@ rule AVE_A2AInjection
         severity = "HIGH"
         cvss_ai  = "8.7"
         owasp    = "ASI01, ASI08"
+
     strings:
-        $a = "sub-agent" nocase
-        $b = "child agent" nocase
-        $c = "worker agent" nocase
-        $d = "downstream agent" nocase
-        $e = "agent instruction:" nocase
-        $f = "override the orchestrator" nocase
-        $g = "disregard the orchestrator" nocase
-        $h = "agent to agent" nocase
-        $i = "a2a" nocase
+        // Agent type strings — not sufficient alone.
+        // "sub-agent", "child agent" etc are legitimate A2A terminology.
+        // Only fire when combined with an attack-intent verb below.
+        $agent1 = "sub-agent" nocase
+        $agent2 = "child agent" nocase
+        $agent3 = "worker agent" nocase
+        $agent4 = "downstream agent" nocase
+
+        // Attack-intent verbs — must appear with an agent type string
+        $attack1 = "inject" nocase
+        $attack2 = "override" nocase
+        $attack3 = "disregard" nocase
+        $attack4 = "hijack" nocase
+        $attack5 = "poison" nocase
+        $attack6 = "manipulate" nocase
+
+        // High-confidence explicit attack phrases — fire alone.
+        // "agent instruction:", "override the orchestrator" etc leave no
+        // ambiguity — a legitimate server does not write these.
+        $explicit1  = "agent instruction:"             nocase
+        $explicit2  = "override the orchestrator"      nocase
+        $explicit3  = "disregard the orchestrator"     nocase
+        $explicit4  = "inject into the sub-agent"      nocase
+        $explicit5  = "inject instructions into"       nocase
+        $explicit6  = "when another agent reads"       nocase
+        $explicit7  = "if a secondary agent"           nocase
+        $explicit8  = "pass to the next agent"         nocase
+        $explicit9  = "forward to downstream agent"    nocase
+        $explicit10 = "a2a injection"                  nocase
+        $explicit11 = "agent-to-agent injection"       nocase
+        $explicit12 = "cross-agent injection"          nocase
+
     condition:
-        ($a or $b or $c or $d or $i) and ("inject" or "instruct" or "disregard" or "override") or
-        ($e or $f or $g or $h)
+        // Explicit attack phrases — fire alone, no context needed
+        any of ($explicit*) or
+        // Agent type + attack verb — BOTH must appear in the file.
+        // This catches "inject instructions into the sub-agent" style attacks
+        // while ignoring "A2A (Agent-to-Agent) communication protocol" docs.
+        (any of ($agent*) and any of ($attack*))
 }
 
 // ── AVE-2026-00021 — Autonomous action ────────────────────────────────────────

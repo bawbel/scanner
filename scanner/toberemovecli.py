@@ -1080,6 +1080,94 @@ def init_cmd(path: str) -> None:
     )
 
 
+# ── scan-server-card command ──────────────────────────────────────────────────
+
+
+@cli.command("scan-server-card")
+@click.argument("url")
+@click.option(
+    "--format",
+    "fmt",
+    type=click.Choice(["text", "json", "sarif"]),
+    default="text",
+    show_default=True,
+    help="Output format",
+)
+@click.option(
+    "--fail-on-severity",
+    "fail_on_severity",
+    type=click.Choice(["critical", "high", "medium", "low"]),
+    default=None,
+    help="Exit code 2 if findings at or above this severity",
+)
+def scan_server_card_cmd(url: str, fmt: str, fail_on_severity: str) -> None:
+    """Fetch and scan an MCP server-card for AVE vulnerabilities.
+
+    Fetches the server-card from:
+
+        <URL>/.well-known/mcp-server-card/server.json
+
+    Scans all tool descriptions, parameter descriptions, and config
+    schemas using the full detection pipeline.
+
+    Examples:
+
+        bawbel scan-server-card https://api.example.com
+
+        bawbel scan-server-card https://api.example.com --format json
+
+        bawbel scan-server-card https://api.example.com --fail-on-severity high
+    """
+    from scanner.fetcher import fetch_server_card, write_temp_scan_file, build_server_card_url
+
+    if fmt == "text":
+        _print_banner()
+        card_url = build_server_card_url(url)
+        console.print(f"[dim]Fetching:[/]  [bold white]{card_url}[/]")
+        console.print()
+
+    # Fetch the server-card
+    content, err = fetch_server_card(url)
+    if err:
+        if fmt == "text":
+            console.print(
+                f"[bold red]✗  Fetch failed:[/] {err}\n\n"
+                "[dim]Check that the server exposes a server-card at:\n"
+                f"  {build_server_card_url(url)}[/]"
+            )
+        else:
+            import json as _json2
+
+            print(_json2.dumps([{"error": err, "url": url}], indent=2))
+        sys.exit(1)
+
+    # Write to temp file and scan
+    tmp_path = write_temp_scan_file(content)
+    try:
+        result = scan(str(tmp_path))
+        # Override file_path in result to show the URL, not the temp path
+        result.file_path = url
+    finally:
+        tmp_path.unlink(missing_ok=True)
+
+    if fmt == "json":
+        _print_json([result])
+    elif fmt == "sarif":
+        _print_sarif([result])
+    else:
+        # Text output — print result then show server-card URL as source
+        _print_scan_result(result, show_report_hint=True, scan_root=None)
+        console.print(f"[dim]Source:  {build_server_card_url(url)}[/]")
+        console.print()
+
+    if fail_on_severity:
+        threshold = SEVERITY_SCORES.get(fail_on_severity.upper(), 0)
+        if _worst_severity_score([result]) >= threshold:
+            sys.exit(2)
+
+    sys.exit(0)
+
+
 # ── Entry point ───────────────────────────────────────────────────────────────
 
 
