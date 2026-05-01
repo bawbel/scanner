@@ -6,6 +6,7 @@
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://pypi.org/project/bawbel-scanner/)
 [![AVE Standard](https://img.shields.io/badge/AVE_Records-40-teal.svg)](https://github.com/bawbel/bawbel-ave)
+[![PyPI Downloads](https://static.pepy.tech/personalized-badge/bawbel-scanner?period=total&units=INTERNATIONAL_SYSTEM&left_color=GREY&right_color=GREEN&left_text=downloads)](https://pepy.tech/projects/bawbel-scanner)
 
 Bawbel Scanner scans agentic AI components — SKILL.md files, MCP server manifests,
 system prompts, and agent plugins — for security vulnerabilities mapped to the
