@@ -22,7 +22,6 @@ from scanner.conformance.checks import (
     ConformanceCheck,
 )
 
-
 # ── Result types ──────────────────────────────────────────────────────────────
 
 

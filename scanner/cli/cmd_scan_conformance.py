@@ -21,7 +21,6 @@ from rich.table import Table
 from scanner.conformance import score_conformance, CheckStatus, CheckCategory
 from scanner.cli.shared import console, print_banner
 
-
 # ── Grade colours ─────────────────────────────────────────────────────────────
 
 _GRADE_COLORS = {
