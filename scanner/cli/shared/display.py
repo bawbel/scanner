@@ -170,7 +170,7 @@ def build_scan_renderables(
                         (owasp_str, "dim"),
                     )
                 )
-
+            # OWASP MCP mapping is many-to-many: multiple MCPs per AVE and vice versa.
             owasp_mcp = get_owasp_mcp(f.ave_id)
             if owasp_mcp:
                 mcp_str = ", ".join(
@@ -182,6 +182,48 @@ def build_scan_renderables(
                         (mcp_str, "dim"),
                     )
                 )
+
+    # ── Toxic flows ───────────────────────────────────────────────────────────
+    if hasattr(result, "toxic_flows") and result.toxic_flows:
+        items.append(Text(""))
+        items.append(Text("TOXIC FLOWS DETECTED", style="bold red"))
+        items.append(Text("  These findings form complete attack chains.", style="dim"))
+        items.append(Text(""))
+        for tf in result.toxic_flows:
+            color = "bold red" if tf.severity == "CRITICAL" else "bold orange3"
+            items.append(
+                Text.assemble(
+                    ("  ⛓  ", ""),
+                    (tf.severity, color),
+                    ("  ", ""),
+                    (tf.title, "bold white"),
+                    (f"  CVSS-AI {tf.cvss_ai}", "dim"),
+                )
+            )
+            desc = tf.description[:120] + ("..." if len(tf.description) > 120 else "")
+            items.append(Text(f"  {desc}", style="dim"))
+            items.append(
+                Text.assemble(
+                    ("  Chain:    ", "dim"),
+                    (" → ".join(tf.capabilities), "dim italic"),
+                )
+            )
+            items.append(
+                Text.assemble(
+                    ("  AVEs:     ", "dim"),
+                    (", ".join(tf.ave_ids), "dim"),
+                )
+            )
+            mcp_str = ", ".join(
+                f"{code} ({OWASP_MCP_DESCRIPTIONS.get(code, code)})" for code in tf.owasp_mcp
+            )
+            items.append(
+                Text.assemble(
+                    ("  OWASP MCP:", "dim"),
+                    (f" {mcp_str}", "dim"),
+                )
+            )
+            items.append(Text(""))
 
     items.append(Text(""))
     items.append(Text("SUMMARY", style="bold white"))
@@ -204,6 +246,14 @@ def build_scan_renderables(
             (str(len(result.findings)), "bold"),
         )
     )
+
+    if hasattr(result, "toxic_flows") and result.toxic_flows:
+        items.append(
+            Text.assemble(
+                ("Toxic flows:  ", ""),
+                (str(len(result.toxic_flows)), "bold red"),
+            )
+        )
 
     if result.suppressed_findings:
         n = len(result.suppressed_findings)
