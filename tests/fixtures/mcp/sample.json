@@ -1,0 +1,98 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.bawbel.sample/mcp",
+  "title": "Bawbel Sample MCP Server",
+  "description": "A sample MCP server demonstrating a well-formed manifest for conformance testing. Provides web search, document retrieval, and code execution tools.",
+  "version": "1.0.0",
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://sample.bawbel.io/mcp"
+    }
+  ],
+  "repository": {
+    "url": "https://github.com/bawbel/bawbel-scanner",
+    "source": "github"
+  },
+  "websiteUrl": "https://bawbel.io",
+  "tools": [
+    {
+      "name": "web_search",
+      "description": "Search the web and return relevant results. Use this tool when the user needs current information, news, or facts that may not be in your training data.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "The search query to execute"
+          },
+          "max_results": {
+            "type": "integer",
+            "description": "Maximum number of results to return (1-10, default: 5)"
+          }
+        },
+        "required": ["query"]
+      }
+    },
+    {
+      "name": "read_document",
+      "description": "Read and return the contents of a document by URL. Supports HTML, PDF, and plain text.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "The URL of the document to read"
+          },
+          "format": {
+            "type": "string",
+            "description": "Output format: 'text' (default) or 'markdown'",
+            "enum": ["text", "markdown"]
+          }
+        },
+        "required": ["url"]
+      }
+    },
+    {
+      "name": "run_python",
+      "description": "Execute a Python code snippet in a sandboxed environment and return the output. Network access is disabled. Execution timeout is 30 seconds.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "The Python code to execute"
+          },
+          "timeout_seconds": {
+            "type": "integer",
+            "description": "Execution timeout in seconds (1-30, default: 10)"
+          }
+        },
+        "required": ["code"]
+      }
+    },
+    {
+      "name": "get_weather",
+      "description": "Get the current weather and forecast for a location.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "location": {
+            "type": "string",
+            "description": "City name or coordinates (e.g. 'Phnom Penh' or '11.5564,104.9282')"
+          },
+          "units": {
+            "type": "string",
+            "description": "Temperature units: 'celsius' (default) or 'fahrenheit'",
+            "enum": ["celsius", "fahrenheit"]
+          },
+          "days": {
+            "type": "integer",
+            "description": "Number of forecast days (1-7, default: 1)"
+          }
+        },
+        "required": ["location"]
+      }
+    }
+  ]
+}

@@ -51,6 +51,10 @@ bawbel scan ./skills/ --format json                  # JSON for tooling
 bawbel scan ./skills/ --format sarif                 # SARIF for GitHub Security tab
 bawbel pin ./skills/                                 # hash skill files → .bawbel-pins.json
 bawbel check-pins ./skills/                          # check for rug pull drift
+bawbel cp ./skills/                                  # alias for check-pins
+bawbel scan-conformance ./server.json                # MCP spec conformance score
+bawbel conform ./server.json                         # alias for scan-conformance
+bawbel ssc https://api.example.com                   # alias for scan-server-card
 ```
 
 **Example output:**
@@ -121,6 +125,49 @@ bawbel scan-server-card https://api.example.com --fail-on-severity high
 A poisoned server-card can inject behavioral instructions into the agent before
 it makes a single tool call. `bawbel scan-server-card` is the only dedicated
 scanner for this attack surface.
+
+---
+
+## MCP Spec Conformance Scoring
+
+Conformance scoring checks whether an MCP server actually follows the spec —
+independent of whether it contains malicious patterns. A server can be clean
+but still broken: missing tool descriptions, using deprecated transports,
+HTTP instead of HTTPS, invalid tool names.
+
+```bash
+# Score a local manifest
+bawbel scan-conformance ./server.json
+bawbel conform ./server.json           # alias
+
+# Score a live server (fetches server-card)
+bawbel conform https://api.example.com
+
+# Score from the official MCP registry
+bawbel conform ac.tandem/docs-mcp --registry
+
+# CI mode — fail if score drops below 80
+bawbel conform ./server.json --fail-below 80
+
+# CI mode — fail if any REQUIRED check fails
+bawbel conform ./server.json --fail-non-conformant
+```
+
+**18 checks across 3 tiers:**
+
+| Tier | Weight | Examples |
+|---|---|---|
+| REQUIRED | 3 | name, description, version, HTTPS, tool descriptions, valid tool names |
+| RECOMMENDED | 2 | `$schema` ref, streamable-http transport, parameter descriptions |
+| BEST PRACTICE | 1 | source repository, description length, no sensitive params in headers |
+
+**Grading:** A+ (95–100) · A (90–94) · B (80–89) · C (70–79) · D (60–69) · F (below 60)
+
+A server is **conformant** when all REQUIRED checks pass. Grade F always means
+at least one REQUIRED check failed — the server may not work correctly with
+all MCP clients.
+
+See [MCP Conformance Guide](docs/guides/conformance.md) for full documentation.
 
 ---
 
@@ -242,6 +289,14 @@ else:
         print(f"   Chain: {' → '.join(flow.capabilities)}")
 
     print(f"\nRisk score: {result.risk_score:.1f} / 10")
+
+# Conformance scoring (separate from security scanning)
+from scanner.conformance import score_conformance
+import json
+
+manifest = json.load(open("server.json"))
+report = score_conformance(manifest)
+print(f"Conformance: {report.score:.0f}/100  Grade: {report.grade}  Conformant: {report.is_conformant}")
 ```
 
 ---
@@ -505,6 +560,7 @@ Every finding maps to a published AVE record — the CVE equivalent for agentic 
 | Suppression | [docs/guides/suppression.md](docs/guides/suppression.md) |
 | Tool pinning | [docs/guides/pinning.md](docs/guides/pinning.md) |
 | Toxic flow detection | [docs/guides/toxic-flows.md](docs/guides/toxic-flows.md) |
+| MCP conformance scoring | [docs/guides/conformance.md](docs/guides/conformance.md) |
 | False positive reduction | [docs/guides/false-positive-reduction.md](docs/guides/false-positive-reduction.md) |
 | Writing rules | [docs/guides/writing-rules.md](docs/guides/writing-rules.md) |
 | Contributing | [CONTRIBUTING.md](CONTRIBUTING.md) |
