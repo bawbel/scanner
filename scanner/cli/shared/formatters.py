@@ -9,6 +9,7 @@ import json
 from scanner import __version__
 from scanner.models import ScanResult
 from scanner.cli.shared.display import sev_value
+from scanner.owasp_mcp_map import get_owasp_mcp
 
 
 def print_json(results: list[ScanResult]) -> None:
@@ -26,6 +27,7 @@ def print_json(results: list[ScanResult]) -> None:
             "match": f.match,
             "engine": f.engine,
             "owasp": f.owasp,
+            "owasp_mcp": get_owasp_mcp(f.ave_id),
         }
         if suppressed:
             d["suppressed"] = True
@@ -46,6 +48,7 @@ def print_json(results: list[ScanResult]) -> None:
                 "suppressed_findings": [
                     _finding_dict(f, suppressed=True) for f in r.suppressed_findings
                 ],
+                "toxic_flows": [tf.to_dict() for tf in getattr(r, "toxic_flows", [])],
             }
         )
     print(json.dumps(output, indent=2, default=str))
