@@ -25,11 +25,16 @@ class ScanResult:
     component_type: str  # (stable) "skill"|"mcp"|"prompt"|"plugin"|"a2a"|"rag"|"model"|"unknown"
 
     # ── Results (stable) ─────────────────────────────────────────────────────
-    # (stable) active findings sorted by severity
-    findings: list[Finding] = field(default_factory=list)
-    # findings suppressed by bawbel-ignore — kept for audit
-    suppressed_findings: list[Finding] = field(default_factory=list)
+    findings: list[Finding] = field(default_factory=list)  # (stable) sorted by severity
+    suppressed_findings: list[Finding] = field(default_factory=list)  # (stable)
     scan_time_ms: int = 0  # (stable) elapsed time
+
+    # ── Toxic flows (stable) ──────────────────────────────────────────────────
+    # Detected attack chains — computed from findings after deduplication.
+    # Empty list if no toxic flows detected or if findings < 2.
+    toxic_flows: list = field(
+        default_factory=list
+    )  # list[ToxicFlow] — typed loosely to avoid circular import
 
     # ── Error ─────────────────────────────────────────────────────────────────
     error: Optional[str] = None  # (stable) error code if scan failed, else None
@@ -48,15 +53,18 @@ class ScanResult:
 
     @property
     def risk_score(self) -> float:
-        """Highest CVSS-AI score across all findings, or 0.0 if none."""
-        if not self.findings:
-            return 0.0
-        return max(f.cvss_ai for f in self.findings)
+        """
+        Highest risk score across findings and toxic flows.
+        Toxic flows elevate the risk score above individual findings.
+        """
+        scores = [f.cvss_ai for f in self.findings]
+        scores += [tf.cvss_ai for tf in self.toxic_flows]
+        return max(scores, default=0.0)
 
     @property
     def is_clean(self) -> bool:
-        """True only if no findings AND no error."""
-        return len(self.findings) == 0 and self.error is None
+        """True only if no findings, no toxic flows, and no error."""
+        return len(self.findings) == 0 and len(self.toxic_flows) == 0 and self.error is None
 
     @property
     def has_error(self) -> bool:
