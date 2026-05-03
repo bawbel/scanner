@@ -20,6 +20,7 @@ from scanner.cli.shared.constants import (
     SEVERITY_COLORS,
     SEVERITY_ICONS,
 )
+from scanner.owasp_mcp_map import get_owasp_mcp, OWASP_MCP_DESCRIPTIONS
 
 console = Console()
 
@@ -167,6 +168,18 @@ def build_scan_renderables(
                     Text.assemble(
                         ("   OWASP:  ", "dim"),
                         (owasp_str, "dim"),
+                    )
+                )
+
+            owasp_mcp = get_owasp_mcp(f.ave_id)
+            if owasp_mcp:
+                mcp_str = ", ".join(
+                    f"{code} ({OWASP_MCP_DESCRIPTIONS.get(code, code)})" for code in owasp_mcp
+                )
+                items.append(
+                    Text.assemble(
+                        ("   OWASP MCP: ", "dim"),
+                        (mcp_str, "dim"),
                     )
                 )
 
