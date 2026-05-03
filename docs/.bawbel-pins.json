@@ -1,0 +1,117 @@
+{
+  "version": "1",
+  "pinned_at": "2026-05-03T04:36:58.504424+00:00",
+  "pinned_by": "chaksaray <chaksaray@gmail.com>",
+  "pins": {
+    "README.md": {
+      "sha256": "660b023c63d1de4d792e4ca66b9991260619a0d905c7c8105d9aa5793410d303",
+      "size_bytes": 3187,
+      "pinned_at": "2026-05-03T04:36:58.504424+00:00"
+    },
+    "api/engines.md": {
+      "sha256": "754fb4cea68ad6fabe7b0378f7f4d5b6f8357da770ed63af955c77378190832c",
+      "size_bytes": 3953,
+      "pinned_at": "2026-05-03T04:36:58.504424+00:00"
+    },
+    "api/finding.md": {
+      "sha256": "96fcbefc12bbf8a5f42605cdb80c16383e24d4b91c616e27d0352f7b322999e9",
+      "size_bytes": 2198,
+      "pinned_at": "2026-05-03T04:36:58.504424+00:00"
+    },
+    "api/messages.md": {
+      "sha256": "b37e266cf0b425b5638d03d65e7e90ab90072ac0fe0541e3ec7b2c5ff453a339",
+      "size_bytes": 3888,
+      "pinned_at": "2026-05-03T04:36:58.504424+00:00"
+    },
+    "api/scan-result.md": {
+      "sha256": "552e1d5d1aad5f2b97b8eb7e8b2bfacad1859aa1e39584c34d4b976150410306",
+      "size_bytes": 3283,
+      "pinned_at": "2026-05-03T04:36:58.504424+00:00"
+    },
+    "api/scan.md": {
+      "sha256": "72945acfb50114ca6d756906510c9b6081a96a92b8b9925862aa555f22bcff20",
+      "size_bytes": 6265,
+      "pinned_at": "2026-05-03T04:36:58.504424+00:00"
+    },
+    "api/utils.md": {
+      "sha256": "54f652c62415b58d557392261aba0a51737dc56f11720df165944466682938d8",
+      "size_bytes": 3465,
+      "pinned_at": "2026-05-03T04:36:58.504424+00:00"
+    },
+    "decisions/adr-001-engine-separation.md": {
+      "sha256": "37bb51490305c682f44a70312dec122047764598d480c3b804bc5c874932861c",
+      "size_bytes": 1076,
+      "pinned_at": "2026-05-03T04:36:58.504424+00:00"
+    },
+    "decisions/adr-002-oop-utils.md": {
+      "sha256": "d0b52a30fc65332a1663032675bcca8c3e11dff0b657e1507b4319ce6fbac8a6",
+      "size_bytes": 1137,
+      "pinned_at": "2026-05-03T04:36:58.504424+00:00"
+    },
+    "decisions/adr-003-error-codes.md": {
+      "sha256": "06d56d2252f4ae4c8ed629a349e17d69169580913b4e1c531a1f7cd0be27d997",
+      "size_bytes": 1076,
+      "pinned_at": "2026-05-03T04:36:58.504424+00:00"
+    },
+    "decisions/adr-004-no-exceptions.md": {
+      "sha256": "8e5cfee04e6391419686e93f875c753d54ddab9b89d1bf73bfe392f6779a1247",
+      "size_bytes": 1131,
+      "pinned_at": "2026-05-03T04:36:58.504424+00:00"
+    },
+    "guides/adding-engine.md": {
+      "sha256": "51ba2ff727eef4bbddd6e3fb9c90b730f974057c41a4f3a19cdeed5f3f9e8515",
+      "size_bytes": 3713,
+      "pinned_at": "2026-05-03T04:36:58.504424+00:00"
+    },
+    "guides/cicd-integration.md": {
+      "sha256": "f5983e3aefa229625adf987010c034161a15550df5a71627245e5f6e26946281",
+      "size_bytes": 12157,
+      "pinned_at": "2026-05-03T04:36:58.504424+00:00"
+    },
+    "guides/configuration.md": {
+      "sha256": "53194e37936ed229134d9523624b3282e078d34c640797249d41baa035f903ef",
+      "size_bytes": 5308,
+      "pinned_at": "2026-05-03T04:36:58.504424+00:00"
+    },
+    "guides/docker.md": {
+      "sha256": "633e0ef2b4ed9cde501f71223dd0cbe6314b8e0db728e0ecfd6b3b88a4923877",
+      "size_bytes": 5870,
+      "pinned_at": "2026-05-03T04:36:58.504424+00:00"
+    },
+    "guides/engines.md": {
+      "sha256": "53e5fa15c204ae8b166bf728a395bc21c5943b39ad3003a50ac607eb8393e385",
+      "size_bytes": 32842,
+      "pinned_at": "2026-05-03T04:36:58.504424+00:00"
+    },
+    "guides/false-positive-reduction.md": {
+      "sha256": "751ad9df582380160e3a17f85fe6635147e70c5943f432e08e69b635dd53859a",
+      "size_bytes": 15326,
+      "pinned_at": "2026-05-03T04:36:58.504424+00:00"
+    },
+    "guides/getting-started.md": {
+      "sha256": "935d48ece54b3d471a423dbd556264dc3831b313049c1cc35ffa1104a1f25795",
+      "size_bytes": 6837,
+      "pinned_at": "2026-05-03T04:36:58.504424+00:00"
+    },
+    "guides/pinning.md": {
+      "sha256": "4108173ac65f34fc5ea4e6626e28a41b7bf04a146fa3021b3ed7d824afb83b99",
+      "size_bytes": 8720,
+      "pinned_at": "2026-05-03T04:36:58.504424+00:00"
+    },
+    "guides/publishing.md": {
+      "sha256": "2b62791ee358adb9e207c1c9e70325ea18c438a7a221e667b9034e59ca9d1783",
+      "size_bytes": 5074,
+      "pinned_at": "2026-05-03T04:36:58.504424+00:00"
+    },
+    "guides/suppression.md": {
+      "sha256": "dbe71735916556322b08feac145714a4ef6f30f5383cddf784324308215ac0b1",
+      "size_bytes": 7289,
+      "pinned_at": "2026-05-03T04:36:58.504424+00:00"
+    },
+    "guides/writing-rules.md": {
+      "sha256": "4b9c7a4e421562b13a1bf4a92d2b1350a85effaf1e6fe39710516a1fed5f2680",
+      "size_bytes": 8468,
+      "pinned_at": "2026-05-03T04:36:58.504424+00:00"
+    }
+  }
+}
