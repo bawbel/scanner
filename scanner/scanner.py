@@ -39,6 +39,9 @@ from scanner.engines.sandbox_engine import (
     is_docker_available,
 )
 
+# Toxic flow analysis
+from scanner.toxic_flows import detect_toxic_flows
+
 # Infrastructure
 from scanner.messages import Logs
 from scanner.suppression import apply_suppressions, NO_IGNORE
@@ -620,6 +623,8 @@ def scan(file_path: str, no_ignore: bool = False) -> ScanResult:
             reverse=True,
         )
 
+        toxic_flows = detect_toxic_flows(findings)
+
         # ── Step 7: FP-2 + FP-3 — negation context + confidence scoring ───────
         lines = content.splitlines()
         active_findings: list[Finding] = []
@@ -695,6 +700,7 @@ def scan(file_path: str, no_ignore: bool = False) -> ScanResult:
         findings=sup.active,
         suppressed_findings=sup.suppressed + low_confidence,
         scan_time_ms=t.elapsed_ms,
+        toxic_flows=toxic_flows,
     )
 
     log.info(

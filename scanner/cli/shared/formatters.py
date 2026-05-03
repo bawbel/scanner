@@ -48,6 +48,7 @@ def print_json(results: list[ScanResult]) -> None:
                 "suppressed_findings": [
                     _finding_dict(f, suppressed=True) for f in r.suppressed_findings
                 ],
+                "toxic_flows": [tf.to_dict() for tf in getattr(r, "toxic_flows", [])],
             }
         )
     print(json.dumps(output, indent=2, default=str))
