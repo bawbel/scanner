@@ -89,6 +89,7 @@ scan/
 # Keep them local only. Share via secure channel if needed.
 PROJECT_CONTEXT.md
 .claude/
+skills/
 
 # ── Docs build output — never commit generated docs ───────────────────────────
 docs/_build/

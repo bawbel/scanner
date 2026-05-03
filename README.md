@@ -5,7 +5,7 @@
 [![PyPI version](https://badge.fury.io/py/bawbel-scanner.svg)](https://pypi.org/project/bawbel-scanner/)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://pypi.org/project/bawbel-scanner/)
-[![AVE Standard](https://img.shields.io/badge/AVE_Records-24-teal.svg)](https://github.com/bawbel/bawbel-ave)
+[![AVE Standard](https://img.shields.io/badge/AVE_Records-40-teal.svg)](https://github.com/bawbel/bawbel-ave)
 
 Bawbel Scanner scans agentic AI components — SKILL.md files, MCP server manifests,
 system prompts, and agent plugins — for security vulnerabilities mapped to the
@@ -22,8 +22,8 @@ pip install bawbel-scanner
 With optional engines:
 
 ```bash
-pip install "bawbel-scanner[yara]"      # Stage 1b — YARA rules (15 rules)
-pip install "bawbel-scanner[semgrep]"   # Stage 1c — Semgrep rules (15 rules)
+pip install "bawbel-scanner[yara]"      # Stage 1b — YARA rules (39 rules)
+pip install "bawbel-scanner[semgrep]"   # Stage 1c — Semgrep rules (41 rules)
 pip install "bawbel-scanner[llm]"       # Stage 2  — LLM semantic analysis
 pip install "bawbel-scanner[magika]"    # Stage 0  — file type verification (Google Magika)
 pip install "bawbel-scanner[watch]"     # Watch mode — re-scan on file change
@@ -40,20 +40,23 @@ Stage 3 (behavioral sandbox) requires Docker — see [Stage 3](#stage-3--behavio
 cp .env.example .env   # copy env template, fill in your keys
 source .env
 
-bawbel version                                    # show version + active engines
-bawbel scan ./my-skill.md                         # scan a file
-bawbel scan ./skills/ --recursive                 # scan a directory
-bawbel report ./my-skill.md                       # full remediation report
-bawbel scan ./skills/ --fail-on-severity high     # exit 2 on HIGH+
-bawbel scan ./skills/ --watch                     # re-scan on every change
-bawbel scan ./skills/ --format json               # JSON for tooling
-bawbel scan ./skills/ --format sarif              # SARIF for GitHub Security tab
+bawbel version                                       # show version + active engines
+bawbel scan ./my-skill.md                            # scan a file
+bawbel scan ./skills/ --recursive                    # scan a directory
+bawbel scan-server-card https://api.example.com      # scan an MCP server-card
+bawbel report ./my-skill.md                          # full remediation report
+bawbel scan ./skills/ --fail-on-severity high        # exit 2 on HIGH+
+bawbel scan ./skills/ --watch                        # re-scan on every change
+bawbel scan ./skills/ --format json                  # JSON for tooling
+bawbel scan ./skills/ --format sarif                 # SARIF for GitHub Security tab
+bawbel pin ./skills/                                 # hash skill files → .bawbel-pins.json
+bawbel check-pins ./skills/                          # check for rug pull drift
 ```
 
 **Example output:**
 
 ```
-Bawbel Scanner v1.0.0  ·  github.com/bawbel/bawbel-scanner
+Bawbel Scanner v1.0.1  ·  github.com/bawbel/bawbel-scanner
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Scanning:  malicious-skill.md
@@ -79,11 +82,37 @@ Scan time:    5ms
 
 ---
 
+## Scanning MCP Server-Cards
+
+MCP server-cards (`.well-known/mcp-server-card/server.json`) are the new
+auto-discovery mechanism for MCP 2026. An agent fetches the card on connection
+and reads all tool descriptions before making a single call — making it a
+critical attack surface.
+
+```bash
+# Scan a server-card by base URL
+bawbel scan-server-card https://api.example.com
+
+# Fetches: https://api.example.com/.well-known/mcp-server-card/server.json
+# Scans: all tool names, descriptions, parameter descriptions, config schemas
+# Output: same JSON/SARIF/text format as bawbel scan
+
+# JSON output
+bawbel scan-server-card https://api.example.com --format json
+
+# CI mode — fail on HIGH+
+bawbel scan-server-card https://api.example.com --fail-on-severity high
+```
+
+A poisoned server-card can inject behavioral instructions into the agent before
+it makes a single tool call. `bawbel scan-server-card` is the only dedicated
+scanner for this attack surface.
+
+---
 
 ## False Positive Reduction
 
-Bawbel v1.0 ships a 5-layer false positive reduction system — the result of real-world
-feedback from scanning production skill files:
+Bawbel ships a 5-layer false positive reduction system:
 
 | Layer | Mechanism | FP reduction |
 |---|---|---|
@@ -100,25 +129,34 @@ call — not a general security scan, but a targeted false-positive filter. Requ
 See [False Positive Reduction guide](docs/guides/false-positive-reduction.md) for full details.
 
 ---
+
 ## Detection Pipeline
 
-Five stages run in sequence — each adds an independent layer:
+Six stages run in sequence:
 
 | Stage | Engine | Install | What it catches |
 |---|---|---|---|
 | 0  | **Magika** | `pip install "bawbel-scanner[magika]"` | Content-type verification — catches supply chain attacks (ELF disguised as .md, pickle as .yaml) |
-| 1a | **Pattern** | nothing — always active | 15 regex rules, all AVE IDs |
-| 1b | **YARA** | `pip install "bawbel-scanner[yara]"` | Binary + complex text combinations, 15 rules |
-| 1c | **Semgrep** | `pip install "bawbel-scanner[semgrep]"` | Structural + multi-line patterns, 15 rules |
+| 1a | **Pattern** | nothing — always active | 37 regex rules, all AVE IDs |
+| 1b | **YARA** | `pip install "bawbel-scanner[yara]"` | Binary + complex text combinations, 39 rules |
+| 1c | **Semgrep** | `pip install "bawbel-scanner[semgrep]"` | Structural + multi-line patterns, 41 rules |
 | 2  | **LLM** | `pip install "bawbel-scanner[llm]"` + API key | Obfuscated, nuanced, multi-paragraph injections |
 | 3  | **Sandbox** | Docker + `BAWBEL_SANDBOX_ENABLED=true` | Runtime behaviour — network egress, filesystem, processes |
 
-**15 built-in rules** covering every major agentic attack class:
+**40 built-in AVE records** covering the full agentic attack surface:
 goal override · jailbreak · hidden instructions · external fetch ·
 tool call injection · permission escalation · credential exfiltration ·
 PII exfiltration · shell injection · destructive commands ·
 cryptocurrency drain · trust escalation · persistence ·
-MCP tool poisoning · system prompt extraction.
+MCP tool poisoning · system prompt extraction · RAG injection ·
+MCP server impersonation · tool result manipulation · memory poisoning ·
+cross-agent A2A injection · autonomous action · scope creep ·
+context manipulation · content type mismatch · conversation history injection ·
+tool output exfiltration · multi-turn persistence · file prompt injection ·
+role claim escalation · feedback poisoning · network reconnaissance ·
+unsafe deserialization · supply chain skill import · lateral movement ·
+vision prompt injection · excessive agency · covert channel ·
+insecure output injection · and more.
 
 ---
 
@@ -159,7 +197,7 @@ bawbel scan ./my-skill.md
 ```
 
 ```bash
-BAWBEL_SANDBOX_IMAGE=local                          # skip Hub, build locally
+BAWBEL_SANDBOX_IMAGE=local                           # skip Hub, build locally
 BAWBEL_SANDBOX_IMAGE=registry.corp.com/bawbel/sandbox@sha256:abc  # enterprise
 ```
 
@@ -191,11 +229,7 @@ else:
 
 ## CI/CD Integration
 
-### GitHub Actions — official action ✅
-
-The recommended way to integrate Bawbel into CI/CD.
-One line — installs the scanner, runs the scan, uploads findings to the
-GitHub Security tab automatically.
+### GitHub Actions — official action
 
 ```yaml
 # .github/workflows/bawbel.yml
@@ -233,17 +267,8 @@ full documentation and examples.
 ### VS Code Extension
 
 Install **Bawbel Scanner** from the VS Code Marketplace. Auto-installs
-the CLI on first activation — no manual setup required. Inline diagnostics,
-status bar, auto-scan on save.
-
-### Manual GitHub Actions (without official action)
-
-```yaml
-      - name: Scan for AVE vulnerabilities
-        run: |
-          pip install "bawbel-scanner[all]"
-          bawbel scan . --recursive --fail-on-severity high
-```
+the CLI on first activation. Inline diagnostics, status bar, auto-scan on save,
+right-click suppress false positives with inline `<!-- bawbel-ignore -->` comments.
 
 ### Pre-commit
 
@@ -292,18 +317,72 @@ See [`.env.example`](.env.example) for the full reference.
 
 ---
 
+## Tool Pinning — Rug Pull Detection
+
+A rug pull is when an MCP server or skill file changes its content **after**
+you installed and audited it. You scan it today — it's clean. Three weeks later
+the tool description silently changes to exfiltrate every user query. Your last
+scan was clean. Nothing in CI caught it.
+
+`bawbel pin` hashes your skill files and saves the hashes to `.bawbel-pins.json`.
+Commit that file. On every subsequent scan, `bawbel check-pins` detects any hash
+that has changed since you pinned it.
+
+```bash
+# 1. Audit first
+bawbel scan ./skills/ --recursive
+
+# 2. Pin once satisfied
+bawbel pin ./skills/
+
+# 3. Commit pins — team shares them automatically
+git add .bawbel-pins.json
+git commit -m "chore: pin skill files"
+
+# 4. Check for drift on every build
+bawbel check-pins ./skills/ --fail-on-drift
+```
+
+**Why `.bawbel-pins.json` beats Snyk's `~/.mcp-scan`:**
+
+| | Bawbel | Snyk |
+|---|---|---|
+| Visible in `git diff` | ✅ | ✗ |
+| Reviewable in PRs | ✅ | ✗ |
+| Shared with team automatically | ✅ | ✗ |
+| Audit trail (`pinned_by`) | ✅ | ✗ |
+
+When a skill file is legitimately updated, re-pin it after scanning:
+
+```bash
+bawbel scan skills/search.md          # verify it's still clean
+bawbel pin skills/search.md --update  # update the pin
+git add skills/search.md .bawbel-pins.json
+git commit -m "update skill + re-pin"
+```
+
+The PR shows both the skill change and the pin update — reviewers see exactly
+what changed and that it was re-audited.
+
+See [Tool Pinning Guide](docs/guides/pinning.md) for full documentation.
+
+---
+
 ## Suppression — Managing False Positives
 
 Three mechanisms to suppress known false positives. Suppressed findings are **never deleted** — they appear in `suppressed_findings` in JSON output for full audit trail.
 
-### Inline — on the line
+### Inline — on the line (preferred)
 
 ```markdown
 fetch https://internal.company.com  <!-- bawbel-ignore -->
 fetch https://internal.company.com  <!-- bawbel-ignore: bawbel-external-fetch -->
 fetch https://internal.company.com  <!-- bawbel-ignore: AVE-2026-00001 -->
 fetch https://internal.company.com  # bawbel-ignore
+fetch https://internal.company.com  # bawbel-ignore: bawbel-external-fetch, AVE-2026-00007
 ```
+
+The VS Code extension inserts these automatically via right-click → Ignore this line.
 
 ### Block — a section
 
@@ -332,7 +411,6 @@ BAWBEL_NO_IGNORE=true bawbel scan ./   # env var
 
 See [Suppression Guide](docs/guides/suppression.md) for full documentation.
 
-
 ---
 
 ## AVE Standard
@@ -356,8 +434,10 @@ Every finding maps to a published AVE record — the CVE equivalent for agentic 
 | CI/CD integration | [docs/guides/cicd-integration.md](docs/guides/cicd-integration.md) |
 | Python API | [docs/api/scan.md](docs/api/scan.md) |
 | Suppression | [docs/guides/suppression.md](docs/guides/suppression.md) |
+| Tool pinning | [docs/guides/pinning.md](docs/guides/pinning.md) |
 | False positive reduction | [docs/guides/false-positive-reduction.md](docs/guides/false-positive-reduction.md) |
 | Writing rules | [docs/guides/writing-rules.md](docs/guides/writing-rules.md) |
+| Contributing | [CONTRIBUTING.md](CONTRIBUTING.md) |
 | Changelog | [CHANGELOG.md](CHANGELOG.md) |
 
 ---
