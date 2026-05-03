@@ -6,7 +6,6 @@
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://pypi.org/project/bawbel-scanner/)
 [![AVE Standard](https://img.shields.io/badge/AVE_Records-40-teal.svg)](https://github.com/bawbel/bawbel-ave)
-[![PyPI Downloads](https://static.pepy.tech/personalized-badge/bawbel-scanner?period=total&units=INTERNATIONAL_SYSTEM&left_color=GREY&right_color=GREEN&left_text=downloads)](https://pepy.tech/projects/bawbel-scanner)
 
 Bawbel Scanner scans agentic AI components — SKILL.md files, MCP server manifests,
 system prompts, and agent plugins — for security vulnerabilities mapped to the
@@ -50,6 +49,8 @@ bawbel scan ./skills/ --fail-on-severity high        # exit 2 on HIGH+
 bawbel scan ./skills/ --watch                        # re-scan on every change
 bawbel scan ./skills/ --format json                  # JSON for tooling
 bawbel scan ./skills/ --format sarif                 # SARIF for GitHub Security tab
+bawbel pin ./skills/                                 # hash skill files → .bawbel-pins.json
+bawbel check-pins ./skills/                          # check for rug pull drift
 ```
 
 **Example output:**
@@ -316,6 +317,57 @@ See [`.env.example`](.env.example) for the full reference.
 
 ---
 
+## Tool Pinning — Rug Pull Detection
+
+A rug pull is when an MCP server or skill file changes its content **after**
+you installed and audited it. You scan it today — it's clean. Three weeks later
+the tool description silently changes to exfiltrate every user query. Your last
+scan was clean. Nothing in CI caught it.
+
+`bawbel pin` hashes your skill files and saves the hashes to `.bawbel-pins.json`.
+Commit that file. On every subsequent scan, `bawbel check-pins` detects any hash
+that has changed since you pinned it.
+
+```bash
+# 1. Audit first
+bawbel scan ./skills/ --recursive
+
+# 2. Pin once satisfied
+bawbel pin ./skills/
+
+# 3. Commit pins — team shares them automatically
+git add .bawbel-pins.json
+git commit -m "chore: pin skill files"
+
+# 4. Check for drift on every build
+bawbel check-pins ./skills/ --fail-on-drift
+```
+
+**Why `.bawbel-pins.json` beats Snyk's `~/.mcp-scan`:**
+
+| | Bawbel | Snyk |
+|---|---|---|
+| Visible in `git diff` | ✅ | ✗ |
+| Reviewable in PRs | ✅ | ✗ |
+| Shared with team automatically | ✅ | ✗ |
+| Audit trail (`pinned_by`) | ✅ | ✗ |
+
+When a skill file is legitimately updated, re-pin it after scanning:
+
+```bash
+bawbel scan skills/search.md          # verify it's still clean
+bawbel pin skills/search.md --update  # update the pin
+git add skills/search.md .bawbel-pins.json
+git commit -m "update skill + re-pin"
+```
+
+The PR shows both the skill change and the pin update — reviewers see exactly
+what changed and that it was re-audited.
+
+See [Tool Pinning Guide](docs/guides/pinning.md) for full documentation.
+
+---
+
 ## Suppression — Managing False Positives
 
 Three mechanisms to suppress known false positives. Suppressed findings are **never deleted** — they appear in `suppressed_findings` in JSON output for full audit trail.
@@ -382,6 +434,7 @@ Every finding maps to a published AVE record — the CVE equivalent for agentic 
 | CI/CD integration | [docs/guides/cicd-integration.md](docs/guides/cicd-integration.md) |
 | Python API | [docs/api/scan.md](docs/api/scan.md) |
 | Suppression | [docs/guides/suppression.md](docs/guides/suppression.md) |
+| Tool pinning | [docs/guides/pinning.md](docs/guides/pinning.md) |
 | False positive reduction | [docs/guides/false-positive-reduction.md](docs/guides/false-positive-reduction.md) |
 | Writing rules | [docs/guides/writing-rules.md](docs/guides/writing-rules.md) |
 | Contributing | [CONTRIBUTING.md](CONTRIBUTING.md) |
