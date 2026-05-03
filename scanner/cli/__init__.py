@@ -30,6 +30,7 @@ from scanner.cli.cmd_scan_card import scan_server_card_cmd
 from scanner.cli.cmd_report import report_cmd
 from scanner.cli.cmd_version import version_cmd
 from scanner.cli.cmd_init import init_cmd
+from scanner.cli.cmd_pin import pin_cmd, check_pins_cmd
 
 # ── CLI group ─────────────────────────────────────────────────────────────────
 
@@ -55,6 +56,8 @@ cli.add_command(scan_server_card_cmd)
 cli.add_command(report_cmd)
 cli.add_command(version_cmd)
 cli.add_command(init_cmd)
+cli.add_command(pin_cmd)
+cli.add_command(check_pins_cmd)
 
 
 # ── Entry point ───────────────────────────────────────────────────────────────
