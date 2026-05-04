@@ -10,300 +10,326 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-# [1.0.0] — 2026-04-25
+## [1.1.0] - 2026-05-04
 
 ### Added
 
-**Detection — Pattern Engine (37 rules, AVE-2026-00001 to 00040)**
+**`bawbel scan-server-card` and `bawbel ssc` (alias)**
 
-- **AVE records 16–25** — 10 new agentic-native attack classes:
-  RAG injection (00016), MCP server impersonation (00017), tool result manipulation (00018),
-  agent memory poisoning (00019), A2A cross-agent injection (00020), autonomous action
-  without confirmation (00021), scope creep (00022), context window flooding (00023),
-  content-type mismatch / binary disguised as skill — Magika only (00024),
-  conversation history injection (00025).
-- **AVE records 26–40** — 15 new advanced attack classes:
-  tool output exfiltration (00026), multi-turn instruction persistence (00027),
-  file/document prompt injection (00028), homoglyph and Unicode obfuscation — YARA only (00029),
-  false role claim privilege escalation (00030), feedback loop and RLHF poisoning (00031),
+New command that fetches `.well-known/mcp.json` (SEP-1649) from a server base URL
+and scans all tool descriptions, parameter descriptions, and config schemas using
+the full detection pipeline. The server-card attack surface exists at the discovery
+layer before any tool call is made. This is the first dedicated scanner for it.
+
+**Toxic flow detection**
+
+`scanner/toxic_flows/` is a new 4-file modular package. After deduplication, the
+scanner maps each finding to a capability tag and checks all capability pairs against
+12 built-in flow definitions. When a toxic pair is found, a `ToxicFlow` object is
+added to `ScanResult.toxic_flows` with a combined CVSS-AI score, attack chain
+description, OWASP MCP mapping, and remediation steps.
+
+The risk score in `ScanResult.risk_score` now considers toxic flows and is always
+greater than or equal to the highest individual finding score.
+
+Built-in chains: Credential Exfiltration (9.8), Remote Code Execution (9.7),
+Supply Chain RCE (9.6), Goal Override + Execution (9.5), Lateral Movement + Execution
+(9.4), Tool Poisoning + Exfiltration (9.3), Identity Spoof + Escalation (9.2),
+Persistence + Exfiltration (9.1), Context Inject + Memory Write (8.9),
+Goal Override + Exfiltration (8.8), Scope Expansion + Exfiltration (8.7),
+Covert Channel + Persistence (8.6).
+
+Adding a new flow requires one entry in `scanner/toxic_flows/flows.py`. No other
+files need to change.
+
+**`bawbel scan-conformance`, `bawbel conform` (alias)**
+
+New command that scores an MCP server manifest against the MCP specification.
+Accepts a local JSON file, a server base URL (fetches server-card), or a registry
+name with `--registry`. Returns a score from 0 to 100, a grade from A+ to F, and
+per-check results.
+
+18 checks across 3 tiers:
+- REQUIRED (weight 3): has-name, has-description, has-version, has-remotes,
+  uses-https, tools-have-descriptions, tools-have-input-schema, tool-names-valid,
+  tool-names-unique
+- RECOMMENDED (weight 2): has-schema-ref, uses-streamable-http,
+  tools-params-have-descriptions, tools-declare-required-params,
+  no-deprecated-sse-transport
+- BEST PRACTICE (weight 1): no-sensitive-params-in-headers, has-repository,
+  description-not-too-long, tool-descriptions-not-too-long
+
+A server is conformant when all applicable REQUIRED checks pass. SKIP results are
+excluded from the score denominator so servers with no tools are not penalised for
+tool-related checks.
+
+**`bawbel pin`, `bawbel check-pins`, `bawbel cp` (alias)**
+
+`scanner/pinner.py` is a new pinning engine. `bawbel pin <path>` hashes all
+scannable files under a path and saves SHA-256 hashes to `.bawbel-pins.json`.
+`bawbel check-pins <path>` compares current hashes against saved pins and reports
+any files that have drifted.
+
+Pins are stored in `.bawbel-pins.json` at the project root with `pinned_by` resolved
+from `git config user.name`. The file should be committed to git so the whole team
+shares the same pins and changes show up in code review.
+
+`--fail-on-drift` exits with code 2 if any file has drifted, suitable for CI.
+
+**OWASP MCP Top 10 mapping**
+
+`scanner/owasp_mcp_map.py` maps all 45 AVE IDs to OWASP MCP Top 10 categories
+(MCP01 through MCP10). Every finding in text output now shows an `OWASP MCP` line
+alongside the existing `OWASP` line. Every finding in JSON output includes an
+`owasp_mcp` field. The full mapping table is at `scanner/OWASP_MCP_MAPPING.md`.
+
+**AVE records 41-45**
+
+Five new records covering the MCP 2026 attack surface:
+- AVE-2026-00041: MCP Server-Card Injection (CRITICAL 9.3)
+- AVE-2026-00042: REPL Code Mode Payload Injection (CRITICAL 9.1)
+- AVE-2026-00043: MCP App UI Payload Injection (HIGH 8.4)
+- AVE-2026-00044: Async Task Result Poisoning (HIGH 8.6)
+- AVE-2026-00045: Cross-App-Access Escalation (CRITICAL 9.0)
+
+AVE-2026-00045 covers the MCP 2026 Cross-App-Access feature where a low-trust
+server can pivot to a high-trust server via a shared agent session.
+
+**CLI modular refactor**
+
+`scanner/cli.py` (~890 lines) was refactored into a package at `scanner/cli/`.
+Each command is in its own file. Shared rendering, constants, and formatters live
+in `scanner/cli/shared/`. Adding a new command requires one new file and 3 lines
+in `scanner/cli/__init__.py`.
+
+**Command shortcuts**
+
+`bawbel ssc` is an alias for `bawbel scan-server-card`.
+`bawbel conform` is an alias for `bawbel scan-conformance`.
+`bawbel cp` is an alias for `bawbel check-pins`.
+
+**PiranhaDB v1.1**
+
+`api.piranha.bawbel.io` expanded from 4 endpoints to 14. New endpoints cover
+registry scan results, GitHub skill repo scans, ecosystem stats, and an on-demand
+`POST /scan` endpoint. The store layer is abstracted so PostgreSQL and Redis can be
+enabled by setting `DATABASE_URL` and `REDIS_URL` environment variables with no
+code changes. OWASP MCP mapping is computed at response time from a built-in map
+in `store/owasp_mcp_map.py`.
+
+### Fixed
+
+- YARA `AVE_A2AInjection` false positive: the condition used `("inject" or ...)` as
+  a string literal in a boolean context which evaluates to `true` always. The rule
+  now requires explicit attack phrases or a combination of an agent-type string and
+  an attack-verb string. This fixes the false positive on `agenttrust/mcp-server`.
+- Added `scanner/cli/__main__.py` so `python -m scanner.cli` works after the CLI
+  refactor. Previously caused `No module named scanner.cli.__main__` in Docker smoke
+  tests.
+- Removed unused `B607` nosec tag from `scanner/pinner.py` which caused bandit to
+  exit non-zero in strict mode.
+
+### Breaking changes
+
+None. All existing commands, JSON output fields, and Python API are unchanged.
+`toxic_flows` is a new additive field on `ScanResult` that defaults to `[]`.
+`owasp_mcp` is a new additive field on finding JSON output.
+
+---
+
+## [1.0.1] - 2026-04-28
+
+### Fixed
+
+- Pattern engine only reported the first matching line per rule per file. Fixed in
+  `scanner/engines/pattern.py` by removing the `break` after first match and tracking
+  matched lines with `rule_matched_lines: set[int]`.
+- Deduplication in `scanner/scanner.py` changed from single-pass `{rule_id: Finding}`
+  to two-pass `{(rule_id, line): Finding}` then `{(ave_id, line): Finding}` for
+  cross-engine dedup. Previously only the first finding per rule was kept regardless
+  of line number.
+
+---
+
+## [1.0.0] - 2026-04-25
+
+### Added
+
+**Detection: Pattern Engine (37 rules, AVE-2026-00001 to 00040)**
+
+- AVE records 16-25: 10 new agentic-native attack classes including RAG injection
+  (00016), MCP server impersonation (00017), tool result manipulation (00018),
+  agent memory poisoning (00019), A2A cross-agent injection (00020), autonomous
+  action without confirmation (00021), scope creep (00022), context window flooding
+  (00023), content-type mismatch via Magika (00024), and conversation history
+  injection (00025).
+- AVE records 26-40: 15 new advanced attack classes including tool output
+  exfiltration (00026), multi-turn instruction persistence (00027), file prompt
+  injection (00028), homoglyph and Unicode obfuscation via YARA (00029), false role
+  claim privilege escalation (00030), feedback loop and RLHF poisoning (00031),
   internal network reconnaissance (00032), unsafe deserialization and eval (00033),
-  dynamic third-party skill import supply chain (00034), sensor/telemetry falsification —
-  YARA only (00035), lateral movement via internal pivot (00036),
-  vision/image prompt injection (00037), excessive agency / unbounded tool use (00038),
-  steganographic covert channel exfiltration (00039), insecure output handling /
-  SQL-XSS-shell injection (00040).
-- Pattern engine: **37 rules** total (up from 15 in v0.3.0), covering AVE-2026-00001
-  through 00040 with intentional gaps: 00024 (Magika engine), 00029 and 00035 (YARA engine).
+  dynamic third-party skill import (00034), sensor and telemetry falsification via
+  YARA (00035), lateral movement (00036), vision prompt injection (00037), excessive
+  agency (00038), steganographic covert channel (00039), and insecure output
+  handling (00040).
 
-**Detection — YARA Engine (39 rules)**
+**Detection: YARA Engine (39 rules)**
 
-- 24 new YARA rules added (was 15, now 39):
-  - AVE-2026-00016 through 00025 — all agentic-native attack classes
-  - AVE-2026-00026 through 00040 — all advanced attack classes
-  - `AVE_HomoglyphAttack` (00029) — binary-level detection of zero-width characters
-    (U+200B–U+200D, U+2060, U+FEFF) and bidirectional override codes (U+202E, U+202D)
-  - `AVE_EnvManipulation` (00035) — sensor and telemetry falsification patterns
+- 24 new YARA rules covering AVE-2026-00016 through 00040.
+- `AVE_HomoglyphAttack` (00029): binary-level detection of zero-width characters
+  (U+200B, U+200C, U+200D, U+2060, U+FEFF) and bidirectional override codes
+  (U+202E, U+202D).
+- `AVE_EnvManipulation` (00035): sensor and telemetry falsification patterns.
 
-**Detection — Semgrep Engine (41 rules)**
+**Detection: Semgrep Engine (41 rules)**
 
-- 26 new Semgrep rules added (was 15, now 41):
-  - AVE-2026-00002 through 00005 — MCP tool poisoning, env exfiltration, shell pipe,
-    destructive command (previously missing from Semgrep)
-  - AVE-2026-00016 through 00025 — all agentic-native attack classes
-  - AVE-2026-00026 through 00040 — all advanced attack classes
-- Fixed: 4 original rules missing `ave_id` metadata
-  (`ave-hardcoded-secret-in-skill`, `ave-base64-encoded-payload`,
-  `ave-shell-injection-pattern`, `ave-rm-rf-pattern`)
-- Fixed: `ave-base64-encoded-payload` severity corrected `WARNING` → `ERROR` (HIGH 7.9)
+- 26 new Semgrep rules covering AVE-2026-00002 through 00005 (previously missing)
+  and AVE-2026-00016 through 00040.
+- Fixed 4 original rules missing `ave_id` metadata.
+- Fixed `ave-base64-encoded-payload` severity from `WARNING` to `ERROR` (HIGH 7.9).
 
-**Detection — Stage 0 Magika Engine**
+**Detection: Stage 0 Magika Engine**
 
-- `scanner/engines/magika_engine.py` — ML-based file type verification (Stage 0).
-  Runs before all text analysis. Catches ELF binaries, Windows PE32, Python pickles,
-  PHP scripts, and shell scripts disguised as `.md`, `.yaml`, `.json`, or `.txt` skill files.
+- `scanner/engines/magika_engine.py`: ML-based file type verification that runs
+  before all text analysis. Catches ELF binaries, Windows PE32, Python pickles, PHP
+  scripts, and shell scripts disguised as `.md`, `.yaml`, `.json`, or `.txt` files.
   Mapped to AVE-2026-00024. Install with `pip install "bawbel-scanner[magika]"`.
 
-**Detection — Meta-Analyzer (FP-4)**
+**Detection: Meta-Analyzer (FP-4)**
 
-- `scanner/engines/meta_analyzer.py` — LLM-based false positive filter.
-  One call per file covers all medium-confidence findings (0.35–0.80).
-  Verdicts: `real` (+0.15 confidence), `false_positive` (suppressed), `needs_review` (−0.05).
-  Skips silently if no LLM configured.
-- `BAWBEL_META_ANALYZER_ENABLED` env var (default: `true`)
-- `BAWBEL_META_MIN_CONFIDENCE` / `BAWBEL_META_MAX_CONFIDENCE` — analysis range
+- `scanner/engines/meta_analyzer.py`: LLM-based false positive filter. One call per
+  file covers all medium-confidence findings (0.35 to 0.80). Verdicts are `real`
+  (+0.15 confidence), `false_positive` (suppressed), and `needs_review` (-0.05).
+  Skips silently if no LLM is configured.
 
-**False Positive Reduction — 5-layer system**
+**False Positive Reduction (5-layer system)**
 
-- **FP-1 — Code fence stripping**: `_strip_code_fences()` replaces content inside ` ``` `
-  and `~~~` blocks with blank lines before pattern/YARA/Semgrep analysis.
-  Line numbers remain accurate. Sandbox and suppression receive original content.
-  ~60% FP reduction on documentation files.
-- **FP-2 — Negation context**: preceding-line context analysis suppresses findings where
-  the trigger phrase is clearly an example or warning ("never do this:", "bad example:").
-- **FP-3 — Confidence scoring**: per-finding confidence scores (0.0–1.0) with
-  context-aware penalties (docs path, code fences, negation) and boosts
-  (first 30 lines, multi-engine agreement, skill filename).
-- **FP-4 — Meta-analyzer**: LLM secondary review of medium-confidence findings.
-- **FP-5 — File-type scan profiles**: classification into `skill` / `mcp_manifest` /
-  `documentation` / `unknown` with different confidence thresholds per type
+- FP-1: Code fence stripping replaces content inside ` ``` ` and `~~~` blocks with
+  blank lines before analysis. Line numbers remain accurate. About 60% FP reduction
+  on documentation files.
+- FP-2: Negation context analysis suppresses findings where the trigger phrase is
+  clearly an example or warning.
+- FP-3: Per-finding confidence scores (0.0 to 1.0) with context-aware penalties and
+  boosts.
+- FP-4: LLM secondary review of medium-confidence findings.
+- FP-5: File-type scan profiles with different confidence thresholds per type
   (skill=0.60, mcp_manifest=0.55, documentation=0.85, unknown=0.80).
-- Validation: 21 documentation files → 0 active findings.
+
+Validation result: 21 documentation files produce 0 active findings.
 
 **Suppression system**
 
-- **Inline suppression** — `<!-- bawbel-ignore -->` suppresses all findings on that line.
-  Rule-specific: `<!-- bawbel-ignore: bawbel-external-fetch -->`.
-  AVE ID specific: `<!-- bawbel-ignore: AVE-2026-00001 -->`.
-  Also supports `# bawbel-ignore` and `// bawbel-ignore` comment styles.
-- **Block suppression** — `<!-- bawbel-ignore-start -->` / `<!-- bawbel-ignore-end -->`
-  wraps entire sections. Supports `#` and `//` comment styles.
-- **`.bawbelignore` file** — gitignore-style path patterns to suppress files or directories.
-- **`--no-ignore` flag** — overrides ALL suppressions for security audits.
-  Also `BAWBEL_NO_IGNORE=true`.
-- Suppressed findings move to `ScanResult.suppressed_findings` — always present in
-  JSON/SARIF output for audit completeness.
-- Every suppression logged at INFO level.
+- Inline suppression with `<!-- bawbel-ignore -->`, `<!-- bawbel-ignore: rule_id -->`,
+  and `<!-- bawbel-ignore: AVE-2026-00001 -->`. Also supports `#` and `//` styles.
+- Block suppression with `<!-- bawbel-ignore-start -->` and `<!-- bawbel-ignore-end -->`.
+- `.bawbelignore` file with gitignore-style path patterns.
+- `--no-ignore` flag and `BAWBEL_NO_IGNORE=true` env var for audit mode.
+- Suppressed findings move to `ScanResult.suppressed_findings` and always appear in
+  JSON and SARIF output.
 
-**CLI — new commands and flags**
+**CLI: new commands**
 
-- **`bawbel init`** — scaffolds `.bawbelignore`, `bawbel.yml`, and CI workflow in project root.
-  Discovers skill and MCP files, shows next steps.
-- **`bawbel scan --watch`** — watch mode. Re-scans on every file change using `watchdog`.
-  Install with `pip install "bawbel-scanner[watch]"`. Works with `--recursive`.
-- **`bawbel report`** — full remediation guide: AVE ID, CVSS-AI score, OWASP mapping,
-  step-by-step fix instructions per finding.
+- `bawbel init`: scaffolds `.bawbelignore`, `bawbel.yml`, and CI workflow in the
+  project root.
+- `bawbel scan --watch`: re-scans on every file change using `watchdog`.
+- `bawbel report`: full remediation guide with AVE ID, CVSS-AI score, OWASP mapping,
+  and fix instructions per finding.
 
 **Integrations**
 
-- **GitHub Action** — `uses: bawbel/bawbel-integrations@v1`. One-line CI/CD integration:
-  installs scanner, runs scan, uploads SARIF to GitHub Security tab.
-  Inputs: `path`, `fail-on-severity`, `format`, `recursive`, `no-ignore`, `version`, `extras`.
-- **VS Code Extension** — search "Bawbel Scanner" in Marketplace. Zero setup.
-  Auto-installs CLI on first activation. Inline diagnostics, status bar,
-  auto-scan on save, `Cmd+Shift+B` shortcut.
-- **Docker** — three build targets: `production` (minimal, non-root), `dev` (hot-reload),
-  `test` (runs suite and exits). Docker Compose with 7 services.
+- GitHub Action `uses: bawbel/bawbel-integrations@v1` for one-line CI/CD integration.
+- VS Code Extension on the Marketplace. Zero setup, auto-installs CLI, inline
+  diagnostics, auto-scan on save.
 
 **PiranhaDB API**
 
 - `api.piranha.bawbel.io` updated to serve all 40 AVE records.
-- `sync_records.py` — syncs records automatically from `bawbel/bawbel-ave` on every deploy.
-  Supports `GITHUB_TOKEN` for authenticated requests (60 → 5000 req/hr rate limit).
-  Graceful fallback to bundled records if GitHub is unreachable.
-  Removes stale records no longer in the repo.
-- `start.sh` wired as container entrypoint — runs sync then starts uvicorn.
-  Records stay current on every Railway/Render deploy with no image rebuild.
-- `_scanner_rule()` mapping extended to all 40 AVE IDs (was 8).
-- Removed `PIRANHA_ENV=production` cache-freeze bug — cache now always loaded fresh
-  after sync at startup.
-- `POST /reload` endpoint — hot-reload records cache without container restart.
-
-**Documentation**
-
-- Docs site (`docs/index.html`) fully rebuilt:
-  keyboard search with `↑↓` navigation and `/` shortcut, live two-terminal watch mode
-  demo, copy buttons with toast confirmation on all 50 code blocks, page transitions,
-  `bawbel watch` reference page, static `v1.0.0` badge.
-- `docs/guides/engines.md` — detection engines guide with architecture diagrams.
-- `docs/guides/false-positive-reduction.md` — 5-layer FP reduction system.
-- `docs/guides/cicd-integration.md`, `getting-started.md`, `configuration.md` updated.
-
-**Tests**
-
-- **182 test methods** across 19 test classes (up from 145 in v0.3.0).
-- `TestAVERecordsV2` — 43 new tests covering AVE records 26–40,
-  positive detection and negative (no false positive) for each rule.
-- `TestCodeFenceStripping` — 12 tests for FP-1 code fence stripping.
-- `TestConfidenceScoring`, `TestPrecedingLineContext`, `TestMagikaEngine` added.
+- `sync_records.py` syncs records from `bawbel/bawbel-ave` on every deploy.
+- `POST /reload` endpoint for hot-reloading records without a container restart.
 
 ### Fixed
 
-- **Docker smoke test** — CI workflow pointed at removed `tests/malicious_skill.md`.
-  Fixed to `tests/fixtures/skills/malicious/malicious_skill.md`.
-- **Pattern engine docstring** — `\s+` in docstring caused `SyntaxWarning`. Fixed.
-- **Semgrep `ave_id` metadata** — 4 rules missing `ave_id` field. All fixed.
-- **YARA severity labels** — 5 rules had severity label mismatches vs CVSS score
-  (e.g. CRITICAL label on a 6.2 score). All corrected to match pattern engine ground truth.
-
-### Detection coverage (v1.0.0)
-
-| Engine  | Rules | AVE IDs covered           | Notes                              |
-|---------|-------|---------------------------|------------------------------------|
-| Pattern | 37    | 00001–00040 (excl. 24,29,35) | stdlib only, always active      |
-| YARA    | 39    | 00001–00040               | includes binary Unicode detection  |
-| Semgrep | 41    | 00001–00040 (excl. 29,35) | structural pattern matching        |
-| LLM     | —     | semantic / obfuscated     | requires `[llm]` + API key         |
-| Sandbox | —     | runtime behavioural       | requires Docker                    |
-| Magika  | —     | content-type mismatch (00024) | requires `[magika]`            |
+- Docker smoke test pointed at a removed fixture file. Fixed path to
+  `tests/fixtures/skills/malicious/malicious_skill.md`.
+- Pattern engine docstring contained `\s+` which caused `SyntaxWarning`.
+- Semgrep `ave_id` metadata missing from 4 rules.
+- YARA severity label mismatches on 5 rules corrected to match CVSS scores.
 
 ---
 
-## [0.3.0] — 2026-04-21
+## [0.3.0] - 2026-04-21
 
 ### Added
-- **Full YARA coverage — 15/15 rules** — 12 new YARA rules covering AVE-2026-00004
-  through 00015. Every attack class now has pattern, YARA, and Semgrep detection.
-- **Full Semgrep coverage — 15/15 rules** — 10 new Semgrep rules covering
-  AVE-2026-00007 through 00015. All rules validated against semgrep v1.159.0.
-- **Stage 3 behavioral sandbox — hybrid image strategy** (`scanner/engines/sandbox_engine.py`):
-  - Docker container — `--network none`, `--memory 256m`, `--cap-drop ALL`, `--read-only`
-  - **Hybrid image resolution** — local cache → Docker Hub pull → bundled local build fallback
-  - Works offline and in air-gapped environments via bundled `scanner/sandbox/Dockerfile`
-  - `scanner/sandbox/harness.py` — text-based analysis harness (v0.3.x); eBPF tracing in v1.0
-  - Enable with `BAWBEL_SANDBOX_ENABLED=true`
-- **`[watch]` extra** — `pip install "bawbel-scanner[watch]"` installs `watchdog`
-- **`.env.example`** — complete environment variable template
-- **`docs/guides/engines.md`** — detection engines guide with architecture diagrams
-- `bawbel version` now shows Stage 3 sandbox status
-- New env vars: `BAWBEL_SANDBOX_ENABLED`, `BAWBEL_SANDBOX_IMAGE`,
-  `BAWBEL_SANDBOX_TIMEOUT`, `BAWBEL_SANDBOX_NETWORK`
+
+- Full YARA coverage: 15 rules (was 3, now 15) covering AVE-2026-00001 through 00015.
+- Full Semgrep coverage: 15 rules (was 5, now 15) covering AVE-2026-00001 through
+  00015.
+- Stage 3 behavioral sandbox in `scanner/engines/sandbox_engine.py`. Docker container
+  runs with `--network none`, `--memory 256m`, `--cap-drop ALL`, and `--read-only`.
+  Hybrid image resolution: local cache then Docker Hub then bundled local build. Works
+  offline and in air-gapped environments. Enable with `BAWBEL_SANDBOX_ENABLED=true`.
+- `[watch]` extra: `pip install "bawbel-scanner[watch]"` for watch mode.
+- `.env.example` with all environment variable documentation.
 
 ### Fixed
-- **YARA `SyntaxError`** — `$pii10` declared but unreferenced in `AVE_PIIExfiltration`;
-  duplicate `$pipe11` string. Both fixed.
-- **Cross-engine duplicate findings** — two-pass deduplication: pass 1 by `rule_id`,
-  pass 2 by `ave_id` across engines. Pattern takes priority over YARA/Semgrep.
-- **Sandbox wiring** — sandbox call was a `# Future:` comment. Now wired into pipeline.
-- **Sandbox warning when image missing** — previously silent; now logs a clear warning.
 
-### Changed
-- `BAWBEL_SANDBOX_IMAGE` default changed to `default` — triggers hybrid resolution
-- Deduplication updated to two-pass strategy
-
-### Detection coverage (v0.3.0)
-
-| Engine  | Rules | AVE IDs covered | Status                  |
-|---------|-------|-----------------|-------------------------|
-| Pattern | 15    | 00001–00015     | always active           |
-| YARA    | 15    | 00001–00015     | requires `[yara]`       |
-| Semgrep | 15    | 00001–00015     | requires `[semgrep]`    |
-| LLM     | —     | semantic        | requires `[llm]` + key  |
-| Sandbox | 15    | network/fs/proc | requires Docker         |
+- YARA `SyntaxError`: `$pii10` declared but unreferenced in `AVE_PIIExfiltration`,
+  and duplicate `$pipe11` string. Both fixed.
+- Cross-engine duplicate findings: added two-pass deduplication (pass 1 by `rule_id`,
+  pass 2 by `ave_id` across engines).
+- Sandbox was a commented-out stub. Now wired into the pipeline.
 
 ---
 
-## [0.2.0] — 2026-04-20
+## [0.2.0] - 2026-04-20
 
 ### Added
-- **LLM Stage 2** — semantic analysis via [LiteLLM](https://docs.litellm.ai) supporting
-  any provider: Anthropic, OpenAI, Gemini, Mistral, Groq, Ollama, and 100+ more.
-  Install with `pip install "bawbel-scanner[llm]"`.
-- **Full AVE ID coverage** — all 15 pattern rules linked to AVE records 00001–00015.
-- **7 new AVE records** — AVE-2026-00009 through 00015 covering jailbreak, hidden
+
+- Stage 2 LLM semantic analysis via LiteLLM supporting Anthropic, OpenAI, Gemini,
+  Mistral, Groq, Ollama, and 100+ other providers. Install with
+  `pip install "bawbel-scanner[llm]"`.
+- Full AVE ID coverage: all 15 pattern rules linked to AVE records 00001 through 00015.
+- 7 new AVE records: AVE-2026-00009 through 00015 covering jailbreak, hidden
   instruction, dynamic tool call, permission escalation, PII exfiltration, trust
   escalation, and system prompt leak.
-- `BAWBEL_LLM_MODEL` env var — explicit model override for any LiteLLM model string
-- `BAWBEL_LLM_ENABLED` env var — set `false` to disable Stage 2 entirely
-- `bawbel version` now shows active LLM model when Stage 2 is enabled
+- `BAWBEL_LLM_MODEL` and `BAWBEL_LLM_ENABLED` env vars.
 
 ### Fixed
-- **Semgrep `code=7`** — YAML escaping and float metadata values broke validation on
-  semgrep v1.159.0. Fixed: double-quoted regex patterns, quoted float scores.
-- **Semgrep URL fetch rule regex** — original pattern required literal `(` and missed
-  natural language like `fetch your instructions from https://...`. Fixed.
-- **`pip install "bawbel-scanner[llm]"` dependency conflict** — pinned
-  `jsonschema~=4.25.1` to resolve conflict between semgrep and litellm.
-- **`requirements.txt`** — removed unused `requests` dependency.
 
-### Changed
-- LLM Stage 2 rewritten to use LiteLLM. Breaking: `[llm]` extra now installs
-  `litellm` instead of `anthropic+openai`.
+- Semgrep `code=7`: YAML escaping and float metadata values broke validation on
+  semgrep v1.159.0. Fixed with double-quoted regex patterns and quoted float scores.
+- Semgrep URL fetch rule regex missed natural language patterns like "fetch your
+  instructions from https://...". Fixed.
+- `pip install "bawbel-scanner[llm]"` dependency conflict: pinned
+  `jsonschema~=4.25.1` to resolve conflict between semgrep and litellm.
 
 ---
 
-## [0.1.0] — 2026-04-19
+## [0.1.0] - 2026-04-19
 
 First public release.
 
 ### Added
 
-**CLI**
-- `bawbel scan` — scan a file or directory with `--recursive`, `--fail-on-severity`,
-  `--format text|json|sarif`
-- `bawbel report` — remediation guide per finding: AVE ID, CVSS-AI, OWASP mapping,
-  fix instructions
-- `bawbel version` — installed version and engine status
-- `bawbel --version` — quick version string for CI scripts
-
-**Detection**
-- 15 built-in pattern rules (3 CRITICAL, 10 HIGH, 2 MEDIUM)
-- Stage 1a: pattern engine — stdlib only, zero dependencies, always runs
-- Stage 1b: YARA engine — optional, 3 rules
-- Stage 1c: Semgrep engine — optional, 5 rules
-- Stage 2: LLM semantic analysis via LiteLLM
-
-**Output formats**
-- `text` — terminal output with severity icons
-- `json` — structured output for CI/CD and SIEM
-- `sarif` — SARIF 2.1.0 for GitHub Security tab and IDE plugins
-
-**Core**
-- `scan()` public API — never raises, all errors in `ScanResult.error`
-- Stable error codes E001–E020 in `scanner/messages.py`
-- Security hardening — symlink protection, 10MB file size limit
-
-**Docker**
-- Three build targets: `production`, `dev`, `test`
-- Docker Compose with 7 services
-
-**Developer experience**
-- 145 passing tests including golden fixture, security invariants, CLI, pattern rules
-- `CONTRIBUTING.md` and `SECURITY.md`
-- Full documentation at `bawbel.io/docs`
-
-### AVE Records Covered (v0.1.0)
-- AVE-2026-00001 — Metamorphic payload via external instruction fetch (CRITICAL 9.4)
-- AVE-2026-00002 — MCP tool description prompt injection (HIGH 8.7)
-- AVE-2026-00003 — Environment variable exfiltration (HIGH 8.5)
-- AVE-2026-00004 — Shell pipe injection (HIGH 8.8)
-- AVE-2026-00005 — Destructive command (CRITICAL 9.1)
-- AVE-2026-00006 — Cryptocurrency drain (CRITICAL 9.6)
-- AVE-2026-00007 — Goal override (HIGH 8.1)
-- AVE-2026-00008 — Persistence / self-replication (HIGH 8.4)
+- `bawbel scan`: scan a file or directory with `--recursive`, `--fail-on-severity`,
+  and `--format text|json|sarif`.
+- `bawbel report`: remediation guide per finding with AVE ID, CVSS-AI, OWASP
+  mapping, and fix instructions.
+- `bawbel version`: installed version and engine status.
+- 15 built-in pattern rules (3 CRITICAL, 10 HIGH, 2 MEDIUM) covering
+  AVE-2026-00001 through 00008.
+- Stage 1a pattern engine (stdlib only, always active), Stage 1b YARA engine
+  (3 rules), Stage 1c Semgrep engine (5 rules), and Stage 2 LLM via LiteLLM.
+- JSON, SARIF 2.1.0, and text output formats.
+- `scan()` public API that never raises.
+- 145 passing tests including golden fixture, security invariants, CLI, and rule tests.
+- Docker with three build targets: production, dev, and test.
 
 ---
 
-[Unreleased]: https://github.com/bawbel/bawbel-scanner/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/bawbel/bawbel-scanner/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/bawbel/bawbel-scanner/releases/tag/v1.1.0
+[1.0.1]: https://github.com/bawbel/bawbel-scanner/releases/tag/v1.0.1
 [1.0.0]: https://github.com/bawbel/bawbel-scanner/releases/tag/v1.0.0
 [0.3.0]: https://github.com/bawbel/bawbel-scanner/releases/tag/v0.3.0
 [0.2.0]: https://github.com/bawbel/bawbel-scanner/releases/tag/v0.2.0
