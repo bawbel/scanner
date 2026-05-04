@@ -41,7 +41,7 @@ jobs:
       - name: Run Bandit
         run: |
           pip install bandit
-          bandit -r scanner/ -f screen
+          bandit -r scanner/ -c pyproject.toml -f screen
 
   # ── 2. Build distribution ─────────────────────────────────────────────────
   build:
