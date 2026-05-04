@@ -46,13 +46,13 @@ SCANNABLE_EXT = {".md", ".yaml", ".yml", ".json", ".txt"}
 def _git_identity() -> str:
     """Resolve the current git user for audit trail."""
     try:
-        name = subprocess.run(  # nosec B607  # noqa: S603 S607
+        name = subprocess.run(  # nosec B603 B607  # noqa: S603 S607
             ["git", "config", "user.name"],
             capture_output=True,
             text=True,
             timeout=3,
         ).stdout.strip()
-        email = subprocess.run(  # nosec B607  # noqa: S603 S607
+        email = subprocess.run(  # nosec B603 B607  # noqa: S603 S607
             ["git", "config", "user.email"],
             capture_output=True,
             text=True,
