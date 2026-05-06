@@ -10,6 +10,16 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.1.1] - 2026-05-07
+
+### Fixed
+
+- Added `<!-- mcp-name: io.github.bawbel/bawbel-scanner -->` marker to README.md
+  so the MCP official registry validator can verify PyPI package ownership.
+  No functional changes. This is a registry submission requirement only.
+
+---
+
 ## [1.1.0] - 2026-05-04
 
 ### Added
@@ -327,7 +337,8 @@ First public release.
 
 ---
 
-[Unreleased]: https://github.com/bawbel/bawbel-scanner/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/bawbel/bawbel-scanner/compare/v1.1.1...HEAD
+[1.1.1]: https://github.com/bawbel/bawbel-scanner/releases/tag/v1.1.1
 [1.1.0]: https://github.com/bawbel/bawbel-scanner/releases/tag/v1.1.0
 [1.0.1]: https://github.com/bawbel/bawbel-scanner/releases/tag/v1.0.1
 [1.0.0]: https://github.com/bawbel/bawbel-scanner/releases/tag/v1.0.0
