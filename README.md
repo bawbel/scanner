@@ -7,6 +7,8 @@
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://pypi.org/project/bawbel-scanner/)
 [![AVE Standard](https://img.shields.io/badge/AVE_Records-45-teal.svg)](https://github.com/bawbel/bawbel-ave)
 
+<!-- mcp-name: io.github.bawbel/bawbel-scanner -->
+
 Bawbel Scanner scans agentic AI components including SKILL.md files, MCP server manifests,
 system prompts, and agent plugins for security vulnerabilities mapped to the
 [AVE (Agentic Vulnerability Enumeration)](https://github.com/bawbel/bawbel-ave) standard.
