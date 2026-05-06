@@ -1,0 +1,45 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.bawbel/bawbel-scanner",
+  "title": "Bawbel Scanner",
+  "description": "Security scanner for MCP servers and skill files. Detects AVE vulnerabilities before production.",
+  "version": "1.1.0",
+  "repository": {
+    "url": "https://github.com/bawbel/bawbel-scanner",
+    "source": "github"
+  },
+  "packages": [
+    {
+      "registryType": "pypi",
+      "registryBaseUrl": "https://pypi.org",
+      "identifier": "bawbel-scanner",
+      "version": "1.1.0",
+      "runtimeHint": "uvx",
+      "transport": {
+        "type": "stdio"
+      },
+      "packageArguments": [
+        {
+          "type": "named",
+          "name": "--path",
+          "description": "File or directory to scan",
+          "default": "."
+        }
+      ]
+    }
+  ],
+  "_meta": {
+    "io.modelcontextprotocol.registry/publisher-provided": {
+      "license": "Apache-2.0",
+      "categories": [
+        "security",
+        "devsecops",
+        "scanner",
+        "vulnerability"
+      ],
+      "threat_intel_api": "https://api.piranha.bawbel.io",
+      "ave_records": 45,
+      "owasp_mcp_mapping": true
+    }
+  }
+}
