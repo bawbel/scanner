@@ -6,7 +6,7 @@
 
 # Documentation — contains intentional examples of attack patterns
 docs/**
-
+docs/guides/**
 # Test fixtures — false-positive regression fixtures only
 # The malicious golden fixture (tests/fixtures/skills/malicious/) is deliberately
 # excluded so the scanner always validates against it.
