@@ -13,7 +13,7 @@
 [![AVE Records](https://img.shields.io/badge/AVE_Records-45-green.svg)](https://github.com/bawbel/ave)
 [![MCP Registry](https://img.shields.io/badge/MCP_Registry-listed-purple.svg)](https://registry.modelcontextprotocol.io)
 
-<!-- [![Star History Chart](https://api.star-history.com/svg?repos=bawbel/scanner&type=Date)](https://star-history.com/#bawbel/scanner&Date) -->
+[![Star History Chart](https://api.star-history.com/svg?repos=bawbel/scanner&type=Date)](https://star-history.com/#bawbel/scanner&Date)
 
 </div>
 
