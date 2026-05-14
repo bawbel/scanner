@@ -62,15 +62,6 @@ Six engines run in parallel. Results merge before toxic flow analysis.
 
 ---
 
-## Toxic flow detection
-
-A single finding may be HIGH. Two that combine into a complete attack chain become CRITICAL.
-Bawbel detects 12 built-in chains.
-
-<img src="docs/diagrams/03_toxic_flows.png" width="100%" alt="Toxic flow detection">
-
----
-
 ## False positive reduction
 
 Bawbel applies five sequential layers before reporting a finding.
