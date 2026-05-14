@@ -78,10 +78,6 @@ Each layer reduces noise further. Click the diagram to open it in Mermaid Live E
 
 <img src="docs/diagrams/04_false_positive.png" width="100%" alt="False positive flow">
 
-### The 5-layer pipeline
-
-<img src="docs/diagrams/05_fp_layers.png" width="40%" align="right" alt="5-layer FP reduction">
-
 ### The 5 layers
 
 | Layer | Mechanism | Applied at | FP reduction |
