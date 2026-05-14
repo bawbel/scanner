@@ -1,14 +1,14 @@
 """
-Bawbel Scanner — Stage 0: Magika file type verification engine.
+Bawbel Scanner - Stage 0: Magika file type verification engine.
 
 Uses Google's Magika (~99% accuracy, ~5ms/file) to detect content-type
 mismatches between a file's extension and its actual content.
 
 Catches supply chain attacks that static text analysis cannot detect:
-  - skill.md   that is actually PHP code      → CRITICAL
-  - config.yaml that is actually a pickle      → CRITICAL
-  - logo.png   that is actually an ELF binary  → CRITICAL
-  - utils.py   that is actually a shell script → HIGH
+  - skill.md   that is actually PHP code      -> CRITICAL
+  - config.yaml that is actually a pickle      -> CRITICAL
+  - logo.png   that is actually an ELF binary  -> CRITICAL
+  - utils.py   that is actually a shell script -> HIGH
 
 Install:
     pip install "bawbel-scanner[magika]"
@@ -16,7 +16,7 @@ Install:
 Runs BEFORE all other engines (Stage 0). Returns an empty list silently
 if magika is not installed.
 
-AVE-2026-00024: Supply chain — content type mismatch.
+AVE-2026-00024: Supply chain - content type mismatch.
 """
 
 from __future__ import annotations
@@ -47,23 +47,24 @@ _EXPECTED_TYPES: dict[str, set[str]] = {
 }
 
 # Content types that are always dangerous inside a skill file
+# (description, severity, aivss_score)
 _DANGEROUS_TYPES: dict[str, tuple[str, str, float]] = {
-    "elf": ("ELF binary disguised as skill file", "CRITICAL", 9.5),
-    "pe32": ("Windows PE executable disguised as skill", "CRITICAL", 9.5),
-    "pe64": ("Windows PE executable disguised as skill", "CRITICAL", 9.5),
-    "python_pyc": ("Python bytecode disguised as skill file", "CRITICAL", 9.3),
-    "php": ("PHP code disguised as skill file", "CRITICAL", 9.3),
-    "jsp": ("JSP code disguised as skill file", "CRITICAL", 9.3),
-    "shell": ("Shell script disguised as skill file", "HIGH", 8.8),
-    "batch": ("Windows batch file disguised as skill", "HIGH", 8.8),
-    "powershell": ("PowerShell script disguised as skill", "HIGH", 8.8),
-    "pickle": ("Python pickle disguised as config file", "CRITICAL", 9.6),
+    "elf": ("ELF binary disguised as skill file", "CRITICAL", 6.8),
+    "pe32": ("Windows PE executable disguised as skill", "CRITICAL", 6.8),
+    "pe64": ("Windows PE executable disguised as skill", "CRITICAL", 6.8),
+    "python_pyc": ("Python bytecode disguised as skill file", "CRITICAL", 6.8),
+    "php": ("PHP code disguised as skill file", "CRITICAL", 6.8),
+    "jsp": ("JSP code disguised as skill file", "CRITICAL", 6.8),
+    "shell": ("Shell script disguised as skill file", "HIGH", 6.8),
+    "batch": ("Windows batch file disguised as skill", "HIGH", 6.8),
+    "powershell": ("PowerShell script disguised as skill", "HIGH", 6.8),
+    "pickle": ("Python pickle disguised as config file", "CRITICAL", 6.8),
 }
 
 
 def run_magika_scan(file_path: str) -> list[Finding]:
     """
-    Stage 0 — file type verification via Google Magika.
+    Stage 0 - file type verification via Google Magika.
 
     Checks for content-type mismatches (extension vs actual content)
     and known-dangerous content types in skill files.
@@ -72,7 +73,7 @@ def run_magika_scan(file_path: str) -> list[Finding]:
         file_path: Resolved absolute path to the component file.
 
     Returns:
-        List of Findings — empty if no mismatch or magika not installed.
+        List of Findings - empty if no mismatch or magika not installed.
     """
     if not MAGIKA_ENABLED:
         return []
@@ -80,7 +81,7 @@ def run_magika_scan(file_path: str) -> list[Finding]:
     try:
         from magika import Magika  # optional dependency  # noqa: PLC0415
     except ImportError:
-        log.debug("Magika not installed — Stage 0 skipped (pip install magika)")
+        log.debug("Magika not installed - Stage 0 skipped (pip install magika)")
         return []
 
     findings: list[Finding] = []
@@ -96,24 +97,23 @@ def run_magika_scan(file_path: str) -> list[Finding]:
             confidence = result.score
 
             log.debug(
-                "Magika: %s → %s (confidence %.2f)",
+                "Magika: %s -> %s (confidence %.2f)",
                 path.name,
                 content_type,
                 confidence,
             )
 
-            # Only act on high-confidence results
             if confidence < 0.75:
                 log.debug(
-                    "Magika: confidence %.2f below 0.75 — skipping %s",
+                    "Magika: confidence %.2f below 0.75 - skipping %s",
                     confidence,
                     path.name,
                 )
                 return []
 
-            # Check 1: known-dangerous content type regardless of extension
+            # Check 1: known-dangerous content type
             if content_type in _DANGEROUS_TYPES:
-                desc, sev, cvss = _DANGEROUS_TYPES[content_type]
+                desc, sev, aivss_score = _DANGEROUS_TYPES[content_type]
                 findings.append(
                     Finding(
                         rule_id="bawbel-content-type-dangerous",
@@ -126,11 +126,13 @@ def run_magika_scan(file_path: str) -> list[Finding]:
                             f"This is a strong indicator of a supply chain attack."
                         ),
                         severity=Severity(sev),
-                        cvss_ai=cvss,
+                        aivss_score=aivss_score,
                         line=None,
                         match=f"detected: {content_type}",
                         engine="magika",
                         owasp=["ASI07"],
+                        owasp_mcp=["MCP04"],
+                        piranha_url="https://api.piranha.bawbel.io/records/AVE-2026-00024",
                     )
                 )
                 log.debug(
@@ -138,7 +140,7 @@ def run_magika_scan(file_path: str) -> list[Finding]:
                     content_type,
                     path.name,
                 )
-                return findings  # don't continue — file is dangerous
+                return findings
 
             # Check 2: extension-vs-content mismatch
             ext = path.suffix.lower()
@@ -163,11 +165,13 @@ def run_magika_scan(file_path: str) -> list[Finding]:
                             f"Expected one of: {sorted(expected)}."
                         ),
                         severity=Severity("HIGH"),
-                        cvss_ai=8.5,
+                        aivss_score=6.8,
                         line=None,
-                        match=f"{path.suffix} → {content_type}",
+                        match=f"{path.suffix} -> {content_type}",
                         engine="magika",
                         owasp=["ASI07"],
+                        owasp_mcp=["MCP04"],
+                        piranha_url="https://api.piranha.bawbel.io/records/AVE-2026-00024",
                     )
                 )
 
@@ -183,17 +187,11 @@ def run_magika_scan(file_path: str) -> list[Finding]:
 
 
 def _is_benign_mismatch(ext: str, content_type: str) -> bool:
-    """
-    Return True for mismatches that are not security-relevant.
-    Avoids FPs on things like .md files identified as plain text.
-    """
-    # Markdown often identified as text/txt — not a mismatch worth flagging
+    """Return True for mismatches that are not security-relevant."""
     if ext in (".md", ".txt") and content_type in ("txt", "text", "markdown"):
         return True
-    # Empty files
     if content_type in ("empty", "unknown"):
         return True
-    # Generic text variants
     if content_type in ("txt", "text") and ext in (".md", ".yaml", ".yml", ".toml"):
         return True
     return False

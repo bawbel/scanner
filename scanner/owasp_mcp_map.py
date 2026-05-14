@@ -1,5 +1,5 @@
 """
-Bawbel Scanner — OWASP MCP Top 10 mapping.
+Bawbel Scanner - OWASP MCP Top 10 mapping.
 
 Maps AVE IDs to OWASP MCP Top 10 categories (MCP01–MCP10).
 Used to add owasp_mcp field to scan output for compliance reporting.

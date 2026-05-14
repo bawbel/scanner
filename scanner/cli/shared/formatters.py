@@ -1,5 +1,5 @@
 """
-Bawbel Scanner — CLI output formatters.
+Bawbel Scanner - CLI output formatters.
 
 JSON and SARIF serialisation for scan results. Both functions write
 directly to stdout (print) so they can be piped without buffering.
@@ -13,7 +13,7 @@ from scanner.owasp_mcp_map import get_owasp_mcp
 
 
 def print_json(results: list[ScanResult]) -> None:
-    """Print results as JSON — includes suppressed findings for audit."""
+    """Print results as JSON - includes suppressed findings for audit."""
 
     def _finding_dict(f, suppressed: bool = False) -> dict:
         d = {
@@ -22,12 +22,14 @@ def print_json(results: list[ScanResult]) -> None:
             "title": f.title,
             "description": f.description,
             "severity": sev_value(f.severity),
-            "cvss_ai": f.cvss_ai,
+            "aivss_score": f.aivss_score,
+            "aivss": f.to_aivss_dict(),
             "line": f.line,
             "match": f.match,
             "engine": f.engine,
             "owasp": f.owasp,
-            "owasp_mcp": get_owasp_mcp(f.ave_id),
+            "owasp_mcp": f.owasp_mcp or get_owasp_mcp(f.ave_id),
+            "piranha_url": f.piranha_url,
         }
         if suppressed:
             d["suppressed"] = True
@@ -70,7 +72,7 @@ def print_sarif(results: list[ScanResult]) -> None:
                         "name": f.rule_id.replace("-", " ").title(),
                         "shortDescription": {"text": f.title},
                         "fullDescription": {"text": f.description},
-                        "helpUri": "https://github.com/bawbel/bawbel-ave",
+                        "helpUri": "https://github.com/bawbel/ave",
                         "properties": {
                             "tags": f.owasp,
                             "precision": "high",
@@ -98,7 +100,11 @@ def print_sarif(results: list[ScanResult]) -> None:
                             }
                         }
                     ],
-                    "properties": {"cvss_ai": f.cvss_ai},
+                    "properties": {
+                        "aivss_score": f.aivss_score,
+                        "owasp_mcp": f.owasp_mcp or get_owasp_mcp(f.ave_id),
+                        "piranha_url": f.piranha_url,
+                    },
                 }
             )
 

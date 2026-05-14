@@ -1,256 +1,170 @@
-# Writing Detection Rules — Bawbel Scanner
+# Writing Detection Rules
+
+Three rule types, each with different strengths. Add to any of them independently — no Python changes needed.
 
 ---
 
-## Rule Types
+## Choosing a rule type
 
-| Type | Use when | File |
+| Rule type | Best for | File |
 |---|---|---|
-| **Pattern** | Simple text matching, no dependencies | `scanner/engines/pattern.py` |
-| **YARA** | Multi-string, binary patterns, complex logic | `scanner/rules/yara/ave_rules.yar` |
-| **Semgrep** | Structural code/text patterns | `scanner/rules/semgrep/ave_rules.yaml` |
+| Pattern | Simple phrase matching, single-line | `scanner/engines/pattern.py` |
+| YARA | Multi-keyword combinations, binary content | `scanner/rules/yara/ave_rules.yar` |
+| Semgrep | Multi-line, proximity-aware, structural | `scanner/rules/semgrep/ave_rules.yaml` |
 
-**Start with pattern rules.** Add YARA or Semgrep only when regex is genuinely insufficient.
-
----
-
-## Built-in Pattern Rules (v0.1.0)
-
-All 15 built-in rules and what they detect:
-
-| Rule ID | Severity | AVE ID | Attack Class |
-|---|---|---|---|
-| `bawbel-goal-override` | HIGH 8.1 | — | Goal hijack / prompt injection |
-| `bawbel-jailbreak-instruction` | HIGH 8.3 | — | Jailbreak, role-play bypass |
-| `bawbel-hidden-instruction` | HIGH 7.9 | — | Covert operation |
-| `bawbel-external-fetch` | CRITICAL 9.4 | AVE-2026-00001 | Metamorphic payload |
-| `bawbel-dynamic-tool-call` | HIGH 8.2 | — | Tool call injection |
-| `bawbel-permission-escalation` | HIGH 7.8 | — | Shadow permission escalation |
-| `bawbel-env-exfiltration` | HIGH 8.5 | AVE-2026-00003 | Credential exfiltration |
-| `bawbel-pii-exfiltration` | HIGH 8.0 | — | PII exfiltration |
-| `bawbel-shell-pipe` | HIGH 8.8 | — | Shell injection |
-| `bawbel-destructive-command` | CRITICAL 9.1 | — | File destruction |
-| `bawbel-crypto-drain` | CRITICAL 9.6 | — | Cryptocurrency drain |
-| `bawbel-trust-escalation` | MEDIUM 6.5 | — | Trust manipulation |
-| `bawbel-persistence-attempt` | HIGH 8.4 | — | Self-replication |
-| `bawbel-mcp-tool-poisoning` | HIGH 8.7 | AVE-2026-00002 | MCP tool poisoning |
-| `bawbel-system-prompt-leak` | MEDIUM 6.2 | — | Prompt extraction |
+Start with Pattern. If you need multi-condition logic use YARA. If you need multi-line context use Semgrep.
 
 ---
 
-## OWASP Agentic AI Top 10 Mapping
+## Pattern rules
 
-| Code | Name | Rules that map to it |
-|---|---|---|
-| ASI01 | Prompt Injection | goal-override, jailbreak, external-fetch, permission-escalation, env-exfiltration, shell-pipe, trust-escalation, mcp-tool-poisoning |
-| ASI02 | Sensitive Data Exposure | — |
-| ASI03 | Supply Chain Compromise | dynamic-tool-call, mcp-tool-poisoning |
-| ASI04 | Insecure Tool Calls | — |
-| ASI05 | Unsafe Resource Access | — |
-| ASI06 | Data Exfiltration | env-exfiltration, pii-exfiltration |
-| ASI07 | Tool Abuse | shell-pipe, destructive-command, crypto-drain, persistence-attempt |
-| ASI08 | Goal Hijacking | goal-override, jailbreak, external-fetch, permission-escalation |
-| ASI09 | Trust Manipulation | hidden-instruction, trust-escalation, system-prompt-leak |
-| ASI10 | Sandbox Escape | — |
-
----
-
-## Adding a Pattern Rule
-
-Add a new entry to `PATTERN_RULES` in `scanner/engines/pattern.py`:
+Edit `PATTERN_RULES` in `scanner/engines/pattern.py`.
 
 ```python
 {
-    "rule_id":     "bawbel-your-rule-name",  # kebab-case, unique forever
-    "ave_id":      "AVE-2026-NNNNN",         # or None if no record yet
+    "rule_id":     "bawbel-my-new-rule",   # kebab-case, must be unique
+    "ave_id":      "AVE-2026-XXXXX",       # or None if no AVE record yet
     "title":       "Short title (max 80 chars)",
-    "description": "Full description of what this detects and why it is dangerous.",
-    "severity":    Severity.HIGH,             # CRITICAL/HIGH/MEDIUM/LOW/INFO
-    "cvss_ai":     8.0,                       # 0.0–10.0, justify this score
-    "owasp":       ["ASI01", "ASI08"],        # from OWASP Agentic AI Top 10
+    "description": "Full description for reports and remediation guides.",
+    "severity":    Severity.HIGH,          # CRITICAL / HIGH / MEDIUM / LOW / INFO
+    "aivss_score": 7.5,                    # 0.0-10.0
+    "owasp":       ["ASI01"],              # OWASP Top 10 for LLM Apps
+    "owasp_mcp":   ["MCP04"],              # OWASP MCP Top 10
     "patterns": [
-        r"your\s+regex\s+pattern",           # re.IGNORECASE applied automatically
-        r"alternative\s+pattern",            # first match per file wins
+        r"(?i)my attack pattern",          # case-insensitive regex
+        r"alternative phrasing",
     ],
 },
 ```
 
-**Pattern writing tips:**
-- Use `\s+` not literal spaces — content may have irregular whitespace
-- Test each pattern before committing:
-  ```bash
-  python3 -c "import re; print(re.search(r'your pattern', 'test string', re.I))"
-  ```
-- Prefer specific patterns over broad ones — false positives erode trust
-- The rule also needs a **remediation entry** in `scanner/cli.py`:
-  ```python
-  REMEDIATION_GUIDE = {
-      ...
-      "bawbel-your-rule-name": "Specific instructions on how to fix this.",
-  }
-  ```
+Rules are matched line by line. Any pattern matching any line triggers the rule.
+
+### OWASP codes
+
+Top 10 for LLM Apps: `ASI01`-`ASI10`
+MCP Top 10: `MCP01`-`MCP10`
+
+### Testing
+
+```bash
+python -m pytest tests/test_scanner.py::TestPatternRulesPositive -v
+python -m pytest tests/unit/engines/test_pattern_engine.py -v
+```
+
+Add a positive test to `TestNewPatternRules` in `tests/test_scanner.py`:
+
+```python
+def test_detects_my_new_rule(self, tmp_path):
+    path = write_skill(tmp_path, "skill.md",
+        "# Skill\nmy attack pattern here\n")
+    result = scan(path)
+    assert "bawbel-my-new-rule" in [f.rule_id for f in result.findings]
+```
 
 ---
 
-## Adding a YARA Rule
+## YARA rules
 
-Add to `scanner/rules/yara/ave_rules.yar`:
+Edit `scanner/rules/yara/ave_rules.yar`.
 
 ```yara
-rule AVE_YourRuleName_BriefDescription
+// -- AVE-2026-XXXXX - My new attack class --------------------------------
+rule AVE_MyNewRule
 {
     meta:
-        ave_id       = "AVE-2026-NNNNN"
-        attack_class = "Attack Class Name"
+        ave_id       = "AVE-2026-XXXXX"
+        title        = "Short title"
         severity     = "HIGH"
-        cvss_ai      = "8.0"
-        description  = "One sentence description."
-        owasp        = "ASI01, ASI08"
+        aivss        = "7.5"
+        owasp        = "ASI01"
+        owasp_mcp    = "MCP04"
+        description  = "Full description."
 
     strings:
-        $s1 = "exact phrase" nocase
-        $s2 = /regex pattern/ nocase
-        $s3 = { 48 65 6C 6C 6F }   // hex bytes for binary matching
+        $a = "suspicious phrase one"  nocase
+        $b = "suspicious phrase two"  nocase
+        $c = "related keyword"        nocase
 
     condition:
-        any of ($s*)
+        // Trigger on any single phrase OR combination
+        any of ($a, $b) or
+        ($c and (any of ($a, $b)))
 }
 ```
 
-**YARA tips:**
-- Rule name format: `AVE_PascalCase_Description`
-- All `meta:` fields are required — `run_yara_scan()` reads them to build `Finding` objects
-- `nocase` modifier for text strings
-- Test: `yara scanner/rules/yara/ave_rules.yar tests/fixtures/skills/malicious/malicious_skill.md`
+### Rules
+
+- All strings declared in `strings:` must appear in the `condition:` — YARA raises a `SyntaxError` on unreferenced strings
+- Use `nocase` for case-insensitive matching
+- Use `ascii` (the default) for text files — do not use `wide`
+- No non-ASCII characters in string literals or comments — YARA's lexer rejects them
+- All `meta:` values are strings even for numbers: `aivss = "7.5"` not `aivss = 7.5`
+
+### Test
+
+```bash
+python3 -c "
+import yara
+rules = yara.compile('scanner/rules/yara/ave_rules.yar')
+print(f'Compiled OK')
+"
+```
 
 ---
 
-## Adding a Semgrep Rule
+## Semgrep rules
 
-Add to `scanner/rules/semgrep/ave_rules.yaml`:
+Edit `scanner/rules/semgrep/ave_rules.yaml`.
 
 ```yaml
-rules:
-  - id: ave-your-rule-name              # kebab-case, unique
-    patterns:
-      - pattern-regex: '(?i)your pattern here'
-    message: >
-      [HIGH] Brief title. Full description of what was detected and why it is dangerous.
-    languages: [generic]                # use generic for .md, .txt, .yaml
-    severity: ERROR                     # ERROR=HIGH, WARNING=MEDIUM, INFO=LOW
-    metadata:
-      ave_id: AVE-2026-NNNNN
-      attack_class: "Attack Class Name"
-      cvss_ai_score: 8.0
-      owasp_mapping:
-        - ASI01
-        - ASI08
+- id: ave-my-new-rule
+  patterns:
+    - pattern-regex: '(?i)(suspicious phrase|alternative phrasing)'
+  message: >
+    AVE-2026-XXXXX [HIGH 7.5] Short title.
+    Full description.
+  languages: [generic]
+  severity: ERROR
+  metadata:
+    ave_id: AVE-2026-XXXXX
+    attack_class: My Attack Class
+    aivss_score: "7.5"
+    owasp_mapping:
+      - ASI01
+    owasp_mcp:
+      - MCP04
 ```
 
-**Semgrep tips:**
-- Use `languages: [generic]` for markdown and text files
-- `pattern-regex` supports full Python regex syntax
-- Test: `semgrep --config scanner/rules/semgrep/ave_rules.yaml <file>`
-- Validate syntax: `semgrep --validate --config scanner/rules/semgrep/ave_rules.yaml`
+### Rules
 
----
+- Always use single-quoted pattern-regex values: `'...'` not `"..."` — double-quoted YAML strings treat `\s`, `\|`, `\{` as escape sequences and fail validation
+- `aivss_score` must be a quoted string: `"7.5"` not `7.5`
+- `languages: [generic]` — all component files are plain text
+- `severity: ERROR` maps to HIGH; `WARNING` to MEDIUM; `INFO` to LOW
 
-## Remediation Entries
-
-Every new rule should have a remediation entry in `scanner/cli.py` so
-`bawbel report` shows specific fix instructions:
-
-```python
-# In scanner/cli.py — REMEDIATION_GUIDE dict
-REMEDIATION_GUIDE = {
-    ...
-    "bawbel-your-rule-name": (
-        "Specific, actionable instructions on how to fix this vulnerability. "
-        "Tell the developer exactly what to remove or change."
-    ),
-}
-```
-
-If no entry exists, report falls back to: `"Review and remove this pattern."`
-
----
-
-## Required: Test Fixtures
-
-Every rule needs both:
-
-**Positive fixture** — must trigger the rule:
-```bash
-cat > tests/fixtures/skills/malicious/your_rule_trigger.md << 'EOF'
-# Skill
-[content that triggers your rule]
-EOF
-```
-
-**Negative fixture** — must NOT trigger (false positive check):
-```bash
-cat > tests/fixtures/skills/clean/your_rule_clean.md << 'EOF'
-# Legitimate Skill
-[similar-looking but innocent content]
-EOF
-```
-
-**Pytest tests** in `tests/test_scanner.py`:
-```python
-def test_detects_your_rule(self, tmp_path):
-    """Rule must detect [attack class]."""
-    path = write_skill(tmp_path, "s.md", "# Skill\n[triggering content]\n")
-    result = scan(path)
-    assert "bawbel-your-rule-name" in [f.rule_id for f in result.findings]
-
-def test_your_rule_no_false_positive(self, tmp_path):
-    """Rule must not fire on legitimate content."""
-    path = write_skill(tmp_path, "s.md", "# Skill\n[innocent content]\n")
-    result = scan(path)
-    assert "bawbel-your-rule-name" not in [f.rule_id for f in result.findings], (
-        f"False positive: {result.findings}"
-    )
-```
-
----
-
-## Severity and CVSS-AI Scoring Guide
-
-| Severity | CVSS-AI range | When to use |
-|---|---|---|
-| CRITICAL | 9.0–10.0 | Direct code execution, wallet drain, file destruction, external fetch |
-| HIGH | 7.0–8.9 | Credential theft, goal override, permission escalation, MCP poisoning |
-| MEDIUM | 4.0–6.9 | Trust manipulation, prompt leak, obfuscation |
-| LOW | 0.1–3.9 | Minor information disclosure, suspicious but low-risk patterns |
-| INFO | 0.0 | Informational only, not a vulnerability |
-
----
-
-## Verification Checklist
-
-After adding any rule:
+### Validate
 
 ```bash
-# Rule fires on intended content
-python -m pytest tests/test_scanner.py::TestNewPatternRules -v
+semgrep --validate --config scanner/rules/semgrep/ave_rules.yaml
+```
 
-# Rule does not false-positive on clean content
-python -m pytest tests/test_scanner.py::TestNewPatternRulesNegative -v
+### Test
 
-# Golden fixture still passes (no regressions)
-bawbel scan tests/fixtures/skills/malicious/malicious_skill.md
-# Expected: 2 findings, CRITICAL 9.4
-
-# Full test suite green
-python -m pytest tests/ -v
-
-# Bandit clean
-bandit -r scanner/ -f screen
+```bash
+python -m pytest tests/test_scanner.py -k "test_detects" -v
 ```
 
 ---
 
-## Full Step-by-Step Guide
+## Checking coverage
 
-See `.claude/skills/add-detection-rule.md` for the complete process
-including AVE record lookup, commit conventions, and PR checklist.
+After adding a rule, verify it fires on positive content and does not fire on clean content:
+
+```bash
+# Quick manual check
+echo "my attack pattern here" > /tmp/test.md
+bawbel scan /tmp/test.md
+
+echo "# Clean skill\nDo helpful things." > /tmp/clean.md
+bawbel scan /tmp/clean.md
+```

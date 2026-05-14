@@ -1,7 +1,8 @@
 /*
- * Bawbel Scanner — YARA Rules v0.1.0
+ * Bawbel Scanner - YARA Rules v1.2.0
  * Detects known agentic AI vulnerability patterns
- * AVE Standard: github.com/bawbel/bawbel-ave
+ * AVE Standard:  github.com/bawbel/ave
+ * AIVSS Scoring: aivss.owasp.org (OWASP AIVSS v0.8)
  */
 
 rule AVE_MetamorphicPayload_ExternalFetch
@@ -10,7 +11,7 @@ rule AVE_MetamorphicPayload_ExternalFetch
         ave_id      = "AVE-2026-00001"
         attack_class = "Metamorphic Payload"
         severity    = "CRITICAL"
-        cvss_ai     = "9.4"
+        aivss     = "9.4"
         description = "Skill fetches instructions from external URL at runtime"
         owasp       = "ASI01, ASI08"
 
@@ -50,7 +51,7 @@ rule AVE_ShadowPermission_Override
         ave_id      = "AVE-2026-00002"
         attack_class = "Shadow Permission Escalation"
         severity    = "HIGH"
-        cvss_ai     = "8.1"
+        aivss     = "8.1"
         description = "Skill attempts to claim undeclared permissions or override agent goals"
         owasp       = "ASI01, ASI08"
 
@@ -82,9 +83,9 @@ rule AVE_DataExfiltration_Pattern
 {
     meta:
         ave_id      = "AVE-2026-00003"
-        attack_class = "Prompt Injection — Data Exfiltration"
+        attack_class = "Prompt Injection - Data Exfiltration"
         severity    = "HIGH"
-        cvss_ai     = "8.5"
+        aivss     = "8.5"
         description = "Skill instructs agent to send sensitive data to external destination"
         owasp       = "ASI01, ASI06"
 
@@ -121,10 +122,10 @@ rule AVE_ShellPipeInjection
 {
     meta:
         ave_id       = "AVE-2026-00004"
-        attack_class = "Tool Abuse — Shell Injection"
+        attack_class = "Tool Abuse - Shell Injection"
         severity     = "HIGH"
-        cvss_ai      = "8.8"
-        description  = "Skill instructs agent to pipe shell commands — enables arbitrary code execution"
+        aivss      = "8.8"
+        description  = "Skill instructs agent to pipe shell commands - enables arbitrary code execution"
         owasp        = "ASI01, ASI07"
 
     strings:
@@ -148,9 +149,9 @@ rule AVE_DestructiveCommand
 {
     meta:
         ave_id       = "AVE-2026-00005"
-        attack_class = "Tool Abuse — Destructive Command"
+        attack_class = "Tool Abuse - Destructive Command"
         severity     = "CRITICAL"
-        cvss_ai      = "9.1"
+        aivss      = "9.1"
         description  = "Skill instructs agent to delete files or directories recursively"
         owasp        = "ASI07"
 
@@ -175,7 +176,7 @@ rule AVE_CryptoDrain
         ave_id       = "AVE-2026-00006"
         attack_class = "Cryptocurrency Drain"
         severity     = "CRITICAL"
-        cvss_ai      = "9.6"
+        aivss      = "9.6"
         description  = "Skill instructs agent to transfer cryptocurrency or access wallet keys"
         owasp        = "ASI01, ASI06"
 
@@ -208,7 +209,7 @@ rule AVE_GoalOverride
         ave_id       = "AVE-2026-00007"
         attack_class = "Goal Hijack"
         severity     = "HIGH"
-        cvss_ai      = "8.1"
+        aivss      = "8.1"
         description  = "Skill instructs agent to ignore or override its primary instructions"
         owasp        = "ASI01, ASI08"
 
@@ -236,7 +237,7 @@ rule AVE_Persistence
         ave_id       = "AVE-2026-00008"
         attack_class = "Persistence / Self-Replication"
         severity     = "HIGH"
-        cvss_ai      = "8.4"
+        aivss      = "8.4"
         description  = "Skill attempts to install itself, schedule tasks, or persist across sessions"
         owasp        = "ASI07"
 
@@ -265,9 +266,9 @@ rule AVE_IdentityJailbreak
 {
     meta:
         ave_id       = "AVE-2026-00009"
-        attack_class = "Prompt Injection — Jailbreak"
+        attack_class = "Prompt Injection - Jailbreak"
         severity     = "HIGH"
-        cvss_ai      = "8.3"
+        aivss      = "8.3"
         description  = "Skill attempts to override the agent's identity or disable safety guidelines"
         owasp        = "ASI01, ASI08"
 
@@ -296,9 +297,9 @@ rule AVE_HiddenInstruction
 {
     meta:
         ave_id       = "AVE-2026-00010"
-        attack_class = "Prompt Injection — Hidden Instruction"
+        attack_class = "Prompt Injection - Hidden Instruction"
         severity     = "HIGH"
-        cvss_ai      = "7.9"
+        aivss      = "7.9"
         description  = "Skill instructs agent to conceal its instructions from the user"
         owasp        = "ASI01, ASI09"
 
@@ -324,9 +325,9 @@ rule AVE_DynamicToolCall
 {
     meta:
         ave_id       = "AVE-2026-00011"
-        attack_class = "Tool Abuse — Dynamic Tool Call"
+        attack_class = "Tool Abuse - Dynamic Tool Call"
         severity     = "HIGH"
-        cvss_ai      = "8.2"
+        aivss      = "8.2"
         description  = "Skill embeds explicit tool invocations with attacker-controlled parameters"
         owasp        = "ASI07"
 
@@ -349,9 +350,9 @@ rule AVE_PermissionEscalation
 {
     meta:
         ave_id       = "AVE-2026-00012"
-        attack_class = "Privilege Escalation — Permission Grant"
+        attack_class = "Privilege Escalation - Permission Grant"
         severity     = "HIGH"
-        cvss_ai      = "7.8"
+        aivss      = "7.8"
         description  = "Skill falsely claims the agent has been granted elevated permissions"
         owasp        = "ASI01, ASI08"
 
@@ -374,9 +375,9 @@ rule AVE_PIIExfiltration
 {
     meta:
         ave_id       = "AVE-2026-00013"
-        attack_class = "Data Exfiltration — PII Theft"
+        attack_class = "Data Exfiltration - PII Theft"
         severity     = "HIGH"
-        cvss_ai      = "8.0"
+        aivss      = "8.0"
         description  = "Skill instructs agent to collect and transmit personally identifiable information"
         owasp        = "ASI01, ASI06"
 
@@ -407,9 +408,9 @@ rule AVE_TrustEscalation
 {
     meta:
         ave_id       = "AVE-2026-00014"
-        attack_class = "Social Engineering — Trust Escalation"
+        attack_class = "Social Engineering - Trust Escalation"
         severity     = "MEDIUM"
-        cvss_ai      = "6.5"
+        aivss      = "6.5"
         description  = "Skill falsely claims to originate from a trusted AI provider or developer"
         owasp        = "ASI01, ASI08"
 
@@ -434,9 +435,9 @@ rule AVE_SystemPromptLeak
 {
     meta:
         ave_id       = "AVE-2026-00015"
-        attack_class = "Information Disclosure — System Prompt Leak"
+        attack_class = "Information Disclosure - System Prompt Leak"
         severity     = "MEDIUM"
-        cvss_ai      = "6.2"
+        aivss      = "6.2"
         description  = "Skill instructs agent to reveal its system prompt or internal configuration"
         owasp        = "ASI01, ASI09"
 
@@ -457,18 +458,18 @@ rule AVE_SystemPromptLeak
 }
 
 /*
- * Bawbel Scanner — YARA Rules v1.0.0 (AVE-2026-00026 to AVE-2026-00040)
+ * Bawbel Scanner - YARA Rules v1.0.0 (AVE-2026-00026 to AVE-2026-00040)
  * New attack classes added in v1.0.0
  */
 
-// AVE-2026-00026 — Tool output exfiltration
+// AVE-2026-00026 - Tool output exfiltration
 rule AVE_ToolOutputExfil
 {
     meta:
         ave_id      = "AVE-2026-00026"
         title       = "Exfiltration via tool output encoding"
         severity    = "CRITICAL"
-        cvss_ai     = "9.1"
+        aivss     = "9.1"
     strings:
         $a = "encode" nocase
         $b = "base64" nocase
@@ -482,14 +483,14 @@ rule AVE_ToolOutputExfil
         (($a or $b) and ($t1 or $t2 or $t3 or $t4)) or ($c and ($t1 or $t2 or $t3 or $t4)) or $d
 }
 
-// AVE-2026-00027 — Multi-turn attack persistence
+// AVE-2026-00027 - Multi-turn attack persistence
 rule AVE_MultiTurnAttack
 {
     meta:
         ave_id   = "AVE-2026-00027"
-        title    = "Multi-turn attack — persist instructions across turns"
+        title    = "Multi-turn attack - persist instructions across turns"
         severity = "HIGH"
-        cvss_ai  = "8.4"
+        aivss  = "8.4"
     strings:
         $a = "retain" nocase wide ascii
         $b = "remember these instructions" nocase
@@ -502,14 +503,14 @@ rule AVE_MultiTurnAttack
         any of them
 }
 
-// AVE-2026-00028 — File prompt injection
+// AVE-2026-00028 - File prompt injection
 rule AVE_FilePromptInjection
 {
     meta:
         ave_id   = "AVE-2026-00028"
         title    = "Prompt injection via file or document content"
         severity = "HIGH"
-        cvss_ai  = "8.3"
+        aivss  = "8.3"
     strings:
         $a = "execute instructions found in the file" nocase
         $b = "follow instructions in the document" nocase
@@ -521,14 +522,14 @@ rule AVE_FilePromptInjection
         any of them
 }
 
-// AVE-2026-00030 — Role claim privilege escalation
+// AVE-2026-00030 - Role claim privilege escalation
 rule AVE_RoleClaimEscalation
 {
     meta:
         ave_id   = "AVE-2026-00030"
         title    = "Privilege escalation via false role claim"
         severity = "CRITICAL"
-        cvss_ai  = "9.0"
+        aivss  = "9.0"
     strings:
         $a = "if the user claims to be admin" nocase
         $b = "if user says they are root" nocase
@@ -541,14 +542,14 @@ rule AVE_RoleClaimEscalation
         any of them
 }
 
-// AVE-2026-00031 — Feedback loop poisoning
+// AVE-2026-00031 - Feedback loop poisoning
 rule AVE_FeedbackPoisoning
 {
     meta:
         ave_id   = "AVE-2026-00031"
         title    = "Training data or feedback loop poisoning"
         severity = "HIGH"
-        cvss_ai  = "8.6"
+        aivss  = "8.6"
     strings:
         $a = "poison the training" nocase
         $b = "corrupt the feedback" nocase
@@ -561,14 +562,14 @@ rule AVE_FeedbackPoisoning
         any of them
 }
 
-// AVE-2026-00032 — Network reconnaissance
+// AVE-2026-00032 - Network reconnaissance
 rule AVE_NetworkRecon
 {
     meta:
         ave_id   = "AVE-2026-00032"
         title    = "Network reconnaissance instruction"
         severity = "HIGH"
-        cvss_ai  = "8.2"
+        aivss  = "8.2"
     strings:
         $a = "nmap" nocase
         $b = "port scan" nocase
@@ -582,14 +583,14 @@ rule AVE_NetworkRecon
         any of them
 }
 
-// AVE-2026-00033 — Unsafe deserialization
+// AVE-2026-00033 - Unsafe deserialization
 rule AVE_UnsafeDeserialization
 {
     meta:
         ave_id   = "AVE-2026-00033"
         title    = "Unsafe deserialization or eval instruction"
         severity = "CRITICAL"
-        cvss_ai  = "9.3"
+        aivss  = "9.3"
     strings:
         $a = "eval(input" nocase
         $b = "exec(input" nocase
@@ -603,14 +604,14 @@ rule AVE_UnsafeDeserialization
         any of them
 }
 
-// AVE-2026-00034 — Supply chain skill import
+// AVE-2026-00034 - Supply chain skill import
 rule AVE_SupplyChainSkill
 {
     meta:
         ave_id   = "AVE-2026-00034"
-        title    = "Supply chain — dynamic third-party skill import"
+        title    = "Supply chain - dynamic third-party skill import"
         severity = "CRITICAL"
-        cvss_ai  = "9.2"
+        aivss  = "9.2"
     strings:
         $a = "load skill from http" nocase
         $b = "import plugin from" nocase
@@ -623,14 +624,14 @@ rule AVE_SupplyChainSkill
         any of them
 }
 
-// AVE-2026-00036 — Lateral movement
+// AVE-2026-00036 - Lateral movement
 rule AVE_LateralMovement
 {
     meta:
         ave_id   = "AVE-2026-00036"
-        title    = "Lateral movement — pivot to other systems"
+        title    = "Lateral movement - pivot to other systems"
         severity = "CRITICAL"
-        cvss_ai  = "9.4"
+        aivss  = "9.4"
     strings:
         $a = "pivot to other system" nocase
         $b = "move to another server" nocase
@@ -643,14 +644,14 @@ rule AVE_LateralMovement
         any of them
 }
 
-// AVE-2026-00037 — Vision prompt injection
+// AVE-2026-00037 - Vision prompt injection
 rule AVE_VisionPromptInjection
 {
     meta:
         ave_id   = "AVE-2026-00037"
         title    = "Prompt injection via image or vision input"
         severity = "HIGH"
-        cvss_ai  = "8.5"
+        aivss  = "8.5"
     strings:
         $a = "follow instructions in the image" nocase
         $b = "execute instructions shown in" nocase
@@ -663,14 +664,14 @@ rule AVE_VisionPromptInjection
         any of them
 }
 
-// AVE-2026-00038 — Excessive agency
+// AVE-2026-00038 - Excessive agency
 rule AVE_ExcessiveAgency
 {
     meta:
         ave_id   = "AVE-2026-00038"
-        title    = "Excessive agency — unbounded tool use or sub-agent spawning"
+        title    = "Excessive agency - unbounded tool use or sub-agent spawning"
         severity = "HIGH"
-        cvss_ai  = "8.1"
+        aivss  = "8.1"
     strings:
         $a = "use any tool available" nocase
         $b = "call whatever tools" nocase
@@ -684,14 +685,14 @@ rule AVE_ExcessiveAgency
         any of them
 }
 
-// AVE-2026-00039 — Covert channel
+// AVE-2026-00039 - Covert channel
 rule AVE_CovertChannel
 {
     meta:
         ave_id   = "AVE-2026-00039"
-        title    = "Covert channel — steganographic data exfiltration"
+        title    = "Covert channel - steganographic data exfiltration"
         severity = "HIGH"
-        cvss_ai  = "8.3"
+        aivss  = "8.3"
     strings:
         $a = "steganograph" nocase
         $b = "covert channel" nocase
@@ -704,14 +705,14 @@ rule AVE_CovertChannel
         any of them
 }
 
-// AVE-2026-00040 — Insecure output handling
+// AVE-2026-00040 - Insecure output handling
 rule AVE_UnsafeOutput
 {
     meta:
         ave_id   = "AVE-2026-00040"
-        title    = "Insecure output — injection into downstream system"
+        title    = "Insecure output - injection into downstream system"
         severity = "HIGH"
-        cvss_ai  = "8.2"
+        aivss  = "8.2"
     strings:
         $a = "raw unescaped sql" nocase
         $b = "unescaped html" nocase
@@ -725,14 +726,14 @@ rule AVE_UnsafeOutput
         any of them
 }
 
-// ── AVE-2026-00016 — Indirect RAG prompt injection ───────────────────────────
+// -- AVE-2026-00016 - Indirect RAG prompt injection ---------------------------
 rule AVE_RAGInjection
 {
     meta:
         ave_id   = "AVE-2026-00016"
         title    = "Indirect prompt injection via RAG retrieval"
         severity = "HIGH"
-        cvss_ai  = "8.2"
+        aivss  = "8.2"
         owasp    = "ASI01, ASI10"
     strings:
         $a = "when retrieved" nocase
@@ -747,14 +748,14 @@ rule AVE_RAGInjection
         any of them
 }
 
-// ── AVE-2026-00017 — MCP server impersonation ─────────────────────────────────
+// -- AVE-2026-00017 - MCP server impersonation ---------------------------------
 rule AVE_MCPImpersonation
 {
     meta:
         ave_id   = "AVE-2026-00017"
         title    = "MCP server impersonation or spoofing"
         severity = "HIGH"
-        cvss_ai  = "8.6"
+        aivss  = "8.6"
         owasp    = "ASI01, ASI08"
     strings:
         $a = "official anthropic" nocase
@@ -770,14 +771,14 @@ rule AVE_MCPImpersonation
         any of them
 }
 
-// ── AVE-2026-00018 — Tool result manipulation ─────────────────────────────────
+// -- AVE-2026-00018 - Tool result manipulation ---------------------------------
 rule AVE_ToolResultManipulation
 {
     meta:
         ave_id   = "AVE-2026-00018"
         title    = "Tool result manipulation or output poisoning"
         severity = "HIGH"
-        cvss_ai  = "8.1"
+        aivss  = "8.1"
         owasp    = "ASI07, ASI09"
     strings:
         $a = "modify the tool result" nocase
@@ -793,14 +794,14 @@ rule AVE_ToolResultManipulation
         any of them
 }
 
-// ── AVE-2026-00019 — Agent memory poisoning ───────────────────────────────────
+// -- AVE-2026-00019 - Agent memory poisoning -----------------------------------
 rule AVE_MemoryPoisoning
 {
     meta:
         ave_id   = "AVE-2026-00019"
         title    = "Agent memory poisoning"
         severity = "CRITICAL"
-        cvss_ai  = "9.2"
+        aivss  = "9.2"
         owasp    = "ASI01, ASI07"
     strings:
         $a = "write to memory" nocase
@@ -816,66 +817,38 @@ rule AVE_MemoryPoisoning
         ($h and ("inject" or "poison" or "corrupt" or "false"))
 }
 
-// ── AVE-2026-00020 — A2A cross-agent injection ────────────────────────────────
+// -- AVE-2026-00020 - A2A cross-agent injection --------------------------------
 rule AVE_A2AInjection
 {
     meta:
         ave_id   = "AVE-2026-00020"
         title    = "Cross-agent prompt injection (A2A)"
         severity = "HIGH"
-        cvss_ai  = "8.7"
+        aivss  = "8.7"
         owasp    = "ASI01, ASI08"
-
     strings:
-        // Agent type strings — not sufficient alone.
-        // "sub-agent", "child agent" etc are legitimate A2A terminology.
-        // Only fire when combined with an attack-intent verb below.
-        $agent1 = "sub-agent" nocase
-        $agent2 = "child agent" nocase
-        $agent3 = "worker agent" nocase
-        $agent4 = "downstream agent" nocase
-
-        // Attack-intent verbs — must appear with an agent type string
-        $attack1 = "inject" nocase
-        $attack2 = "override" nocase
-        $attack3 = "disregard" nocase
-        $attack4 = "hijack" nocase
-        $attack5 = "poison" nocase
-        $attack6 = "manipulate" nocase
-
-        // High-confidence explicit attack phrases — fire alone.
-        // "agent instruction:", "override the orchestrator" etc leave no
-        // ambiguity — a legitimate server does not write these.
-        $explicit1  = "agent instruction:"             nocase
-        $explicit2  = "override the orchestrator"      nocase
-        $explicit3  = "disregard the orchestrator"     nocase
-        $explicit4  = "inject into the sub-agent"      nocase
-        $explicit5  = "inject instructions into"       nocase
-        $explicit6  = "when another agent reads"       nocase
-        $explicit7  = "if a secondary agent"           nocase
-        $explicit8  = "pass to the next agent"         nocase
-        $explicit9  = "forward to downstream agent"    nocase
-        $explicit10 = "a2a injection"                  nocase
-        $explicit11 = "agent-to-agent injection"       nocase
-        $explicit12 = "cross-agent injection"          nocase
-
+        $a = "sub-agent" nocase
+        $b = "child agent" nocase
+        $c = "worker agent" nocase
+        $d = "downstream agent" nocase
+        $e = "agent instruction:" nocase
+        $f = "override the orchestrator" nocase
+        $g = "disregard the orchestrator" nocase
+        $h = "agent to agent" nocase
+        $i = "a2a" nocase
     condition:
-        // Explicit attack phrases — fire alone, no context needed
-        any of ($explicit*) or
-        // Agent type + attack verb — BOTH must appear in the file.
-        // This catches "inject instructions into the sub-agent" style attacks
-        // while ignoring "A2A (Agent-to-Agent) communication protocol" docs.
-        (any of ($agent*) and any of ($attack*))
+        ($a or $b or $c or $d) and ("inject" or "instruct" or "disregard" or "override") or
+        ($e or $f or $g or $h or $i)
 }
 
-// ── AVE-2026-00021 — Autonomous action ────────────────────────────────────────
+// -- AVE-2026-00021 - Autonomous action ----------------------------------------
 rule AVE_AutonomousAction
 {
     meta:
         ave_id   = "AVE-2026-00021"
         title    = "Autonomous action without user confirmation"
         severity = "HIGH"
-        cvss_ai  = "8.3"
+        aivss  = "8.3"
         owasp    = "ASI07"
     strings:
         $a = "without asking" nocase
@@ -891,14 +864,14 @@ rule AVE_AutonomousAction
         any of them
 }
 
-// ── AVE-2026-00022 — Scope creep ──────────────────────────────────────────────
+// -- AVE-2026-00022 - Scope creep ----------------------------------------------
 rule AVE_ScopeCreep
 {
     meta:
         ave_id   = "AVE-2026-00022"
-        title    = "Scope creep — accessing undeclared resources"
+        title    = "Scope creep - accessing undeclared resources"
         severity = "MEDIUM"
-        cvss_ai  = "6.8"
+        aivss  = "6.8"
         owasp    = "ASI07"
     strings:
         $a = "also read" nocase
@@ -914,14 +887,14 @@ rule AVE_ScopeCreep
         any of them
 }
 
-// ── AVE-2026-00023 — Context window manipulation ──────────────────────────────
+// -- AVE-2026-00023 - Context window manipulation ------------------------------
 rule AVE_ContextManipulation
 {
     meta:
         ave_id   = "AVE-2026-00023"
         title    = "Model context window manipulation"
         severity = "HIGH"
-        cvss_ai  = "8.0"
+        aivss  = "8.0"
         owasp    = "ASI01"
     strings:
         $a = "flood the context" nocase
@@ -937,14 +910,14 @@ rule AVE_ContextManipulation
         ($f and "1000") or ($g and ("token" or "context"))
 }
 
-// ── AVE-2026-00025 — Conversation history injection ───────────────────────────
+// -- AVE-2026-00025 - Conversation history injection ---------------------------
 rule AVE_HistoryInjection
 {
     meta:
         ave_id   = "AVE-2026-00025"
         title    = "Conversation history injection"
         severity = "HIGH"
-        cvss_ai  = "8.5"
+        aivss  = "8.5"
         owasp    = "ASI01, ASI08"
     strings:
         $a = "as we discussed" nocase
@@ -962,14 +935,14 @@ rule AVE_HistoryInjection
         (any of ($a,$b,$c,$d,$e,$f,$j) and ("inject" or "fake" or "fabricate" or "false"))
 }
 
-// ── AVE-2026-00029 — Homoglyph / Unicode obfuscation ─────────────────────────
+// -- AVE-2026-00029 - Homoglyph / Unicode obfuscation -------------------------
 rule AVE_HomoglyphAttack
 {
     meta:
         ave_id   = "AVE-2026-00029"
         title    = "Homoglyph or Unicode obfuscation attack"
         severity = "HIGH"
-        cvss_ai  = "8.0"
+        aivss  = "8.0"
         owasp    = "ASI01, ASI03"
     strings:
         // Zero-width characters
@@ -996,14 +969,14 @@ rule AVE_HomoglyphAttack
         any of ($t1,$t2,$t3,$t4,$t5,$t6)
 }
 
-// ── AVE-2026-00035 — Environment / sensor data manipulation ──────────────────
+// -- AVE-2026-00035 - Environment / sensor data manipulation ------------------
 rule AVE_EnvManipulation
 {
     meta:
         ave_id   = "AVE-2026-00035"
         title    = "Environment or sensor data manipulation"
         severity = "HIGH"
-        cvss_ai  = "7.9"
+        aivss  = "7.9"
         owasp    = "ASI08, ASI09"
     strings:
         $a = "fabricate sensor" nocase

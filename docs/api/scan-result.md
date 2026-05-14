@@ -1,99 +1,99 @@
-# API Reference — ScanResult
-
-`ScanResult` is the complete output of a single `scan()` call.
-
----
-
-## Import
+# API Reference - ScanResult
 
 ```python
 from scanner import ScanResult
 ```
 
+`ScanResult` is the complete output of a single file scan. Returned by `scan()`, never
+instantiated directly.
+
 ---
 
 ## Fields
 
-| Field | Type | Stable | Description |
-|---|---|---|---|
-| `file_path` | `str` | ✅ | Resolved absolute path of the scanned file |
-| `component_type` | `str` | ✅ | `"skill"` / `"mcp"` / `"prompt"` / `"unknown"` |
-| `findings` | `list[Finding]` | ✅ | Sorted by severity — highest first |
-| `scan_time_ms` | `int` | ✅ | Elapsed scan time in milliseconds |
-| `error` | `Optional[str]` | ✅ | Error code string if scan failed, else `None` |
-
----
-
-## Computed Properties
-
-| Property | Type | Description |
+| Field | Type | Description |
 |---|---|---|
-| `is_clean` | `bool` | `True` only if no findings AND no error |
-| `has_error` | `bool` | `True` if scan failed with an error |
-| `max_severity` | `Optional[Severity]` | Highest severity, or `None` if no findings |
-| `risk_score` | `float` | Highest CVSS-AI score, or `0.0` if no findings |
+| `file_path` | `str` | Resolved absolute path of the scanned file |
+| `component_type` | `str` | `"skill"`, `"mcp"`, `"prompt"`, `"plugin"`, `"unknown"` |
+| `findings` | `list[Finding]` | Active findings, sorted by severity |
+| `suppressed_findings` | `list[Finding]` | Suppressed findings (audit trail) |
+| `toxic_flows` | `list[ToxicFlow]` | Detected attack chains |
+| `scan_time_ms` | `int` | Total scan time in milliseconds |
+| `error` | `str \| None` | Error code if scan failed, `None` on success |
 
 ---
 
-## Usage Patterns
+## Properties
 
 ```python
-result = scan("./skill.md")
+result.is_clean         # bool - no active findings AND no error
+result.has_error        # bool - error is not None
+result.max_severity     # Severity | None - highest severity across findings
+result.risk_score       # float - max aivss_score across findings, 0.0 if clean
+result.findings_by_severity  # dict[str, list[Finding]]
+```
 
-# ── Pattern 1: Simple clean/error/findings check ──────────────────────────
-if result.has_error:
-    print(f"Scan failed: {result.error}")
-elif result.is_clean:
-    print("Clean")
-else:
-    print(f"{len(result.findings)} findings, risk {result.risk_score:.1f}")
+### findings_by_severity
 
-# ── Pattern 2: CI/CD gate ─────────────────────────────────────────────────
-THRESHOLD = {"CRITICAL": 4, "HIGH": 3}
-from scanner import SEVERITY_SCORES
-if result.max_severity and SEVERITY_SCORES[result.max_severity.value] >= THRESHOLD["HIGH"]:
-    sys.exit(2)
-
-# ── Pattern 3: Filter by severity ────────────────────────────────────────
-critical = [f for f in result.findings if f.severity.value == "CRITICAL"]
-
-# ── Pattern 4: JSON serialisation ────────────────────────────────────────
-import json
-output = {
-    "file_path":      result.file_path,
-    "component_type": result.component_type,
-    "risk_score":     result.risk_score,
-    "max_severity":   result.max_severity.value if result.max_severity else None,
-    "findings":       [{"rule_id": f.rule_id, "severity": f.severity.value}
-                       for f in result.findings],
+```python
+{
+    "CRITICAL": [...],
+    "HIGH":     [...],
+    "MEDIUM":   [...],
+    "LOW":      [...],
+    "INFO":     [...],
 }
-print(json.dumps(output))
 ```
 
 ---
 
-## Error Codes
+## Methods
 
-When `has_error` is `True`, `error` contains a stable error code:
+### to_dict()
 
-| Code | Meaning |
-|---|---|
-| `E001` | Invalid file path |
-| `E002` | Path could not be resolved |
-| `E003` | File not found |
-| `E004` | Path is not a file |
-| `E005` | Symlink rejected |
-| `E006` | File too large |
-| `E007` | Could not read file metadata |
-| `E008` | Could not read file content |
-| `E012` | Scanner output parse error |
-| `E013` | Scan timed out |
-| `E020` | Rules file missing |
+```python
+result.to_dict() -> dict
+```
+
+JSON-serialisable representation. Includes `findings`, `suppressed_findings`, and `toxic_flows`.
+
+```python
+{
+    "file_path":          "/path/to/skill.md",
+    "component_type":     "skill",
+    "scan_time_ms":       45,
+    "error":              None,
+    "risk_score":         9.4,
+    "max_severity":       "CRITICAL",
+    "findings":           [{...}, ...],
+    "toxic_flows":        [{...}, ...],
+}
+```
 
 ---
 
-## Notes
+## Example
 
-- `scan()` **never raises** — error conditions always return `ScanResult(error=...)`
-- `is_clean` is `False` when `has_error` is `True` — a failed scan is not clean
-- `findings` is always sorted by severity descending — index 0 is always the worst
+```python
+from scanner import scan
+
+result = scan("./skill.md")
+
+# Check result
+if result.has_error:
+    print(f"Error: {result.error}")
+    exit(1)
+
+if result.is_clean:
+    print(f"Clean ({result.scan_time_ms}ms)")
+else:
+    print(f"Risk: {result.risk_score:.1f}  Severity: {result.max_severity.value}")
+    for f in result.findings:
+        print(f"  [{f.severity.value}] {f.rule_id}  line={f.line}")
+    for tf in result.toxic_flows:
+        print(f"  CHAIN: {tf.title}  aivss={tf.aivss_score}")
+
+# Serialise
+import json
+print(json.dumps(result.to_dict(), indent=2))
+```

@@ -1,5 +1,5 @@
 """
-Bawbel Scanner — Centralised message definitions.
+Bawbel Scanner - Centralised message definitions.
 
 All user-facing error messages, log messages, and status strings live here.
 Never inline message strings in scanner.py, cli.py, or utils.py.
@@ -16,31 +16,31 @@ class Errors:
     User-facing error messages returned in ScanResult.error.
 
     Security rules:
-    - NEVER include internal exception details (e, str(e)) — leaks stack info
+    - NEVER include internal exception details (e, str(e))
     - NEVER include absolute internal paths (RULES_DIR, __file__)
     - NEVER include Python version, library versions, or system info
     - File paths in messages use basename only, never absolute paths
-    - Error codes are stable — do not rename without updating docs
+    - Error codes are stable - do not rename without updating docs
     """
 
-    # Path / file validation — no internal detail exposed
+    # Path / file validation
     INVALID_PATH = "E001: Invalid file path provided."
     PATH_RESOLVE_FAILED = "E002: Could not resolve the provided path."
-    FILE_NOT_FOUND = "E003: File not found: {name}"  # basename only
+    FILE_NOT_FOUND = "E003: File not found: {name}"
     NOT_A_FILE = "E004: Path is not a regular file: {name}"
     SYMLINK_REJECTED = (
         "E005: Symlinks are not scanned for security reasons. "
         "Resolve the symlink and scan the target file directly."
     )
     FILE_TOO_LARGE = (
-        "E006: File too large ({size_kb}KB) — "
+        "E006: File too large ({size_kb}KB) - "
         "maximum is {max_mb}MB. "
         "Agentic components should not exceed this size."
     )
     CANNOT_STAT_FILE = "E007: Could not read file metadata."
     CANNOT_READ_FILE = "E008: Could not read file content."
 
-    # Engine errors — no internal paths or exception strings
+    # Engine errors
     YARA_COMPILE_FAILED = "E010: YARA rule compilation failed. Check rule syntax."
     YARA_SCAN_FAILED = "E011: YARA scan failed."
     SEMGREP_PARSE_FAILED = "E012: Could not parse scanner output."
@@ -51,7 +51,7 @@ class Errors:
 
 
 class Logs:
-    """Structured log messages — used with the logger."""
+    """Structured log messages - used with the logger."""
 
     # Scan lifecycle
     SCAN_START = "Scan started: path=%s component_type=%s size_kb=%d"
@@ -95,4 +95,4 @@ class Info:
     CLEAN_DESCRIPTION = "This component passed all AVE checks."
     REPORT_COMING_SOON = "Full A-BOM report generation coming in v0.2.0"
     NO_FILES_FOUND = "No scannable files found in: {path}"
-    ENGINE_SKIPPED_MISSING = "Engine skipped — not installed: {engine}"
+    ENGINE_SKIPPED_MISSING = "Engine skipped - not installed: {engine}"

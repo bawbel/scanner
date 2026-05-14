@@ -1,8 +1,8 @@
 """
-Bawbel Scanner — `bawbel report` command.
+Bawbel Scanner - `bawbel report` command.
 
-Scans a component and renders a full remediation guide — finding details,
-OWASP mapping, CVSS-AI scores, and specific remediation steps.
+Scans a component and renders a full remediation guide - finding details,
+OWASP mapping, AIVSS scores, and specific remediation steps.
 """
 
 import sys
@@ -39,7 +39,7 @@ from scanner.cli.shared.constants import OWASP_DESCRIPTIONS, REMEDIATION_GUIDE
 def report_cmd(path: str, fmt: str) -> None:
     """Scan a component and show a full remediation guide.
 
-    Includes finding details, OWASP mapping, CVSS-AI scores,
+    Includes finding details, OWASP mapping, AIVSS v0.8 scores,
     and specific remediation steps for each finding.
     """
     result = scan(path)
@@ -54,8 +54,8 @@ def report_cmd(path: str, fmt: str) -> None:
     console.print(f"[dim]Type:[/]        [bold white]{result.component_type}[/]")
     console.print(
         "[dim]AVE Standard:[/] "
-        "[link=https://github.com/bawbel/bawbel-ave]"
-        "github.com/bawbel/bawbel-ave[/link]"
+        "[link=https://github.com/bawbel/ave]"
+        "github.com/bawbel/ave[/link]"
     )
     console.print()
 
@@ -78,7 +78,7 @@ def report_cmd(path: str, fmt: str) -> None:
         sys.exit(0)
 
     console.print("[bold white]VULNERABILITIES FOUND[/]")
-    console.print("[dim]" + "─" * 58 + "[/]")
+    console.print("[dim]" + "-" * 58 + "[/]")
     console.print()
 
     for i, f in enumerate(result.findings, 1):
@@ -97,13 +97,13 @@ def report_cmd(path: str, fmt: str) -> None:
             table.add_row(
                 "AVE ID",
                 (
-                    f"[link=https://github.com/bawbel/bawbel-ave"
+                    f"[link=https://github.com/bawbel/ave"
                     f"/blob/main/records/{f.ave_id}.md]"
                     f"{f.ave_id}[/link]"
                 ),
             )
         table.add_row("Rule ID", f.rule_id)
-        table.add_row("CVSS-AI", f"{f.cvss_ai:.1f} / 10.0")
+        table.add_row("AIVSS", f"{f.aivss_score:.1f} / 10.0  (OWASP AIVSS v0.8)")
         table.add_row("Engine", f.engine)
         if f.line:
             table.add_row("Location", f"Line {f.line}")
@@ -111,9 +111,21 @@ def report_cmd(path: str, fmt: str) -> None:
             table.add_row("Matched", f"[italic]{f.match}[/italic]")
         if f.owasp:
             owasp_str = "\n".join(
-                f"{code} — {OWASP_DESCRIPTIONS.get(code, code)}" for code in f.owasp
+                f"{code} - {OWASP_DESCRIPTIONS.get(code, code)}" for code in f.owasp
             )
             table.add_row("OWASP", owasp_str)
+        if f.owasp_mcp:
+            from scanner.owasp_mcp_map import OWASP_MCP_DESCRIPTIONS
+
+            mcp_str = "\n".join(
+                f"{code} - {OWASP_MCP_DESCRIPTIONS.get(code, code)}" for code in f.owasp_mcp
+            )
+            table.add_row("OWASP MCP", mcp_str)
+        if f.piranha_url:
+            table.add_row(
+                "PiranhaDB",
+                f"[link={f.piranha_url}]{f.piranha_url}[/link]",
+            )
 
         console.print(table)
         console.print(f"   [bold]What:[/] [dim]{f.description}[/]")

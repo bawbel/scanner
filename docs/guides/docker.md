@@ -1,281 +1,159 @@
-# Docker — Bawbel Scanner
-
-Run the scanner without any local Python installation.
-Three build targets cover every use case.
+# Docker
 
 ---
 
-## Build Targets
-
-| Target | Use case | Size |
-|---|---|---|
-| `production` | Scan files in CI/CD or on any machine | Minimal |
-| `dev` | Interactive development shell, hot-reload | Full toolchain |
-| `test` | Run the test suite in a clean container | Full toolchain |
-
----
-
-## Quick Start (Production)
+## Production image
 
 ```bash
-# Build the production image
-docker build --target production -t bawbel/scanner:0.1.0 .
+# Build
+docker build --target production -t bawbel/scanner:1.2.0 .
 
-# Scan a directory
-docker run --rm \
-  -v /path/to/your/skills:/scan:ro \
-  bawbel/scanner:0.1.0 \
-  scan /scan --recursive
+# With LLM engine
+docker build --target production \
+  --build-arg WITH_LLM=true \
+  -t bawbel/scanner:1.2.0-llm .
 
-# Scan a single file
-docker run --rm \
-  -v $(pwd)/my-skill.md:/scan/my-skill.md:ro \
-  bawbel/scanner:0.1.0 \
-  scan /scan/my-skill.md
+# With everything
+docker build --target production \
+  --build-arg WITH_ALL=true \
+  -t bawbel/scanner:1.2.0-full .
+```
 
-# Full remediation report
+### Build args
+
+| Arg | Default | Description |
+|---|---|---|
+| `PYTHON_VERSION` | `3.12` | Python version |
+| `WITH_LLM` | `false` | Include LLM engine (`litellm`) |
+| `WITH_SANDBOX` | `false` | Include sandbox engine deps |
+| `WITH_ALL` | `false` | Include all optional engines |
+
+---
+
+## Scanning with Docker
+
+```bash
+# Scan a local directory - text output
 docker run --rm \
-  -v /path/to/your/skills:/scan:ro \
-  bawbel/scanner:0.1.0 \
-  report /scan/my-skill.md
+  -v /path/to/skills:/scan:ro \
+  bawbel/scanner:1.2.0 scan /scan --recursive
 
 # JSON output
 docker run --rm \
-  -v /path/to/your/skills:/scan:ro \
-  bawbel/scanner:0.1.0 \
-  scan /scan --recursive --format json
+  -v /path/to/skills:/scan:ro \
+  bawbel/scanner:1.2.0 scan /scan --recursive --format json
 
-# SARIF output (redirect to file)
+# SARIF output
 docker run --rm \
-  -v /path/to/your/skills:/scan:ro \
-  bawbel/scanner:0.1.0 \
-  scan /scan --recursive --format sarif > results.sarif
+  -v /path/to/skills:/scan:ro \
+  -v /path/to/reports:/reports \
+  bawbel/scanner:1.2.0 scan /scan --recursive \
+    --format sarif > /reports/bawbel.sarif
 
-# Check version and engines
-docker run --rm bawbel/scanner:0.1.0 version
+# Fail on high severity (for CI)
+docker run --rm \
+  -v /path/to/skills:/scan:ro \
+  bawbel/scanner:1.2.0 scan /scan --recursive \
+    --fail-on-severity high
+echo "Exit: $?"
+
+# Other commands
+docker run --rm bawbel/scanner:1.2.0 version
+docker run --rm bawbel/scanner:1.2.0 conform https://api.example.com
+docker run --rm bawbel/scanner:1.2.0 ssc https://api.example.com
 ```
 
 ---
 
 ## Docker Compose
 
-### Setup
+All services use `SCAN_DIR` to point at the directory to scan.
 
 ```bash
-# Create the scan directory and add files to scan
-mkdir -p scan
-cp path/to/your/skill.md scan/
+export SCAN_DIR=/path/to/your/skills
 ```
 
-### Scan (text output — default)
+### Common services
 
 ```bash
-docker compose run --rm scan
+# Default scan - text output
+SCAN_DIR=./skills docker compose run --rm scan
+
+# JSON output
+SCAN_DIR=./skills docker compose --profile json run --rm scan-json
+
+# SARIF output (saved to REPORT_DIR)
+SCAN_DIR=./skills REPORT_DIR=./reports \
+  docker compose --profile sarif run --rm scan-sarif
+
+# Remediation report
+SCAN_DIR=./skills docker compose --profile report run --rm report
+
+# MCP server card scan
+MCP_URL=https://api.example.com docker compose run --rm ssc
+
+# Conformance check
+MCP_URL=https://api.example.com docker compose run --rm conform
+
+# Pin skill files
+SCAN_DIR=./skills docker compose --profile pin run --rm pin
+
+# Check for drift
+SCAN_DIR=./skills docker compose --profile pins run --rm check-pins
 ```
 
-### Report (full remediation guide)
+### Development shell
 
 ```bash
-docker compose run --rm report
+# Interactive shell with live source mount
+docker compose --profile dev up dev
+
+# Or with run
+docker compose --profile dev run --rm dev
 ```
 
-### JSON output
+### Test suite
 
 ```bash
-docker compose run --rm scan-json
+docker compose --profile test run --rm test
 ```
 
-### SARIF output
+### Local PiranhaDB (offline mode)
 
 ```bash
-docker compose run --rm scan-sarif > results.sarif
+# Start local PiranhaDB
+docker compose --profile offline up piranha
+
+# Scan using local API
+BAWBEL_PIRANHA_URL=http://localhost:8000 \
+  SCAN_DIR=./skills docker compose run --rm scan
 ```
 
 ### Security audit
 
 ```bash
-docker compose run --rm audit
-```
-
-### Custom scan directory
-
-```bash
-SCAN_DIR=/path/to/your/skills docker compose run --rm scan
+# Run bandit + pip-audit against the scanner codebase
+docker compose --profile audit run --rm audit
 ```
 
 ---
 
-## Development Shell
+## Dockerfile targets
 
-The `dev` target mounts your source code so changes reflect immediately
-without rebuilding.
+| Target | Purpose |
+|---|---|
+| `base` | Minimal Python + system deps |
+| `builder` | Installs Python deps |
+| `dev` | Full dev environment, source mounted |
+| `test` | Runs pytest on build |
+| `production` | Final minimal image, entrypoint set |
 
 ```bash
-# Build the dev image
+# Dev image
 docker build --target dev -t bawbel/scanner:dev .
 
-# Start an interactive shell
 docker run --rm -it \
-  -v $(pwd):/app \
+  -v "$(pwd)":/app \
   bawbel/scanner:dev
-
-# Inside the container:
-bawbel version
-python -m pytest tests/ -v
-bawbel scan tests/fixtures/skills/malicious/malicious_skill.md
-```
-
-Or with Compose:
-
-```bash
-docker compose run --rm dev
-```
-
-The dev shell has: `bawbel` CLI, `pytest`, `black`, `flake8`, `bandit`, `pre-commit`, `pip-audit`, `build`, `twine`.
-
----
-
-## Test Runner
-
-Run the full test suite in a clean container — useful for verifying the build
-before a release:
-
-```bash
-# Build and run tests (build fails if tests fail)
-docker build --target test -t bawbel/scanner:test .
-
-# Run tests in the already-built image
-docker run --rm bawbel/scanner:test
-# Expected: 145 passed
-```
-
-Or with Compose:
-
-```bash
-docker compose run --rm test
-```
-
----
-
-## Environment Variables
-
-Pass environment variables to enable optional features:
-
-```bash
-# Stage 2 LLM — Anthropic
-docker run --rm \
-  -e ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY \
-  -v /path/to/skills:/scan:ro \
-  bawbel/scanner:0.1.0 scan /scan --recursive
-
-# Stage 2 LLM — OpenAI
-docker run --rm \
-  -e OPENAI_API_KEY=$OPENAI_API_KEY \
-  -v /path/to/skills:/scan:ro \
-  bawbel/scanner:0.1.0 scan /scan
-
-# Stage 2 LLM — explicit model (any LiteLLM provider)
-docker run --rm \
-  -e BAWBEL_LLM_MODEL=gemini/gemini-1.5-flash \
-  -e GEMINI_API_KEY=$GEMINI_API_KEY \
-  -v /path/to/skills:/scan:ro \
-  bawbel/scanner:0.1.0 scan /scan
-
-# Use a .env file (recommended — works with any provider)
-docker run --rm --env-file .env \
-  -v /path/to/skills:/scan:ro \
-  bawbel/scanner:0.1.0 scan /scan
-
-# Set log level
-docker run --rm \
-  -e BAWBEL_LOG_LEVEL=DEBUG \
-  -v /path/to/skills:/scan:ro \
-  bawbel/scanner:0.1.0 scan /scan
-```
-
----
-
-## CI/CD Integration
-
-### GitHub Actions
-
-```yaml
-name: Bawbel Security Scan
-
-on: [push, pull_request]
-
-jobs:
-  scan:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Build scanner
-        run: docker build --target production -t bawbel/scanner:ci .
-
-      - name: Scan and upload SARIF
-        run: |
-          docker run --rm \
-            -v ${{ github.workspace }}:/scan:ro \
-            bawbel/scanner:ci \
-            scan /scan --recursive --format sarif > bawbel-results.sarif
-
-      - name: Upload to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: bawbel-results.sarif
-
-      - name: Fail on critical findings
-        run: |
-          docker run --rm \
-            -v ${{ github.workspace }}:/scan:ro \
-            bawbel/scanner:ci \
-            scan /scan --recursive --fail-on-severity critical
-```
-
----
-
-## Security Properties
-
-The production image is hardened:
-
-| Property | Value |
-|---|---|
-| Base image | `python:3.12-slim` |
-| Run as | Non-root user `bawbel` (UID 1000) |
-| Scan volume | Read-only (`:ro`) |
-| Filesystem | Read-only (`read_only: true` in Compose) |
-| Privileges | `no-new-privileges:true` |
-| Build tools | Not included in production image |
-| Tests | Not included in production image |
-
-Never run the production image as root. Never mount the scan volume as writable.
-
----
-
-## Troubleshooting
-
-**`permission denied` on the scan volume:**
-```bash
-# The container runs as UID 1000 — make sure the files are readable
-chmod -R a+r /path/to/your/skills
-```
-
-**`bawbel: command not found` inside dev container:**
-```bash
-# Reinstall the editable package
-pip install -e . --quiet
-```
-
-**`ModuleNotFoundError: No module named 'scanner'`:**
-```bash
-# Always run from the repo root, not a subdirectory
-cd /app   # inside container
-bawbel scan ...
-```
-
-**Docker build fails at test stage:**
-```bash
-# Tests failed — run them locally to see what broke
-python -m pytest tests/ -v
+# Inside: bawbel version, bawbel scan tests/fixtures/...
 ```

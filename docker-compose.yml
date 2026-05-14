@@ -1,49 +1,43 @@
-# Bawbel Scanner — Docker Compose
+# ── Bawbel Scanner - docker-compose.yml ───────────────────────────────────────
 #
-# Services:
+# Version: 1.2.0
 #
-#   dev       — interactive development shell (hot-reload)
-#   test      — run full test suite
-#   scan      — scan ./scan/ directory (text output)
-#   report    — scan ./scan/ and show remediation guide
-#   scan-json — scan ./scan/ directory (JSON output)
-#   scan-sarif — scan ./scan/ directory (SARIF output)
-#   audit     — run security checks (bandit + pip-audit)
+# Usage examples:
 #
-# Usage:
+#   Development shell:
+#     docker compose --profile dev up dev
 #
-#   # Development shell
-#   docker compose run --rm dev
+#   Run full test suite:
+#     docker compose --profile test run --rm test
 #
-#   # Run all tests
-#   docker compose run --rm test
+#   Scan a local skills directory (text output):
+#     SCAN_DIR=./skills docker compose run --rm scan
 #
-#   # Scan a directory (put files in ./scan/ first)
-#   mkdir -p scan && cp path/to/skill.md scan/
-#   docker compose run --rm scan
+#   Scan MCP server manifest (never starts the server):
+#     MCP_URL=https://server.example.com docker compose run --rm ssc
 #
-#   # Full remediation report
-#   docker compose run --rm report
+#   Conformance check:
+#     MCP_URL=https://server.example.com docker compose run --rm conform
 #
-#   # JSON output
-#   docker compose run --rm scan-json
+#   AIBOM (AI Bill of Materials):
+#     SCAN_DIR=./skills docker compose run --rm aibom
 #
-#   # SARIF output (redirect to file)
-#   docker compose run --rm scan-sarif > results.sarif
+#   Pin skill files (rug pull protection):
+#     SCAN_DIR=./skills docker compose run --rm pin
 #
-#   # Security audit
-#   docker compose run --rm audit
+#   Check pins for drift:
+#     SCAN_DIR=./skills docker compose run --rm check-pins
 #
-# Environment variables (optional — set in .env file):
-#   BAWBEL_LLM_MODEL    — LiteLLM model string (e.g. claude-haiku-4-5, gpt-4o-mini, ollama/mistral)
-#   ANTHROPIC_API_KEY   — enables Stage 2 via Claude (auto-selects claude-haiku-4-5)
-#   OPENAI_API_KEY      — enables Stage 2 via OpenAI (auto-selects gpt-4o-mini)
-#   GEMINI_API_KEY      — enables Stage 2 via Gemini
-#   MISTRAL_API_KEY     — enables Stage 2 via Mistral
-#   GROQ_API_KEY        — enables Stage 2 via Groq
-#   BAWBEL_LLM_ENABLED  — set false to disable Stage 2 even if key is present
-#   BAWBEL_LOG_LEVEL    — DEBUG | INFO | WARNING (default)
-#   SCAN_DIR            — override the scan directory (default: ./scan)
+#   JSON output:
+#     SCAN_DIR=./skills docker compose run --rm scan-json
+#
+#   SARIF output (GitHub Security upload):
+#     SCAN_DIR=./skills docker compose run --rm scan-sarif
+#
+#   Full security audit of scanner codebase:
+#     docker compose --profile audit run --rm audit
+#
+# ─────────────────────────────────────────────────────────────────────────────
 
 x-base: &base
   build:
@@ -52,7 +46,7 @@ x-base: &base
   environment:
     BAWBEL_LOG_LEVEL:        ${BAWBEL_LOG_LEVEL:-WARNING}
     BAWBEL_LLM_MODEL:        ${BAWBEL_LLM_MODEL:-}
-    BAWBEL_LLM_ENABLED:      ${BAWBEL_LLM_ENABLED:-true}
+    BAWBEL_LLM_ENABLED:      ${BAWBEL_LLM_ENABLED:-false}
     ANTHROPIC_API_KEY:       ${ANTHROPIC_API_KEY:-}
     OPENAI_API_KEY:          ${OPENAI_API_KEY:-}
     GEMINI_API_KEY:          ${GEMINI_API_KEY:-}
@@ -73,9 +67,20 @@ x-scan-base: &scan-base
   security_opt:
     - no-new-privileges:true
 
+x-ssc-base: &ssc-base
+  <<: *base
+  build:
+    context: .
+    dockerfile: Dockerfile
+    target: production
+  read_only: true
+  security_opt:
+    - no-new-privileges:true
+
+
 services:
 
-  # ── Development shell ───────────────────────────────────────────────────────
+  # ── Development shell ──────────────────────────────────────────────────────
   dev:
     <<: *base
     build:
@@ -84,9 +89,7 @@ services:
       target: dev
     container_name: bawbel-dev
     volumes:
-      # Mount full source — changes reflect immediately (editable install)
       - .:/app
-      # Persist pip cache across container rebuilds
       - pip-cache:/root/.cache/pip
     environment:
       BAWBEL_LOG_LEVEL: DEBUG
@@ -94,12 +97,11 @@ services:
       PYTHONUNBUFFERED: "1"
     stdin_open: true
     tty: true
-    # Override entrypoint for interactive shell
     entrypoint: /bin/bash
     profiles:
       - dev
 
-  # ── Test runner ─────────────────────────────────────────────────────────────
+  # ── Test runner ────────────────────────────────────────────────────────────
   test:
     <<: *base
     build:
@@ -107,7 +109,6 @@ services:
       dockerfile: Dockerfile
       target: test
     container_name: bawbel-test
-    # No volume mount needed — tests use internal fixtures
     entrypoint: python
     command:
       - -m
@@ -118,7 +119,7 @@ services:
     profiles:
       - test
 
-  # ── Scan: text output (default) ─────────────────────────────────────────────
+  # ── Scan: text output (default) ────────────────────────────────────────────
   scan:
     <<: *scan-base
     container_name: bawbel-scan
@@ -128,18 +129,7 @@ services:
       - /scan
       - --recursive
 
-  # ── Report: full remediation guide ──────────────────────────────────────────
-  report:
-    <<: *scan-base
-    container_name: bawbel-report
-    entrypoint: ["python", "-m", "scanner.cli"]
-    command:
-      - report
-      - /scan
-    profiles:
-      - report
-
-  # ── Scan: JSON output ────────────────────────────────────────────────────────
+  # ── Scan: JSON output ──────────────────────────────────────────────────────
   scan-json:
     <<: *scan-base
     container_name: bawbel-scan-json
@@ -153,10 +143,13 @@ services:
     profiles:
       - json
 
-  # ── Scan: SARIF output ───────────────────────────────────────────────────────
+  # ── Scan: SARIF output (GitHub Security / GHAS) ────────────────────────────
   scan-sarif:
     <<: *scan-base
     container_name: bawbel-scan-sarif
+    volumes:
+      - ${SCAN_DIR:-./scan}:/scan:ro
+      - ${REPORT_DIR:-./reports}:/reports
     entrypoint: ["python", "-m", "scanner.cli"]
     command:
       - scan
@@ -164,10 +157,108 @@ services:
       - --recursive
       - --format
       - sarif
+      - --output
+      - /reports/bawbel.sarif
     profiles:
       - sarif
 
-  # ── Security audit ───────────────────────────────────────────────────────────
+  # ── SSC: scan MCP server manifest (never starts the server) ────────────────
+  # Usage: MCP_URL=https://server.example.com docker compose run --rm ssc
+  ssc:
+    <<: *ssc-base
+    container_name: bawbel-ssc
+    entrypoint: ["python", "-m", "scanner.cli"]
+    command:
+      - ssc
+      - ${MCP_URL:-https://example.com}
+
+  # ── Conform: MCP server conformance grading (A+ to F) ─────────────────────
+  # Usage: MCP_URL=https://server.example.com docker compose run --rm conform
+  conform:
+    <<: *ssc-base
+    container_name: bawbel-conform
+    entrypoint: ["python", "-m", "scanner.cli"]
+    command:
+      - conform
+      - ${MCP_URL:-https://example.com}
+
+  # ── AIBOM: AI Bill of Materials ────────────────────────────────────────────
+  # Usage: SCAN_DIR=./skills docker compose run --rm aibom
+  aibom:
+    <<: *scan-base
+    container_name: bawbel-aibom
+    volumes:
+      - ${SCAN_DIR:-./scan}:/scan:ro
+      - ${REPORT_DIR:-./reports}:/reports
+    entrypoint: ["python", "-m", "scanner.cli"]
+    command:
+      - aibom
+      - /scan
+      - --output
+      - /reports/aibom.json
+    profiles:
+      - aibom
+
+  # ── Pin: record skill file hashes for rug pull detection ──────────────────
+  # Usage: SCAN_DIR=./skills docker compose run --rm pin
+  pin:
+    <<: *base
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: bawbel-pin
+    volumes:
+      - ${SCAN_DIR:-./scan}:/scan
+    entrypoint: ["python", "-m", "scanner.cli"]
+    command:
+      - pin
+      - /scan
+    profiles:
+      - pin
+
+  # ── Check-pins: detect drift from pinned hashes ────────────────────────────
+  # Usage: SCAN_DIR=./skills docker compose run --rm check-pins
+  check-pins:
+    <<: *scan-base
+    container_name: bawbel-check-pins
+    entrypoint: ["python", "-m", "scanner.cli"]
+    command:
+      - check-pins
+      - /scan
+    profiles:
+      - pins
+
+  # ── Report: full remediation guide ────────────────────────────────────────
+  report:
+    <<: *scan-base
+    container_name: bawbel-report
+    entrypoint: ["python", "-m", "scanner.cli"]
+    command:
+      - report
+      - /scan
+    profiles:
+      - report
+
+  # ── PiranhaDB: local threat intel API for offline development ─────────────
+  # Mirrors api.piranha.bawbel.io locally. No network calls from scanner.
+  piranha:
+    image: bawbel/piranha-api:latest
+    container_name: bawbel-piranha
+    ports:
+      - "8000:8000"
+    environment:
+      - PIRANHA_RECORDS_DIR=/app/records
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    profiles:
+      - dev
+      - offline
+
+  # ── Security audit ─────────────────────────────────────────────────────────
   audit:
     <<: *base
     build:
@@ -186,6 +277,7 @@ services:
         pip-audit -r requirements.txt
     profiles:
       - audit
+
 
 volumes:
   pip-cache:

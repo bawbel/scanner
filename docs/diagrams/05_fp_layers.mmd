@@ -1,0 +1,54 @@
+flowchart TD
+    FILE[Raw file content] --> FP1
+
+    FP1["FP-1  Code fence stripping
+    Replace content inside backtick blocks
+    with blank lines before analysis
+    ~60% reduction"]
+
+    FP1 --> FP2
+
+    FP2["FP-2  Preceding-line context
+    Penalise if line above trigger contains
+    never / bad example / do not
+    ~15% reduction"]
+
+    FP2 --> FP3
+
+    FP3["FP-3  Confidence scoring
+    Table rows, headings, docs/ paths
+    lower the confidence score
+    ~10% reduction"]
+
+    FP3 --> FP4
+
+    FP4["FP-4  Meta-analyzer
+    One LLM call reviews findings
+    with confidence 0.35 to 0.80
+    Returns real / false_positive / needs_review
+    ~7% reduction"]
+
+    FP4 --> FP5
+
+    FP5["FP-5  File-type profiles
+    docs/ files require 0.85 confidence
+    skill files require 0.60 confidence
+    ~3% reduction"]
+
+    FP5 --> SPLIT{Confidence
+    threshold
+    passed?}
+
+    SPLIT -->|Yes| REAL["Real finding
+    Reported to output"]
+    SPLIT -->|No| FP["False positive
+    Moved to
+    suppressed_findings"]
+
+    style FP1 fill:#1a3a2a,color:#fff,stroke:#2a5a3a
+    style FP2 fill:#1a3a2a,color:#fff,stroke:#2a5a3a
+    style FP3 fill:#1a3a2a,color:#fff,stroke:#2a5a3a
+    style FP4 fill:#1a3a4a,color:#fff,stroke:#2a4a6a
+    style FP5 fill:#1a3a2a,color:#fff,stroke:#2a5a3a
+    style REAL fill:#1a4a1a,color:#fff
+    style FP fill:#4a1a1a,color:#fff

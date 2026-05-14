@@ -1,8 +1,8 @@
 """
-Bawbel Scanner — Core orchestrator.
+Bawbel Scanner - Core orchestrator.
 
 This module is the public API entry point.
-It orchestrates the scan pipeline — validation, engine dispatch, deduplication.
+It orchestrates the scan pipeline - validation, engine dispatch, deduplication.
 
 It does NOT contain engine logic or rules.
 Each engine lives in scanner/engines/<name>.py.
@@ -28,6 +28,7 @@ from config.default import (
 
 # Models
 from scanner.models import Finding, ScanResult, Severity
+from scanner.models.finding import calc_aivss, severity_from_aivss, DEFAULT_AARF
 
 # Engines
 from scanner.engines import run_pattern_scan, run_semgrep_scan, run_yara_scan, run_llm_scan
@@ -70,13 +71,10 @@ def _strip_code_fences(content: str) -> str:
 
     Replaces the *content* of each ``` or ~~~ block with an equal number of
     blank lines so that line N in the stripped content maps to the same line N
-    in the original. This keeps Finding.line accurate — the line number a
-    pattern engine reports is still correct relative to the original file.
+    in the original. This keeps Finding.line accurate.
 
-    The fence markers themselves (``` and ```) are kept — only the content
-    between them is blanked. This means a finding on the fence-open line is
-    still possible (the marker line is not blanked), but content lines inside
-    the fence are not scanned.
+    The fence markers themselves are kept - only the content between them is
+    blanked. Content inside fences is not scanned by static analysis engines.
 
     Why preserve line numbers:
         If we deleted fenced lines instead of blanking them, every finding
@@ -84,7 +82,7 @@ def _strip_code_fences(content: str) -> str:
 
     Why sandbox gets the original content:
         The sandbox runs the full file. A malicious payload hidden inside a
-        code fence is still caught behaviourally at Stage 3.
+        code fence is still caught behaviourally.
 
     Args:
         content: Raw file content string.
@@ -95,9 +93,7 @@ def _strip_code_fences(content: str) -> str:
 
     def _blank_interior(m: _re.Match) -> str:
         interior = m.group(1)
-        # Count how many newlines are in the interior and replace with blanks
         blank_lines = "\n" * interior.count("\n")
-        # Reconstruct: opening fence line + blank interior + closing fence
         fence_open = m.group(0).split("\n")[0]
         return fence_open + "\n" + blank_lines + "```"
 
@@ -114,7 +110,7 @@ def _strip_code_fences(content: str) -> str:
 
 log = get_logger(__name__)
 
-# Per-process warning flags — emit each warning only once across all files
+# Per-process warning flags - emit each warning only once across all files
 _warned_sandbox_no_image: bool = False
 _warned_sandbox_no_docker: bool = False
 
@@ -131,7 +127,6 @@ __all__ = [
 # ── FP-2: Preceding-line negation context ────────────────────────────────────
 # If the line immediately before a match contains any of these prefixes,
 # the match is almost certainly a documentation example, not a real attack.
-# Case-insensitive, partial match (e.g. "bad:" matches "# Bad:").
 
 _NEGATION_PREFIXES: frozenset[str] = frozenset(
     {
@@ -157,8 +152,8 @@ _NEGATION_PREFIXES: frozenset[str] = frozenset(
         "never do this",
         "antipattern",
         "anti-pattern",
-        "❌",
-        "✗",
+        "\u274c",
+        "\u2717",
         "wrong:",
         "# bad",
         "// bad",
@@ -171,13 +166,6 @@ def _has_negation_context(lines: list[str], line_no: int) -> bool:
     """
     Return True if the line immediately preceding line_no (1-indexed)
     contains a negation / documentation prefix.
-
-    Args:
-        lines:   All lines of the file (0-indexed list).
-        line_no: 1-indexed line number of the finding.
-
-    Returns:
-        True if preceding line signals this is a documentation example.
     """
     if line_no is None or line_no < 2:
         return False
@@ -186,10 +174,8 @@ def _has_negation_context(lines: list[str], line_no: int) -> bool:
 
 
 # ── FP-3: Confidence scoring ──────────────────────────────────────────────────
-# Default threshold — findings below this go to low_confidence_findings.
 _CONFIDENCE_THRESHOLD: float = float(_os.environ.get("BAWBEL_CONFIDENCE_THRESHOLD", "0.80"))
 
-# File patterns that indicate a skill / high-trust component
 _SKILL_NAMES: frozenset[str] = frozenset(
     {
         "skill.md",
@@ -203,7 +189,6 @@ _SKILL_NAMES: frozenset[str] = frozenset(
     }
 )
 
-# Path segments that indicate documentation / low-trust context
 _DOC_PATH_SEGMENTS: frozenset[str] = frozenset(
     {
         "docs",
@@ -227,69 +212,48 @@ def _score_confidence(
     all_findings: list[Finding],
 ) -> float:
     """
-    Compute a confidence score (0.0–1.0) for a finding.
+    Compute a confidence score (0.0-1.0) for a finding.
 
     Score represents the probability that this is a true positive.
     Starts at 1.0 and adjusts based on context signals.
 
-    Signals:
-      Penalties (reduce confidence — likely FP):
+    Penalties (reduce confidence - likely FP):
         -0.4  preceded by negation context
-        -0.3  match is inside a markdown table (line starts with |)
-        -0.4  match is in a heading (line starts with # word)
-        -0.3  file path contains a docs/examples/tests segment
-        -0.2  match text is very short (< 6 chars — too little signal)
+        -0.45 match is inside a markdown table (line starts with |)
+        -0.55 match is in a heading (line starts with #)
+        -0.35 file path contains a docs/examples/tests segment
+        -0.2  match text is very short (< 6 chars)
 
-      Boosts (increase confidence — likely TP):
-        +0.2  match is in the first 30 lines (instructions are usually at top)
-        +0.3  two or more engines agree on the same ave_id
-        +0.2  file is named SKILL.md or system_prompt.*
-        +0.1  CVSS-AI >= 9.0 (critical patterns — trust the high-severity signal)
-
-    Args:
-        finding:      The finding to score.
-        lines:        All lines of the file (0-indexed).
-        path:         Resolved file path.
-        all_findings: All findings (for multi-engine agreement check).
-
-    Returns:
-        Float in range [0.0, 1.0].
+    Boosts (increase confidence - likely TP):
+        +0.15 match is in the first 30 lines
+        +0.25 two or more engines agree on the same ave_id
+        +0.15 file is named SKILL.md or system_prompt.*
+        +0.05 AIVSS score >= 9.0
     """
     score = 1.0
     line_no = finding.line
 
-    # ── Penalties ─────────────────────────────────────────────────────────────
     if line_no is not None:
-        # Negation context — preceding line signals documentation example
         if _has_negation_context(lines, line_no):
             score -= 0.4
-
-        # Markdown table — match is inside a table row (starts with |)
         if 1 <= line_no <= len(lines):
             current_line = lines[line_no - 1].lstrip()
             if current_line.startswith("|"):
                 score -= 0.45
-            # Heading — match is inside a # heading
             if _re.match(r"#{1,6}\s+\w", current_line):
                 score -= 0.55
 
-    # Documentation path segment — computed before boosts so boosts can be conditional
     path_parts = {p.lower() for p in path.parts}
     in_docs_path = bool(path_parts & _DOC_PATH_SEGMENTS)
     if in_docs_path:
         score -= 0.35
 
-    # Very short match — too little context to be meaningful
     if finding.match and len(finding.match.strip()) < 6:
         score -= 0.2
 
-    # ── Boosts ────────────────────────────────────────────────────────────────
-    # Boosts do NOT apply when a structural FP indicator is present —
-    # being in line 1 of a docs/ file does not make the finding more real.
     if line_no is not None and line_no <= 30 and not in_docs_path:
         score += 0.15
 
-    # Multi-engine agreement — same ave_id detected by 2+ engines
     if finding.ave_id:
         agreeing = sum(
             1 for f in all_findings if f.ave_id == finding.ave_id and f.engine != finding.engine
@@ -297,26 +261,22 @@ def _score_confidence(
         if agreeing >= 1:
             score += 0.25
 
-    # Skill file name — high-trust context
     if path.name.lower() in _SKILL_NAMES:
         score += 0.15
 
-    # Critical severity — small signal boost (not enough to override structural FP)
-    if finding.cvss_ai >= 9.0:
+    # Use aivss_score for the critical signal boost (was cvss_ai in v1.1)
+    if finding.aivss_score >= 9.0:
         score += 0.05
 
     return max(0.0, min(1.0, score))
 
 
 # ── FP-5: File-type scan profiles ────────────────────────────────────────────
-# Maps file classification → confidence threshold override.
-# Documentation files require a higher bar to surface a finding.
-
 _PROFILE_THRESHOLDS: dict[str, float] = {
-    "skill": 0.60,  # skill files — scan hard
-    "mcp_manifest": 0.55,  # MCP manifests — scan hardest (high-risk surface)
-    "documentation": 0.85,  # docs — only surface very high-confidence findings
-    "unknown": 0.80,  # default threshold
+    "skill": 0.60,
+    "mcp_manifest": 0.55,
+    "documentation": 0.85,
+    "unknown": 0.80,
 }
 
 
@@ -329,7 +289,6 @@ def _classify_file(path: Path) -> str:
     name = path.name.lower()
     parts = {p.lower() for p in path.parts}
 
-    # Explicit skill indicators
     if name in {
         "skill.md",
         "skills.md",
@@ -345,7 +304,6 @@ def _classify_file(path: Path) -> str:
     if name.endswith((".skill.md", ".skill.yaml", ".skill.yml")):
         return "skill"
 
-    # MCP manifest indicators
     if any(name.startswith(prefix) for prefix in ("mcp_", "mcp-", "mcp.")) and name.endswith(
         (".json", ".yaml", ".yml")
     ):
@@ -353,7 +311,6 @@ def _classify_file(path: Path) -> str:
     if name in {"mcp_manifest.json", "mcp_manifest.yaml", "server.json"}:
         return "mcp_manifest"
 
-    # Documentation indicators — path segments
     doc_segments = {
         "docs",
         "doc",
@@ -369,7 +326,6 @@ def _classify_file(path: Path) -> str:
     if parts & doc_segments:
         return "documentation"
 
-    # Documentation indicators — filename
     if name in {
         "readme.md",
         "changelog.md",
@@ -391,10 +347,7 @@ def _error_result(
     error: str,
     component_type: str = "unknown",
 ) -> ScanResult:
-    """
-    Build a ScanResult for a failed scan.
-    Logs the error and returns a clean ScanResult with error set.
-    """
+    """Build a ScanResult for a failed scan."""
     log.error(Logs.SCAN_ERROR, file_path, error)
     return ScanResult(
         file_path=file_path,
@@ -408,30 +361,51 @@ def _make_finding(
     title: str,
     description: str,
     severity: Severity,
-    cvss_ai: float,
+    aivss_score: float,  # renamed from cvss_ai - OWASP AIVSS v0.8
     engine: str,
     ave_id: Optional[str] = None,
     line: Optional[int] = None,
     match: Optional[str] = None,
     owasp: Optional[list[str]] = None,
+    owasp_mcp: Optional[list[str]] = None,
+    cvss_base: float = 0.0,
+    aarf: Optional[dict] = None,
+    thm: float = 0.75,
+    mitigation_factor: float = 1.0,
     max_match: int = 80,
 ) -> Finding:
     """
     Construct a sanitised Finding.
-    Always use this — never instantiate Finding directly.
-    Validates and clamps all fields.
+    Always use this - never instantiate Finding directly.
+
+    If cvss_base and aarf are provided, aivss_score is computed from
+    the OWASP AIVSS v0.8 formula. Otherwise aivss_score is used directly.
     """
+    # Compute AIVSS score from formula if AARF data is available
+    if cvss_base > 0.0 and aarf:
+        computed = calc_aivss(cvss_base, aarf, thm, mitigation_factor)
+        severity = severity_from_aivss(computed)
+        score = computed
+    else:
+        score = parse_cvss(aivss_score)
+
     return Finding(
         rule_id=rule_id,
         ave_id=ave_id,
         title=title[:max_match],
         description=description,
         severity=severity,
-        cvss_ai=parse_cvss(cvss_ai),
+        aivss_score=score,
+        cvss_base=cvss_base,
+        aarf=aarf or dict(DEFAULT_AARF),
+        aars=round(sum((aarf or DEFAULT_AARF).values()), 1),
+        thm=thm,
+        mitigation_factor=mitigation_factor,
         line=line,
         match=truncate_match(match, max_match),
         engine=engine,
         owasp=owasp or [],
+        owasp_mcp=owasp_mcp or [],
     )
 
 
@@ -439,15 +413,11 @@ def _deduplicate(findings: list[Finding]) -> list[Finding]:
     """
     Deduplicate findings across engines.
 
-    Two passes:
-    1. Keep the highest-severity finding per rule_id (same engine, same rule).
-    2. Keep the highest-severity finding per (ave_id, line) — removes cross-engine
-       duplicates where pattern + YARA + Semgrep all detect the same AVE ID on
-       the same line. The finding with the richer match/description wins.
-
-    Stable contract: do not change without a minor version bump.
+    Pass 1: Keep highest-severity finding per rule_id.
+    Pass 2: Keep highest-severity finding per (ave_id, line) - removes
+            cross-engine duplicates where pattern + YARA + Semgrep all
+            detect the same AVE on the same line.
     """
-    # Pass 1 — deduplicate by rule_id
     by_rule: dict[str, Finding] = {}
     for f in findings:
         existing = by_rule.get(f.rule_id)
@@ -459,35 +429,27 @@ def _deduplicate(findings: list[Finding]) -> list[Finding]:
             log.debug(Logs.FINDING_DEDUPED, f.rule_id, f.severity.value)
             by_rule[f.rule_id] = f
 
-    # Pass 2 — deduplicate by ave_id across engines
-    # Groups all findings with the same ave_id, keeps the best one:
-    # - prefer the finding that has a line number (more specific)
-    # - among those with lines, prefer pattern > yara > semgrep > llm > sandbox
     by_ave: dict[str, Finding] = {}
     no_ave: list[Finding] = []
-
     priority = {"pattern": 0, "yara": 1, "semgrep": 2, "llm": 3, "sandbox": 4}
 
     for f in by_rule.values():
         if not f.ave_id:
             no_ave.append(f)
             continue
-
         existing = by_ave.get(f.ave_id)
         if existing is None:
             by_ave[f.ave_id] = f
             continue
 
-        # Prefer the finding with a line number
         f_has_line = f.line is not None
         ex_has_line = existing.line is not None
 
         if f_has_line and not ex_has_line:
-            by_ave[f.ave_id] = f  # f is more specific
+            by_ave[f.ave_id] = f
         elif not f_has_line and ex_has_line:
-            pass  # keep existing — it has a line
+            pass
         else:
-            # Both have (or both lack) line numbers — prefer by engine priority
             if priority.get(f.engine, 99) < priority.get(existing.engine, 99):
                 by_ave[f.ave_id] = f
                 log.debug(
@@ -515,18 +477,20 @@ def scan(file_path: str, no_ignore: bool = False) -> ScanResult:
       2. Reads the file safely
       3. Dispatches to all enabled detection engines
       4. Deduplicates and sorts findings
-      5. Applies suppression (inline, block, .bawbelignore)
-      6. Returns a complete ScanResult
+      5. Applies the 5-layer FP reduction pipeline
+      6. Applies inline suppressions
+      7. Returns a complete ScanResult with OWASP AIVSS v0.8 scores
 
-    Never raises — all errors are captured in ScanResult.error.
+    Never raises - all errors are captured in ScanResult.error.
 
     Args:
-        file_path: Path to the component file (any string — will be validated)
-        no_ignore: If True, skip all suppressions — audit mode
+        file_path: Path to the component file (any string - will be validated)
+        no_ignore: If True, skip all suppressions - audit mode
 
     Returns:
-        ScanResult with findings, suppressed_findings, risk_score, max_severity, scan_time_ms
-        ScanResult.is_clean == True only if no findings AND no error
+        ScanResult with findings, suppressed_findings, risk_score,
+        max_severity, scan_time_ms, and toxic_flows.
+        ScanResult.is_clean == True only if no findings AND no error.
     """
     with Timer() as t:
 
@@ -558,30 +522,21 @@ def scan(file_path: str, no_ignore: bool = False) -> ScanResult:
 
         log.info(Logs.SCAN_START, path, component_type, size_kb)
 
-        # ── Step 5: Run detection engines ─────────────────────────────────────
-        # Strip code fence content before static analysis (Priority 1 FP reduction).
-        # Fenced content is replaced with blank lines — line numbers stay correct.
-        # Original content is preserved for:
-        #   - Sandbox (Stage 3) — must see full file for behavioural analysis
-        #   - Suppression — inline bawbel-ignore comments may be inside fences
+        # ── Step 5: FP-1 - Strip code fences ─────────────────────────────────
+        # Content inside ``` blocks is replaced with blank lines.
+        # Line numbers stay accurate. Original content preserved for sandbox.
         stripped = _strip_code_fences(content)
 
         findings: list[Finding] = []
 
-        # ── Stage 0: Magika file type verification ────────────────────────────
-        # Runs before all other engines. Catches supply chain attacks where
-        # a file's content type doesn't match its extension.
-        # Skips silently if magika is not installed.
+        # ── Stage 0: Magika content-type verification ─────────────────────────
         magika_findings = run_magika_scan(str(path))
         findings.extend(magika_findings)
         if magika_findings:
-            # If Magika flags a dangerous content type, skip text analysis —
-            # the file is not what it claims to be and text patterns are
-            # meaningless. Still run sandbox for behavioral analysis.
             dangerous = any(f.rule_id == "bawbel-content-type-dangerous" for f in magika_findings)
             if dangerous:
                 log.warning(
-                    "Magika: dangerous content type in %s — " "skipping text analysis engines",
+                    "Magika: dangerous content type in %s - " "skipping text analysis engines",
                     path.name,
                 )
             else:
@@ -595,7 +550,7 @@ def scan(file_path: str, no_ignore: bool = False) -> ScanResult:
             findings.extend(run_semgrep_scan(str(path), stripped))
             findings.extend(run_llm_scan(content))
 
-        # ── Stage 3: Behavioral sandbox ──────────────────────────────────────
+        # ── Stage 3: Behavioral sandbox ───────────────────────────────────────
         if SANDBOX_ENABLED:
             if is_docker_available():
                 sandbox_findings = run_sandbox_scan(str(path), stripped_content=stripped)
@@ -605,7 +560,7 @@ def scan(file_path: str, no_ignore: bool = False) -> ScanResult:
                     if not _warned_sandbox_no_image:
                         _warned_sandbox_no_image = True
                         log.warning(
-                            "Sandbox engine: no findings returned — "
+                            "Sandbox engine: no findings returned - "
                             "ensure bawbel/sandbox:latest image is built "
                             "or set BAWBEL_SANDBOX_IMAGE=local to build locally. "
                             "See docs/guides/engines.md for setup."
@@ -614,7 +569,7 @@ def scan(file_path: str, no_ignore: bool = False) -> ScanResult:
                 global _warned_sandbox_no_docker
                 if not _warned_sandbox_no_docker:
                     _warned_sandbox_no_docker = True
-                    log.warning("Sandbox engine: Docker not running — Stage 3 skipped")
+                    log.warning("Sandbox engine: Docker not running - Stage 3 skipped")
 
         # ── Step 6: Deduplicate and sort ──────────────────────────────────────
         findings = _deduplicate(findings)
@@ -625,12 +580,12 @@ def scan(file_path: str, no_ignore: bool = False) -> ScanResult:
 
         toxic_flows = detect_toxic_flows(findings)
 
-        # ── Step 7: FP-2 + FP-3 — negation context + confidence scoring ───────
+        # ── Step 7: FP-2 + FP-3 - Negation context + confidence scoring ───────
         lines = content.splitlines()
         active_findings: list[Finding] = []
         low_confidence: list[Finding] = []
 
-        # FP-5: file-type profile threshold override
+        # FP-5: file-type profile determines confidence threshold
         file_profile = _classify_file(path)
         profile_threshold = _PROFILE_THRESHOLDS.get(file_profile, _CONFIDENCE_THRESHOLD)
 
@@ -639,7 +594,7 @@ def scan(file_path: str, no_ignore: bool = False) -> ScanResult:
             if f.line is not None and _has_negation_context(lines, f.line):
                 f.suppressed = True
                 f.suppression_reason = (
-                    "negation_context — preceding line signals documentation example"
+                    "negation_context - preceding line signals documentation example"
                 )
                 low_confidence.append(f)
                 log.debug(
@@ -669,11 +624,13 @@ def scan(file_path: str, no_ignore: bool = False) -> ScanResult:
 
             active_findings.append(f)
 
-        # ── Step 8: Meta-analysis FP filter ──────────────────────────────────
-        # Runs on medium-confidence active findings — one LLM call per file.
+        # ── Step 8: FP-4 - Meta-analyzer ──────────────────────────────────────
+        # One LLM call per file reviews medium-confidence findings (0.35-0.80).
+        # Returns real / false_positive / needs_review per finding.
         # Skips silently if LLM not configured.
         magika_label = next(
-            (f.match.replace("detected: ", "") for f in findings if f.engine == "magika"), "unknown"
+            (f.match.replace("detected: ", "") for f in findings if f.engine == "magika"),
+            "unknown",
         )
         active_findings = run_meta_analysis(
             findings=active_findings,
@@ -681,12 +638,11 @@ def scan(file_path: str, no_ignore: bool = False) -> ScanResult:
             file_path=str(path),
             magika_label=magika_label,
         )
-        # Move meta-analyzer FP verdicts to low_confidence
         meta_fp = [f for f in active_findings if f.suppressed]
         active_findings = [f for f in active_findings if not f.suppressed]
         low_confidence.extend(meta_fp)
 
-        # ── Step 9: Apply suppressions ────────────────────────────────────────
+        # ── Step 9: Apply inline suppressions ─────────────────────────────────
         sup = apply_suppressions(
             findings=active_findings,
             file_path=str(path),
@@ -713,7 +669,7 @@ def scan(file_path: str, no_ignore: bool = False) -> ScanResult:
 
     if sup.suppressed:
         log.info(
-            "Suppression: %d finding(s) suppressed in %s — run with --no-ignore to see all",
+            "Suppression: %d finding(s) suppressed in %s - run with --no-ignore to see all",
             len(sup.suppressed),
             path.name,
         )

