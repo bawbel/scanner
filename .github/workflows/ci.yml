@@ -110,8 +110,8 @@ jobs:
 
       - name: Verify Docker finds HIGH or CRITICAL finding
         run: |
-          output=$(docker run --rm \\
-            -v ${{ github.workspace }}/tests/fixtures/skills/malicious:/scan:ro \\
+          output=$(docker run --rm \
+            -v ${{ github.workspace }}/tests/fixtures/skills/malicious:/scan:ro \
             bawbel/scanner:test scan /scan/malicious_skill.md --format json)
           echo "$output" | python3 << 'PYEOF'
           import json, sys
