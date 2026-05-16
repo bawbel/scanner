@@ -110,20 +110,12 @@ jobs:
 
       - name: Verify Docker finds HIGH or CRITICAL finding
         run: |
-          output=$(docker run --rm \
+          docker run --rm \
             -v ${{ github.workspace }}/tests/fixtures/skills/malicious:/scan:ro \
-            bawbel/scanner:test scan /scan/malicious_skill.md --format json)
-          echo "$output" | python3 << 'PYEOF'
-          import json, sys
-          data = json.load(sys.stdin)
-          findings = data[0]['findings']
-          assert len(findings) >= 1, 'Expected findings, got ' + str(len(findings))
-          max_score = max(f['aivss_score'] for f in findings)
-          # bawbel-external-fetch scores 8.0 (HIGH band 7.0-8.9)
-          assert max_score >= 7.0, 'Expected score >= 7.0, got ' + str(max_score)
-          print('Docker scan: ' + str(len(findings)) + ' findings, max AIVSS ' + str(max_score))
-          PYEOF
-
+            bawbel/scanner:test scan /scan/malicious_skill.md --format json \
+            > /tmp/bawbel_scan.json
+          cat /tmp/bawbel_scan.json
+          python3 -c "import json; data=json.load(open('/tmp/bawbel_scan.json')); findings=data[0]['findings']; max_score=max(f['aivss_score'] for f in findings); assert len(findings)>=1; assert max_score>=7.0, str(max_score); print(str(len(findings))+' findings, max AIVSS '+str(max_score))"
   # ── Bawbel self-scan ───────────────────────────────────────────────────────
   # self-scan:
   #   name: Bawbel Self-Scan
