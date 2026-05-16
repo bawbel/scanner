@@ -32,6 +32,11 @@ class ScanResult:
     # -- Toxic flows ---------------------------------------------------------
     toxic_flows: list = field(default_factory=list)  # ToxicFlow objects
 
+    # -- Justified suppression (v1.2.0) --------------------------------------
+    # AcceptedFinding objects - false positives and accepted risks
+    # These are separate from suppressed_findings which are auto-suppressed by FP pipeline
+    accepted_findings: list = field(default_factory=list)
+
     # -- Error ---------------------------------------------------------------
     error: Optional[str] = None  # (stable) error code if scan failed, else None
 
@@ -106,4 +111,8 @@ class ScanResult:
                 for f in self.findings
             ],
             "toxic_flows": [tf.to_dict() for tf in self.toxic_flows] if self.toxic_flows else [],
+            # J4: accepted_findings in JSON output
+            "accepted_findings": (
+                [af.to_dict() for af in self.accepted_findings] if self.accepted_findings else []
+            ),
         }
