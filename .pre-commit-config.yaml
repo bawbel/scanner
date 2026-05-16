@@ -49,7 +49,7 @@ repos:
       - id: gitleaks
 
   # ── Bawbel Scanner self-scan ──────────────────────────────────────────────
-  # The scanner scans itself — dogfooding
+  # The scanner scans itself - dogfooding
   - repo: local
     hooks:
       - id: bawbel-self-scan

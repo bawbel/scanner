@@ -1,19 +1,19 @@
 """
-Bawbel Scanner — Utilities and helpers.
+Bawbel Scanner - Utilities and helpers.
 
 All shared infrastructure lives here as focused classes.
 Import functions (not classes) via the module-level aliases at the bottom.
 
 Classes:
-    Logger          — structured logging factory
-    PathValidator   — safe path resolution and validation
-    FileReader      — safe file reading with encoding fallback
-    SubprocessRunner — safe external tool execution
-    JsonParser      — safe JSON parsing
-    TextSanitiser   — string validation and truncation
-    Timer           — elapsed time context manager
+    Logger           - structured logging factory
+    PathValidator    - safe path resolution and validation
+    FileReader       - safe file reading with encoding fallback
+    SubprocessRunner - safe external tool execution
+    JsonParser       - safe JSON parsing
+    TextSanitiser    - string validation and truncation
+    Timer            - elapsed time context manager
 
-Usage (preferred — use module-level functions):
+Usage (preferred - use module-level functions):
     from scanner.utils import get_logger, resolve_path, is_safe_path, ...
 
 Usage (direct class):
@@ -48,9 +48,9 @@ class Logger:
 
     Usage:
         log = Logger.get(__name__)
-        log.debug("detail: value=%s", value)       # DEBUG only — full detail
-        log.warning("skipped: reason=%s", code)    # WARNING — code only
-        log.error("failed: type=%s", type(e).__name__)  # ERROR — type only
+        log.debug("detail: value=%s", value)
+        log.warning("skipped: reason=%s", code)
+        log.error("failed: type=%s", type(e).__name__)
     """
 
     FORMAT = "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
@@ -63,7 +63,7 @@ class Logger:
         Return a named logger under the bawbel namespace.
 
         Args:
-            name: Module name — use __name__ from the calling module
+            name: Module name - use __name__ from the calling module
 
         Returns:
             Configured logging.Logger instance
@@ -95,7 +95,7 @@ class PathValidator:
     2. Resolve to absolute path
     3. Check file existence, type, and size
 
-    This order matters — Path.resolve() follows symlinks, so the symlink
+    This order matters - Path.resolve() follows symlinks, so the symlink
     check MUST happen before resolve() to prevent symlink attacks.
     """
 
@@ -105,8 +105,6 @@ class PathValidator:
     def resolve(cls, file_path: str) -> tuple[Optional[Path], Optional[str]]:
         """
         Safely construct and resolve a Path from a string.
-
-        Checks: valid path string, not a symlink.
 
         Args:
             file_path: Raw path string from user input
@@ -121,7 +119,6 @@ class PathValidator:
             cls._log.warning("invalid path input: error_type=%s", type(e).__name__)
             return None, Errors.INVALID_PATH
 
-        # Symlink check BEFORE resolve()
         if raw.is_symlink():
             cls._log.warning(Logs.SYMLINK_REJECTED, file_path)
             return None, Errors.SYMLINK_REJECTED
@@ -138,8 +135,6 @@ class PathValidator:
     def validate(cls, path: Path) -> tuple[bool, Optional[str]]:
         """
         Validate a resolved path is safe and scannable.
-
-        Checks: not a symlink, exists, is a file, within size limit.
 
         Args:
             path: A Path object (should already be resolved)
@@ -182,7 +177,7 @@ class FileReader:
     Safe file reading with encoding fallback.
 
     Security note:
-        Always uses errors="ignore" — malicious files may contain invalid
+        Always uses errors="ignore" - malicious files may contain invalid
         UTF-8 sequences designed to cause UnicodeDecodeError and expose
         stack traces. Dropping invalid bytes is safe for text analysis.
     """
@@ -223,11 +218,11 @@ class SubprocessRunner:
     Safe external tool execution via subprocess.
 
     Security contract (never violate):
-    - Args are ALWAYS a list — never a string, never shell=True
+    - Args are ALWAYS a list - never a string, never shell=True
     - User input is NEVER interpolated into command strings
     - Timeout is ALWAYS enforced
     - stderr is NEVER returned to the user (logged at DEBUG only)
-    - Tool-not-found returns (None, None) — caller skips silently
+    - Tool-not-found returns (None, None) - caller skips silently
     """
 
     _log = Logger.get("utils.subprocess")
@@ -243,13 +238,13 @@ class SubprocessRunner:
         Run an external command safely.
 
         Args:
-            args:    Command + arguments as a list (security: never a string)
+            args:    Command + arguments as a list
             timeout: Maximum seconds before TimeoutExpired
             label:   Human-readable identifier for logging
 
         Returns:
             (stdout string, None) on success
-            (None, None) if tool not installed — caller should skip silently
+            (None, None) if tool not installed - caller should skip silently
             (None, error code) on failure
         """
         start = time.time()
@@ -277,7 +272,6 @@ class SubprocessRunner:
                     result.returncode,
                 )
                 if result.stderr:
-                    # Stderr may contain internal paths — DEBUG only
                     cls._log.debug(
                         "stderr: label=%s content=%s",
                         label,
@@ -292,7 +286,7 @@ class SubprocessRunner:
 
         except FileNotFoundError:
             cls._log.info("tool not found: label=%s cmd=%s", label, args[0] if args else "")
-            return None, None  # not installed — skip silently
+            return None, None
 
         except Exception as e:  # nosec B110
             cls._log.error("error: label=%s error_type=%s", label, type(e).__name__)
@@ -329,7 +323,7 @@ class JsonParser:
             (None, error code) on failure
         """
         if not raw or not raw.strip():
-            return None, None  # empty output is not an error
+            return None, None
 
         try:
             return json.loads(raw), None
@@ -356,16 +350,7 @@ class TextSanitiser:
 
     @staticmethod
     def truncate(text: Optional[str], max_len: int) -> Optional[str]:
-        """
-        Truncate a string to max_len after stripping whitespace.
-
-        Args:
-            text:    Input string (may be None)
-            max_len: Maximum character length
-
-        Returns:
-            Truncated string, or None if input is None
-        """
+        """Truncate a string to max_len after stripping whitespace."""
         if text is None:
             return None
         cleaned = text.strip()
@@ -373,16 +358,7 @@ class TextSanitiser:
 
     @staticmethod
     def parse_severity(severity_str: str, fallback: str = "HIGH") -> str:
-        """
-        Validate and normalise a severity string.
-
-        Args:
-            severity_str: Raw severity from rule metadata
-            fallback:     Returned if severity_str is unrecognised
-
-        Returns:
-            Valid severity string: CRITICAL | HIGH | MEDIUM | LOW | INFO
-        """
+        """Validate and normalise a severity string."""
         valid = {"CRITICAL", "HIGH", "MEDIUM", "LOW", "INFO"}
         normalised = severity_str.strip().upper() if severity_str else fallback
         if normalised not in valid:
@@ -397,7 +373,10 @@ class TextSanitiser:
     @staticmethod
     def parse_cvss(raw: object, fallback: float = 5.0) -> float:
         """
-        Parse and clamp a CVSS score to 0.0–10.0.
+        Parse and clamp a score to 0.0-10.0.
+
+        Used for both CVSS base scores and AIVSS scores.
+        Does not compute AIVSS - that logic lives in finding.py.
 
         Args:
             raw:      Raw value (str, float, int, or None)
@@ -409,8 +388,8 @@ class TextSanitiser:
         try:
             return max(0.0, min(10.0, float(raw)))
         except (TypeError, ValueError):
-            Logger.get("utils.cvss").warning(
-                "invalid CVSS score: value=%r fallback=%.1f", raw, fallback
+            Logger.get("utils.score").warning(
+                "invalid score: value=%r fallback=%.1f", raw, fallback
             )
             return fallback
 
@@ -441,8 +420,7 @@ class Timer:
 
 
 # ── Module-level aliases ──────────────────────────────────────────────────────
-# These allow callers to import functions rather than classes,
-# keeping call sites clean without losing the OOP structure.
+# Allow callers to import functions rather than classes.
 
 
 def get_logger(name: str) -> logging.Logger:

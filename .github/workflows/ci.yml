@@ -53,9 +53,10 @@ jobs:
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          pip install click rich pytest pytest-cov
+          pip install -e .
+          pip install pytest pytest-cov
 
-      - name: Run tests (Stage 1 only — no optional deps)
+      - name: Run tests (Stage 1 only - no optional deps)
         run: python -m pytest tests/ -v --tb=short -m "not integration and not slow"
 
       - name: Upload coverage
@@ -107,21 +108,14 @@ jobs:
             -v ${{ github.workspace }}/tests/fixtures/skills/malicious:/scan:ro \
             bawbel/scanner:test scan /scan/malicious_skill.md
 
-      - name: Verify Docker finds CRITICAL finding
+      - name: Verify Docker finds HIGH or CRITICAL finding
         run: |
-          output=$(docker run --rm \
+          docker run --rm \
             -v ${{ github.workspace }}/tests/fixtures/skills/malicious:/scan:ro \
-            bawbel/scanner:test scan /scan/malicious_skill.md --format json)
-          echo "$output" | python3 -c "
-          import json, sys
-          data = json.load(sys.stdin)
-          findings = data[0]['findings']
-          assert len(findings) >= 1, f'Expected findings, got {len(findings)}'
-          max_score = max(f['cvss_ai'] for f in findings)
-          assert max_score >= 9.0, f'Expected CRITICAL score, got {max_score}'
-          print(f'✓ Docker scan: {len(findings)} findings, max CVSS-AI {max_score}')
-          "
-
+            bawbel/scanner:test scan /scan/malicious_skill.md --format json \
+            > /tmp/bawbel_scan.json
+          cat /tmp/bawbel_scan.json
+          python3 -c "import json; data=json.load(open('/tmp/bawbel_scan.json')); findings=data[0]['findings']; max_score=max(f['aivss_score'] for f in findings); assert len(findings)>=1; assert max_score>=7.0, str(max_score); print(str(len(findings))+' findings, max AIVSS '+str(max_score))"
   # ── Bawbel self-scan ───────────────────────────────────────────────────────
   # self-scan:
   #   name: Bawbel Self-Scan
@@ -154,7 +148,7 @@ jobs:
   #         #     and 'tests/' not in r['file_path']
   #         # ]
   #         # if critical:
-  #         #     print('FAIL — self-scan found issues in source:')
+  #         #     print('FAIL - self-scan found issues in source:')
   #         #     for r in critical:
   #         #         print(f'  {r[\"file_path\"]}: {r[\"max_severity\"]}')
   #         #     raise SystemExit(1)

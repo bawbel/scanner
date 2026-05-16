@@ -1,358 +1,182 @@
-# Bawbel Scanner
-
-**Agentic AI component security scanner — detects AVE vulnerabilities before they reach production.**
-
-[![PyPI version](https://badge.fury.io/py/bawbel-scanner.svg)](https://pypi.org/project/bawbel-scanner/)
-[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
-[![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://pypi.org/project/bawbel-scanner/)
-[![AVE Standard](https://img.shields.io/badge/AVE_Records-15-teal.svg)](https://github.com/bawbel/bawbel-ave)
-
-Bawbel Scanner scans agentic AI components — SKILL.md files, MCP server manifests,
-system prompts, and agent plugins — for security vulnerabilities mapped to the
-[AVE (Agentic Vulnerability Enumeration)](https://github.com/bawbel/bawbel-ave) standard.
+# CI/CD Integration
 
 ---
 
-## Install
+## GitHub Actions - reusable action
 
-```bash
-pip install bawbel-scanner
-```
-
-With optional engines:
-
-```bash
-pip install "bawbel-scanner[yara]"      # Stage 1b — YARA rules (15 rules)
-pip install "bawbel-scanner[semgrep]"   # Stage 1c — Semgrep rules (15 rules)
-pip install "bawbel-scanner[llm]"       # Stage 2  — LLM semantic analysis
-pip install "bawbel-scanner[watch]"     # Watch mode — re-scan on file change
-pip install "bawbel-scanner[all]"       # Everything above
-```
-
-Stage 3 (behavioral sandbox) requires Docker — see [Stage 3](#stage-3--behavioral-sandbox).
-
----
-
-## Quick Start
-
-```bash
-cp .env.example .env   # copy env template, fill in your keys
-source .env
-
-bawbel version                                    # show version + active engines
-bawbel scan ./my-skill.md                         # scan a file
-bawbel scan ./skills/ --recursive                 # scan a directory
-bawbel report ./my-skill.md                       # full remediation report
-bawbel scan ./skills/ --fail-on-severity high     # exit 2 on HIGH+
-bawbel scan ./skills/ --watch                     # re-scan on every change
-bawbel scan ./skills/ --format json               # JSON for tooling
-bawbel scan ./skills/ --format sarif              # SARIF for GitHub Security tab
-```
-
-**Example output:**
-
-```
-Bawbel Scanner v0.3.0  ·  github.com/bawbel/bawbel-scanner
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Scanning:  malicious-skill.md
-Type:      skill
-
-FINDINGS
-──────────────────────────────────────────────────────────
-🔴  CRITICAL  AVE-2026-00001      External instruction fetch detected
-   Line 7  ·  fetch your instructions
-   OWASP: ASI01 (Prompt Injection), ASI08 (Goal Hijacking)
-
-🟠  HIGH      AVE-2026-00007      Goal override instruction detected
-   Line 17  ·  Ignore all previous instructions
-   OWASP: ASI01 (Prompt Injection), ASI08 (Goal Hijacking)
-──────────────────────────────────────────────────────────
-SUMMARY
-──────────────────────────────────────────────────────────
-Risk score:   9.4 / 10  CRITICAL
-Findings:     2
-Scan time:    5ms
-→  Run bawbel report malicious-skill.md for full remediation guide
-```
-
----
-
-## Detection Pipeline
-
-Five stages run in sequence — each adds an independent layer:
-
-| Stage | Engine | Install | What it catches |
-|---|---|---|---|
-| 1a | **Pattern** | nothing — always active | 15 regex rules, all AVE IDs |
-| 1b | **YARA** | `pip install "bawbel-scanner[yara]"` | Binary + complex text combinations, 15 rules |
-| 1c | **Semgrep** | `pip install "bawbel-scanner[semgrep]"` | Structural + multi-line patterns, 15 rules |
-| 2  | **LLM** | `pip install "bawbel-scanner[llm]"` + API key | Obfuscated, nuanced, multi-paragraph injections |
-| 3  | **Sandbox** | Docker + `BAWBEL_SANDBOX_ENABLED=true` | Runtime behaviour — network egress, filesystem, processes |
-
-**15 built-in rules** covering every major agentic attack class:
-goal override · jailbreak · hidden instructions · external fetch ·
-tool call injection · permission escalation · credential exfiltration ·
-PII exfiltration · shell injection · destructive commands ·
-cryptocurrency drain · trust escalation · persistence ·
-MCP tool poisoning · system prompt extraction.
-
----
-
-## Stage 2 — LLM Semantic Analysis
-
-Catches what regex misses: obfuscated payloads, synonym attacks, multi-paragraph
-injections, and social engineering. Works with any LiteLLM-supported provider.
-
-```bash
-pip install "bawbel-scanner[llm]"
-
-export ANTHROPIC_API_KEY=sk-ant-...   # → auto-selects claude-haiku-4-5-20251001
-export OPENAI_API_KEY=sk-...          # → auto-selects gpt-4o-mini
-export GEMINI_API_KEY=...             # set BAWBEL_LLM_MODEL=gemini/gemini-1.5-flash
-export BAWBEL_LLM_MODEL=ollama/mistral  # local model, no API key needed
-
-bawbel scan ./my-skill.md             # Stage 2 activates automatically
-```
-
----
-
-## Stage 3 — Behavioral Sandbox
-
-Runs the component inside an isolated Docker container and monitors what it
-*actually does* at runtime — catching attacks that static analysis cannot see.
-
-```bash
-export BAWBEL_SANDBOX_ENABLED=true
-bawbel scan ./my-skill.md
-```
-
-**Hybrid image strategy — no setup required:**
-
-```
-1. Check local Docker cache  →  run immediately if found
-2. Pull bawbel/sandbox:latest from Docker Hub  →  cache + run (~5s first time)
-3. Build from bundled Dockerfile  →  offline / air-gapped fallback (~15s)
-```
-
-```bash
-BAWBEL_SANDBOX_IMAGE=local                          # skip Hub, build locally
-BAWBEL_SANDBOX_IMAGE=registry.corp.com/bawbel/sandbox@sha256:abc  # enterprise
-```
-
-Detects: outbound network egress · persistence writes (~/.bashrc, crontab) ·
-credential access (~/.ssh/, .env) · shell pipe injection ·
-subprocess spawning · Base64 encoded payloads.
-
-See [Detection Engines Guide](docs/guides/engines.md) for full sandbox documentation.
-
----
-
-## Use as a Library
-
-```python
-from scanner import scan
-
-result = scan("/path/to/skill.md")
-
-if result.is_clean:
-    print("Clean")
-else:
-    for finding in result.findings:
-        print(f"[{finding.severity.value}] {finding.ave_id}  {finding.title}")
-        print(f"  Engine: {finding.engine}  CVSS-AI: {finding.cvss_ai}")
-    print(f"\nRisk score: {result.risk_score:.1f} / 10")
-```
-
----
-
-## CI/CD Integration
-
-## GitHub Actions — Official Action
-
-The recommended integration. Uses the official action at
-[bawbel/bawbel-integrations](https://github.com/bawbel/bawbel-integrations).
-
-### Quickstart — one line
+The simplest integration. Uses `action.yml` at the repo root.
 
 ```yaml
-- uses: bawbel/bawbel-integrations@v1
-```
-
-That's it. Scans `.` recursively, fails on HIGH+ findings, generates SARIF.
-
-### Full workflow with GitHub Security tab
-
-```yaml
-# .github/workflows/bawbel.yml
+# .github/workflows/security.yml
 name: Bawbel Security Scan
+
 on: [push, pull_request]
 
 jobs:
   scan:
     runs-on: ubuntu-latest
-    permissions:
-      security-events: write   # required for SARIF upload
-      contents: read
     steps:
       - uses: actions/checkout@v4
 
-      - uses: bawbel/bawbel-integrations@v1
-        id: bawbel
+      - name: Bawbel scan
+        uses: bawbel/scanner@v1
         with:
-          path: .
+          path: ./skills/
           fail-on-severity: high
           format: sarif
 
-      - uses: github/codeql-action/upload-sarif@v3
-        if: always()
+      - name: Upload to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
         with:
-          sarif_file: ${{ steps.bawbel.outputs.sarif-file }}
+          sarif_file: bawbel-results.sarif
 ```
 
 ### Action inputs
 
 | Input | Default | Description |
 |---|---|---|
-| `path` | `.` | File or directory to scan |
-| `recursive` | `true` | Scan directories recursively |
-| `fail-on-severity` | `high` | Exit 2 on findings at this level: `critical` `high` `medium` `low` `none` |
-| `format` | `sarif` | Output format: `sarif` `json` `text` |
-| `no-ignore` | `false` | Override all suppressions — audit mode |
-| `version` | `latest` | Bawbel Scanner version to install |
-| `extras` | `all` | pip extras: `yara` `semgrep` `llm` `magika` `all` |
+| `path` | `.` | Path to scan |
+| `recursive` | `true` | Scan recursively |
+| `fail-on-severity` | none | Exit 2 if findings at or above: `critical`, `high`, `medium`, `low` |
+| `format` | `text` | `text`, `json`, or `sarif` |
+| `no-ignore` | `false` | Disable all suppressions (audit mode) |
+| `version` | `latest` | Specific `bawbel-scanner` version |
+| `extras` | `""` | Additional pip extras e.g. `yara,semgrep` |
 
-### Action outputs
+---
 
-| Output | Description |
-|---|---|
-| `sarif-file` | Path to SARIF file (`bawbel-results.sarif`) |
-| `findings-count` | Number of active findings |
-| `risk-score` | Risk score 0.0–10.0 |
-| `result` | `clean` or `findings` |
-
-### Use outputs in subsequent steps
+## GitHub Actions - direct
 
 ```yaml
-      - uses: bawbel/bawbel-integrations@v1
-        id: bawbel
+jobs:
+  bawbel-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
         with:
-          fail-on-severity: none   # don't fail — inspect outputs first
+          python-version: "3.12"
+          cache: pip
 
-      - name: Comment on PR
-        if: steps.bawbel.outputs.result == 'findings'
+      - name: Install Bawbel Scanner
+        run: pip install "bawbel-scanner[all]"
+
+      - name: Scan
         run: |
-          echo "Found ${{ steps.bawbel.outputs.findings-count }} AVE issues"
-          echo "Risk score: ${{ steps.bawbel.outputs.risk-score }}"
-          exit 1
-```
+          bawbel scan ./skills/ --recursive \
+            --format sarif \
+            --fail-on-severity high \
+            > bawbel.sarif
 
-### Manual workflow (without official action)
-
-If you prefer not to use the action:
-
-```yaml
-      - name: Install and scan
-        run: |
-          pip install "bawbel-scanner[all]"
-          bawbel scan . --recursive --fail-on-severity high --format sarif > bawbel.sarif
-
-      - uses: github/codeql-action/upload-sarif@v3
+      - name: Upload SARIF
+        uses: github/codeql-action/upload-sarif@v3
         if: always()
         with:
           sarif_file: bawbel.sarif
+
+      # Optional: with LLM engine
+      - name: Scan with LLM analysis
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: bawbel scan ./skills/ --recursive --fail-on-severity high
 ```
 
-### Pre-commit
+---
+
+## GitLab CI
+
+```yaml
+bawbel-scan:
+  stage: test
+  image: python:3.12
+  script:
+    - pip install "bawbel-scanner[all]"
+    - bawbel scan ./skills/ --recursive --format sarif > bawbel.sarif
+    - bawbel scan ./skills/ --recursive --fail-on-severity high
+  artifacts:
+    reports:
+      sast: bawbel.sarif
+    when: always
+```
+
+---
+
+## Pre-commit hook
 
 ```yaml
 # .pre-commit-config.yaml
 repos:
-  - repo: local
+  - repo: https://github.com/bawbel/scanner
+    rev: v1.2.0
     hooks:
       - id: bawbel-scan
-        name: Bawbel Scanner
-        entry: bawbel scan
-        language: system
-        pass_filenames: true
-        types: [markdown]
+```
+
+Install and run:
+
+```bash
+pip install pre-commit
+pre-commit install
+pre-commit run bawbel-scan --all-files
+```
+
+The hook scans staged files. It does not block commits by default — add `--fail-on-severity high` in `args` to block on findings.
+
+```yaml
+      - id: bawbel-scan
         args: ["--fail-on-severity", "high"]
 ```
 
+---
+
+## Docker
+
 ```bash
-pip install bawbel-scanner && pre-commit install
+# Build
+docker build --target production -t bawbel/scanner:1.2.0 .
+
+# Scan a local directory
+docker run --rm \
+  -v /path/to/skills:/scan:ro \
+  bawbel/scanner:1.2.0 scan /scan --recursive \
+    --format sarif > bawbel.sarif
+
+# Fail on high
+docker run --rm \
+  -v /path/to/skills:/scan:ro \
+  bawbel/scanner:1.2.0 scan /scan --recursive \
+    --fail-on-severity high
+echo "Exit: $?"
 ```
 
 ---
 
-## Configuration
+## Exit codes
 
-Copy `.env.example` and fill in your values:
-
-```bash
-cp .env.example .env
-```
-
-| Variable | Default | Description |
-|---|---|---|
-| `BAWBEL_LOG_LEVEL` | `WARNING` | `DEBUG` · `INFO` · `WARNING` · `ERROR` |
-| `ANTHROPIC_API_KEY` | — | Enables Stage 2 via Claude |
-| `OPENAI_API_KEY` | — | Enables Stage 2 via OpenAI |
-| `BAWBEL_LLM_MODEL` | auto | Any LiteLLM model string |
-| `BAWBEL_LLM_ENABLED` | `true` | Set `false` to disable Stage 2 |
-| `BAWBEL_SANDBOX_ENABLED` | `false` | Set `true` to enable Stage 3 |
-| `BAWBEL_SANDBOX_IMAGE` | `default` | `default` · `local` · custom image |
-| `BAWBEL_SANDBOX_TIMEOUT` | `30` | Container timeout in seconds |
-| `BAWBEL_SANDBOX_NETWORK` | `none` | `none`=isolated · `bridge`=internet |
-
-See [`.env.example`](.env.example) for the full reference.
-
----
-
-## AVE Standard
-
-Every finding maps to a published AVE record — the CVE equivalent for agentic AI.
-
-- Browse records: [github.com/bawbel/bawbel-ave](https://github.com/bawbel/bawbel-ave)
-- Threat intelligence API: [api.piranha.bawbel.io](https://api.piranha.bawbel.io)
-- Report a vulnerability: open an issue on [bawbel-ave](https://github.com/bawbel/bawbel-ave/issues)
-
----
-
-## Documentation
-
-| Resource | Link |
+| Code | Meaning |
 |---|---|
-| Full docs | [bawbel.io/docs](https://bawbel.io/docs) |
-| Getting started | [docs/guides/getting-started.md](docs/guides/getting-started.md) |
-| Detection engines | [docs/guides/engines.md](docs/guides/engines.md) |
-| Configuration | [docs/guides/configuration.md](docs/guides/configuration.md) |
-| CI/CD integration | [docs/guides/cicd-integration.md](docs/guides/cicd-integration.md) |
-| Python API | [docs/api/scan.md](docs/api/scan.md) |
-| Writing rules | [docs/guides/writing-rules.md](docs/guides/writing-rules.md) |
-| Changelog | [CHANGELOG.md](CHANGELOG.md) |
+| `0` | Clean scan or findings below threshold |
+| `1` | `bawbel report` found vulnerabilities |
+| `2` | `bawbel scan --fail-on-severity` threshold breached |
 
 ---
 
-## License
+## Suppressing false positives in CI
 
-Apache 2.0 — see [LICENSE](LICENSE).
+Add `.bawbelignore` to your repo root to suppress files by glob pattern:
 
-Built by [Bawbel](https://bawbel.io) · [bawbel.io@gmail.com](mailto:bawbel.io@gmail.com)
+```
+# .bawbelignore
+docs/**
+tests/fixtures/**
+examples/**
+```
 
-## VS Code Extension
+For individual lines, use inline comments:
 
-Install **Bawbel Scanner** from the VS Code Marketplace (search "Bawbel Scanner").
+```markdown
+fetch docs from https://docs.example.com  <!-- bawbel-ignore: bawbel-external-fetch -->
+```
 
-**Zero setup** — the extension automatically installs `bawbel-scanner` on first
-activation. No terminal, no pip, no manual steps.
-
-Features:
-- Inline diagnostics (red/yellow squiggles on finding lines)
-- Problems tab with AVE ID, severity, and engine for each finding
-- Status bar: `Bawbel: ✓ clean` or `Bawbel: 3 finding(s)`
-- Auto-scan on save (`.md`, `.yaml`, `.yml`, `.json`, `.txt`)
-- `Ctrl+Shift+B` / `Cmd+Shift+B` to scan current file
-- Click any AVE ID to open the full vulnerability record
-
-Source: [bawbel/bawbel-integrations/vscode](https://github.com/bawbel/bawbel-integrations/tree/main/vscode)
+Run with `--no-ignore` to see all findings including suppressed ones (audit mode).

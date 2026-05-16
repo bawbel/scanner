@@ -14,7 +14,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
-- Added `<!-- mcp-name: io.github.bawbel/bawbel-scanner -->` marker to README.md
+- Added `<!-- mcp-name: io.github.bawbel/scanner -->` marker to README.md
   so the MCP official registry validator can verify PyPI package ownership.
   No functional changes. This is a registry submission requirement only.
 
@@ -36,7 +36,7 @@ layer before any tool call is made. This is the first dedicated scanner for it.
 `scanner/toxic_flows/` is a new 4-file modular package. After deduplication, the
 scanner maps each finding to a capability tag and checks all capability pairs against
 12 built-in flow definitions. When a toxic pair is found, a `ToxicFlow` object is
-added to `ScanResult.toxic_flows` with a combined CVSS-AI score, attack chain
+added to `ScanResult.toxic_flows` with a combined AIVSS score, attack chain
 description, OWASP MCP mapping, and remediation steps.
 
 The risk score in `ScanResult.risk_score` now considers toxic flows and is always
@@ -242,19 +242,19 @@ Validation result: 21 documentation files produce 0 active findings.
 - `bawbel init`: scaffolds `.bawbelignore`, `bawbel.yml`, and CI workflow in the
   project root.
 - `bawbel scan --watch`: re-scans on every file change using `watchdog`.
-- `bawbel report`: full remediation guide with AVE ID, CVSS-AI score, OWASP mapping,
+- `bawbel report`: full remediation guide with AVE ID, AIVSS score, OWASP mapping,
   and fix instructions per finding.
 
 **Integrations**
 
-- GitHub Action `uses: bawbel/bawbel-integrations@v1` for one-line CI/CD integration.
+- GitHub Action `uses: bawbel/integrations@v1` for one-line CI/CD integration.
 - VS Code Extension on the Marketplace. Zero setup, auto-installs CLI, inline
   diagnostics, auto-scan on save.
 
 **PiranhaDB API**
 
 - `api.piranha.bawbel.io` updated to serve all 40 AVE records.
-- `sync_records.py` syncs records from `bawbel/bawbel-ave` on every deploy.
+- `sync_records.py` syncs records from `bawbel/ave` on every deploy.
 - `POST /reload` endpoint for hot-reloading records without a container restart.
 
 ### Fixed
@@ -323,7 +323,7 @@ First public release.
 
 - `bawbel scan`: scan a file or directory with `--recursive`, `--fail-on-severity`,
   and `--format text|json|sarif`.
-- `bawbel report`: remediation guide per finding with AVE ID, CVSS-AI, OWASP
+- `bawbel report`: remediation guide per finding with AVE ID, AIVSS, OWASP
   mapping, and fix instructions.
 - `bawbel version`: installed version and engine status.
 - 15 built-in pattern rules (3 CRITICAL, 10 HIGH, 2 MEDIUM) covering
@@ -337,11 +337,11 @@ First public release.
 
 ---
 
-[Unreleased]: https://github.com/bawbel/bawbel-scanner/compare/v1.1.1...HEAD
-[1.1.1]: https://github.com/bawbel/bawbel-scanner/releases/tag/v1.1.1
-[1.1.0]: https://github.com/bawbel/bawbel-scanner/releases/tag/v1.1.0
-[1.0.1]: https://github.com/bawbel/bawbel-scanner/releases/tag/v1.0.1
-[1.0.0]: https://github.com/bawbel/bawbel-scanner/releases/tag/v1.0.0
-[0.3.0]: https://github.com/bawbel/bawbel-scanner/releases/tag/v0.3.0
-[0.2.0]: https://github.com/bawbel/bawbel-scanner/releases/tag/v0.2.0
-[0.1.0]: https://github.com/bawbel/bawbel-scanner/releases/tag/v0.1.0
+[Unreleased]: https://github.com/bawbel/scanner/compare/v1.1.1...HEAD
+[1.1.1]: https://github.com/bawbel/scanner/releases/tag/v1.1.1
+[1.1.0]: https://github.com/bawbel/scanner/releases/tag/v1.1.0
+[1.0.1]: https://github.com/bawbel/scanner/releases/tag/v1.0.1
+[1.0.0]: https://github.com/bawbel/scanner/releases/tag/v1.0.0
+[0.3.0]: https://github.com/bawbel/scanner/releases/tag/v0.3.0
+[0.2.0]: https://github.com/bawbel/scanner/releases/tag/v0.2.0
+[0.1.0]: https://github.com/bawbel/scanner/releases/tag/v0.1.0

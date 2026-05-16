@@ -1,0 +1,20 @@
+flowchart LR
+    subgraph INPUT["Input"]
+        A1[SKILL.md]
+        A2[MCP server URL]
+        A3[System prompt]
+    end
+    subgraph SCANNER["Bawbel Scanner"]
+        B[Fetcher\nreads file or fetches manifest]
+        C[Magika\ncontent-type verification]
+        D[Detection engines]
+        E[Toxic flow detector]
+        F[AIVSS scorer]
+    end
+    subgraph OUTPUT["Output"]
+        G[JSON / SARIF finding]
+        H[PiranhaDB lookup]
+    end
+    A1 & A2 & A3 --> B
+    B --> C --> D --> E
+    D & E --> F --> G --> H

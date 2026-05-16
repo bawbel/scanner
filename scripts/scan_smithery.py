@@ -1,17 +1,18 @@
-#!/usr/bin/env python3
 """
-scan_smithery.py — Bawbel scanner for Smithery MCP registry servers
+scan_smithery.py
 
-Fetches MCP server details from registry.smithery.ai and scans
-tool names, descriptions, and README content for AVE vulnerabilities.
+Scans MCP servers from the Smithery registry using Bawbel Scanner.
+Fetches server tool descriptions and scans for AVE vulnerabilities.
 
 Usage:
-    export SMITHERY_API_KEY=your_key_here
-    python scan_smithery.py --limit 20
-    python scan_smithery.py --limit 100 --output results.json
+    pip install requests "bawbel-scanner[all]"
+    export SMITHERY_API_KEY=your_key
+    python3 scan_smithery.py --limit 500 --output smithery_scan_results.json
 
 Requirements:
-    pip install bawbel-scanner requests
+    - SMITHERY_API_KEY environment variable
+    - bawbel-scanner installed
+    - Optional: ANTHROPIC_API_KEY for LLM stage
 """
 
 import argparse
@@ -21,302 +22,360 @@ import subprocess  # nosec B404  # noqa: S404
 import sys
 import tempfile
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 try:
     import requests
 except ImportError:
-    print("pip install requests")
+    print("Error: pip install requests")
     sys.exit(1)
 
-# ── Config ────────────────────────────────────────────────────────────────────
-
-REGISTRY_BASE = "https://registry.smithery.ai"
-API_KEY = os.environ.get("SMITHERY_API_KEY", "")
-RATE_LIMIT_SLEEP = 0.5  # seconds between requests — be polite
-
-# ── Smithery API ──────────────────────────────────────────────────────────────
+SMITHERY_API = "https://registry.smithery.ai"
+PIRANHA_API = "https://api.piranha.bawbel.io"
+RESULTS_FILE = "smithery_scan_results.json"
+PROGRESS_FILE = "smithery_scan_progress.json"
 
 
-def get_headers() -> dict:
-    if not API_KEY:
-        print("ERROR: SMITHERY_API_KEY not set.")
-        print("Get one at: https://smithery.ai/account/api-keys")
-        sys.exit(1)
-    return {"Authorization": f"Bearer {API_KEY}"}
+def post_to_piranha(output: dict, ingest_token: str) -> bool:
+    """POST scan results to PiranhaDB registry-scan/ingest endpoint."""
+    if not ingest_token:
+        print("  Skipping PiranhaDB upload: PIRANHA_INGEST_TOKEN not set")
+        return False
+    try:
+        resp = requests.post(
+            f"{PIRANHA_API}/registry-scan/ingest?source=smithery",
+            json=output,
+            headers={
+                "Content-Type": "application/json",
+                "X-Ingest-Token": ingest_token,
+            },
+            timeout=30,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        print(f"  PiranhaDB: {data.get('message', 'ok')}")
+        return True
+    except requests.RequestException as e:
+        print(f"  PiranhaDB upload failed: {e}")
+        return False
 
 
-def list_servers(page: int = 1, page_size: int = 10, query: str = "") -> dict:
-    """Fetch a page of servers from the Smithery registry."""
-    params = {"page": page, "pageSize": page_size}
-    if query:
-        params["q"] = query
-    resp = requests.get(
-        f"{REGISTRY_BASE}/servers",
-        headers=get_headers(),
-        params=params,
-        timeout=10,
-    )
-    resp.raise_for_status()
-    return resp.json()
+def get_headers(api_key: str) -> dict:
+    return {
+        "Authorization": f"Bearer {api_key}",
+        "Accept": "application/json",
+        "User-Agent": "bawbel-scanner/1.1.1 (https://bawbel.io)",
+    }
 
 
-def get_server(qualified_name: str) -> dict:
-    """Fetch full details for one server including tools."""
-    resp = requests.get(
-        f"{REGISTRY_BASE}/servers/{qualified_name}",
-        headers=get_headers(),
-        timeout=10,
-    )
-    resp.raise_for_status()
-    return resp.json()
+def fetch_server_list(api_key: str, limit: int = 500) -> list:
+    servers = []
+    page = 1
+    per_page = 50
+
+    print(f"Fetching top {limit} servers from Smithery...")
+
+    while len(servers) < limit:
+        try:
+            resp = requests.get(
+                f"{SMITHERY_API}/servers",
+                headers=get_headers(api_key),
+                params={"page": page, "pageSize": per_page},
+                timeout=15,
+            )
+            resp.raise_for_status()
+            data = resp.json()
+        except requests.RequestException as e:
+            print(f"  Error fetching page {page}: {e}")
+            break
+
+        items = data.get("servers", [])
+        if not items:
+            break
+
+        servers.extend(items)
+        pagination = data.get("pagination", {})
+        total_pages = pagination.get("totalPages", 1)
+        total_count = pagination.get("totalCount", 0)
+        print(
+            f"  Fetched {len(servers)} servers... (page {page}/{total_pages}, total: {total_count})"
+        )
+
+        if len(servers) >= limit:
+            break
+        if page >= total_pages:
+            break
+
+        page += 1
+        time.sleep(0.3)
+
+    return servers[:limit]
 
 
-# ── Content builder ───────────────────────────────────────────────────────────
+def fetch_server_details(api_key: str, qualified_name: str) -> dict:
+    try:
+        resp = requests.get(
+            f"{SMITHERY_API}/servers/{qualified_name}",
+            headers=get_headers(api_key),
+            timeout=15,
+        )
+        if resp.status_code == 404:
+            return None
+        resp.raise_for_status()
+        return resp.json()
+    except requests.RequestException:
+        return None
 
 
-def build_scan_content(server: dict) -> str:
-    """
-    Build a text file representing the MCP server's attack surface.
-    Includes all content that bawbel-scanner can analyse:
-      - Server name and description
-      - Tool names and descriptions (the primary attack surface)
-      - Config schema descriptions
-      - README if available
-    """
+def extract_scannable_content(server: dict) -> str:
     lines = []
-    name = server.get("qualifiedName", "unknown")
+    name = server.get("qualifiedName", server.get("name", "unknown"))
     lines.append(f"# MCP Server: {name}")
-    lines.append(f"# Display name: {server.get('displayName', '')}")
     lines.append("")
 
     desc = server.get("description", "")
     if desc:
-        lines.append("## Server Description")
-        lines.append(desc)
+        lines.append(f"Server description: {desc}")
         lines.append("")
 
-    # Tool descriptions — primary attack surface for tool poisoning (AVE-2026-00002)
     tools = server.get("tools", [])
-    if tools:
-        lines.append("## Tools")
-        for tool in tools:
-            tool_name = tool.get("name", "")
-            tool_desc = tool.get("description", "")
-            lines.append(f"### {tool_name}")
-            if tool_desc:
-                lines.append(tool_desc)
-            # Input schema descriptions
-            schema = tool.get("inputSchema", {})
-            props = schema.get("properties", {})
-            for prop_name, prop_val in props.items():
-                prop_desc = prop_val.get("description", "")
-                if prop_desc:
-                    lines.append(f"  - {prop_name}: {prop_desc}")
-            lines.append("")
+    for tool in tools:
+        tname = tool.get("name", "")
+        tdesc = tool.get("description", "")
+        lines.append(f"## Tool: {tname}")
+        if tdesc:
+            lines.append(f"Description: {tdesc}")
+        schema = tool.get("inputSchema", {})
+        for pname, pdef in schema.get("properties", {}).items():
+            pdesc = pdef.get("description", "")
+            if pdesc:
+                lines.append(f"Parameter {pname}: {pdesc}")
+        lines.append("")
 
-    # Connection config schema — may contain injected instructions
-    connections = server.get("connections", [])
-    for conn in connections:
-        config_schema = conn.get("configSchema", {})
-        if isinstance(config_schema, dict):
-            schema_desc = config_schema.get("description", "")
-            if schema_desc:
-                lines.append("## Config Schema")
-                lines.append(schema_desc)
-                lines.append("")
-            # Check property descriptions
-            props = config_schema.get("properties", {})
-            for prop_name, prop_val in props.items():
-                if isinstance(prop_val, dict):
-                    prop_desc = prop_val.get("description", "")
-                    if prop_desc:
-                        lines.append(f"  config.{prop_name}: {prop_desc}")
+    config = server.get("config", {})
+    if config:
+        lines.append("## Config schema")
+        lines.append(json.dumps(config, indent=2))
 
     return "\n".join(lines)
 
 
-# ── Scanner ───────────────────────────────────────────────────────────────────
-
-
-def scan_server(server: dict) -> dict:
-    """Run bawbel scan on a server's content. Returns scan result."""
-    name = server.get("qualifiedName", "unknown")
-    content = build_scan_content(server)
-
-    # Write to temp file for bawbel scan
+def run_bawbel_scan(content: str) -> dict:
     with tempfile.NamedTemporaryFile(
-        mode="w",
-        suffix=".md",
-        prefix="smithery_",
-        delete=False,
-        encoding="utf-8",
+        mode="w", suffix=".md", prefix="smithery_scan_", delete=False, encoding="utf-8"
     ) as f:
         f.write(content)
-        tmp_path = f.name
+        tmp = f.name
 
     try:
         result = subprocess.run(  # nosec B603 B607  # noqa: S603 S607
-            ["bawbel", "scan", tmp_path, "--format", "json"],
+            ["bawbel", "scan", tmp, "--format", "json"],
             capture_output=True,
             text=True,
-            timeout=30,
+            timeout=60,
         )
         raw = result.stdout.strip()
         if not raw:
             return {
-                "server": name,
-                "error": result.stderr.strip() or "no output",
                 "findings": [],
+                "toxic_flows": [],
                 "risk_score": 0,
+                "error": result.stderr[:200],
             }
 
-        json_start = raw.find("[")
-        if json_start < 0:
-            return {"server": name, "error": raw[:200], "findings": [], "risk_score": 0}
+        start = raw.find("[")
+        if start < 0:
+            return {"findings": [], "toxic_flows": [], "risk_score": 0}
 
-        scan_results = json.loads(raw[json_start:])
-        if scan_results:
-            r = scan_results[0]
-            return {
-                "server": name,
-                "display_name": server.get("displayName", ""),
-                "findings": r.get("findings", []),
-                "risk_score": r.get("risk_score", 0),
-                "max_severity": r.get("max_severity", ""),
-                "scan_time_ms": r.get("scan_time_ms", 0),
-                "error": None,
-            }
-        return {"server": name, "findings": [], "risk_score": 0, "error": None}
+        results = json.loads(raw[start:])
+        return results[0] if results else {"findings": [], "toxic_flows": [], "risk_score": 0}
 
     except subprocess.TimeoutExpired:
-        return {"server": name, "error": "timeout", "findings": [], "risk_score": 0}
-    except json.JSONDecodeError as e:
-        return {"server": name, "error": f"parse: {e}", "findings": [], "risk_score": 0}
+        return {"findings": [], "toxic_flows": [], "risk_score": 0, "error": "timeout"}
+    except (json.JSONDecodeError, IndexError):
+        return {"findings": [], "toxic_flows": [], "risk_score": 0, "error": "parse error"}
     finally:
-        Path(tmp_path).unlink(missing_ok=True)
-
-
-# ── Main ──────────────────────────────────────────────────────────────────────
+        Path(tmp).unlink(missing_ok=True)
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Scan Smithery MCP servers for AVE vulnerabilities"
-    )
-    parser.add_argument(
-        "--limit", type=int, default=20, help="Number of servers to scan (default: 20)"
-    )
-    parser.add_argument(
-        "--query", type=str, default="", help="Filter servers by query (e.g. 'github', 'email')"
-    )
-    parser.add_argument("--output", type=str, default="", help="Save results to JSON file")
-    parser.add_argument("--verbose", action="store_true", help="Print scan content for each server")
+    parser = argparse.ArgumentParser(description="Scan Smithery MCP servers with Bawbel")
+    parser.add_argument("--limit", type=int, default=500, help="Number of servers to scan")
+    parser.add_argument("--output", default=RESULTS_FILE, help="Output JSON file")
+    parser.add_argument("--resume", action="store_true", help="Resume from last checkpoint")
     args = parser.parse_args()
 
-    print("Bawbel Smithery Scanner")
-    print(f"Scanning top {args.limit} servers from registry.smithery.ai")
-    print("─" * 60)
+    api_key = os.environ.get("SMITHERY_API_KEY", "")
+    if not api_key:
+        print("Error: set SMITHERY_API_KEY environment variable")
+        sys.exit(1)
 
-    # Collect server list
-    servers = []
-    page = 1
-    while len(servers) < args.limit:
-        batch_size = min(10, args.limit - len(servers))
-        try:
-            data = list_servers(page=page, page_size=batch_size, query=args.query)
-        except requests.HTTPError as e:
-            print(f"Registry API error: {e}")
-            sys.exit(1)
+    check = subprocess.run(  # nosec B603 B607  # noqa: S603 S607
+        ["bawbel", "version"], capture_output=True, text=True
+    )
+    if check.returncode != 0:
+        print("Error: bawbel CLI not found. pip install bawbel-scanner")
+        sys.exit(1)
+    print(f"Using: {check.stdout.strip().splitlines()[0]}")
 
-        batch = data.get("servers", []) if isinstance(data, dict) else data
-        if not batch:
-            break
-        servers.extend(batch)
-        page += 1
-        time.sleep(RATE_LIMIT_SLEEP)
+    completed: set = set()
+    results: list = []
 
-    servers = servers[: args.limit]
-    print(f"Found {len(servers)} servers to scan\n")
+    if args.resume and Path(PROGRESS_FILE).exists():
+        progress = json.loads(Path(PROGRESS_FILE).read_text())
+        completed = set(progress.get("completed", []))
+        results = progress.get("results", [])
+        print(f"Resuming: {len(completed)} already scanned")
 
-    # Fetch full details + scan each server
-    results = []
-    total_findings = 0
-    servers_with_findings = 0
+    servers = fetch_server_list(api_key, args.limit)
+    print(f"\nScanning {len(servers)} servers...\n")
+    print("-" * 60)
 
-    for i, server_stub in enumerate(servers, 1):
-        qname = server_stub.get("qualifiedName", server_stub.get("id", "unknown"))
-        print(f"[{i:03d}/{len(servers)}] {qname}", end=" ... ", flush=True)
+    stats = {
+        "scanned": 0,
+        "with_findings": 0,
+        "with_toxic_flows": 0,
+        "clean": 0,
+        "errors": 0,
+        "total_findings": 0,
+        "total_toxic_flows": 0,
+        "by_severity": {"CRITICAL": 0, "HIGH": 0, "MEDIUM": 0, "LOW": 0},
+        "by_ave_id": {},
+        "by_owasp_mcp": {},
+    }
 
-        try:
-            server_full = get_server(qname)
-            time.sleep(RATE_LIMIT_SLEEP)
-        except requests.HTTPError as e:
-            print(f"fetch error: {e}")
-            results.append({"server": qname, "error": str(e), "findings": []})
+    for i, server in enumerate(servers, 1):
+        qname = server.get("qualifiedName", server.get("name", f"server_{i}"))
+
+        if qname in completed:
             continue
 
-        if args.verbose:
-            print(f"\n--- scan content ---\n{build_scan_content(server_full)}\n---")
+        details = fetch_server_details(api_key, qname) or server
+        content = extract_scannable_content(details)
 
-        result = scan_server(server_full)
-        results.append(result)
+        if not content.strip() or len(content) < 50:
+            print(f"[{i:03d}/{len(servers)}] {qname[:45]:<45} skip")
+            continue
 
-        n = len(result.get("findings", []))
-        total_findings += n
-        if n > 0:
-            servers_with_findings += 1
-            sev = result.get("max_severity", "?")
-            print(f"⚠  {n} finding(s) [{sev}] risk {result.get('risk_score', 0)}/10")
-            for f in result["findings"]:
-                print(f"     [{f['severity']}] {f['ave_id']} — {f['title']}")
-                print(f"       line {f['line']}: {f.get('match','')[:70]}")
+        scan = run_bawbel_scan(content)
+        findings = scan.get("findings", [])
+        toxic_flows = scan.get("toxic_flows", [])
+        risk_score = scan.get("risk_score", 0)
+
+        stats["scanned"] += 1
+        stats["total_findings"] += len(findings)
+        stats["total_toxic_flows"] += len(toxic_flows)
+
+        if findings:
+            stats["with_findings"] += 1
         else:
-            print("✓ clean")
+            stats["clean"] += 1
 
-    # Summary
-    print(f"\n{'═' * 60}")
-    print(f"SCAN COMPLETE — {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}")
-    print(f"{'═' * 60}")
-    print(f"  Servers scanned:       {len(servers)}")
-    print(f"  Servers with findings: {servers_with_findings}")
-    print(f"  Total findings:        {total_findings}")
-    print(f"  Clean servers:         {len(servers) - servers_with_findings}")
+        if toxic_flows:
+            stats["with_toxic_flows"] += 1
 
-    if total_findings > 0:
-        # Breakdown by rule
-        rule_counts: dict[str, int] = {}
-        sev_counts: dict[str, int] = {}
-        for r in results:
-            for f in r.get("findings", []):
-                rule_counts[f["rule_id"]] = rule_counts.get(f["rule_id"], 0) + 1
-                sev_counts[f["severity"]] = sev_counts.get(f["severity"], 0) + 1
+        if scan.get("error"):
+            stats["errors"] += 1
 
-        print("\n  By severity:")
-        for sev in ["CRITICAL", "HIGH", "MEDIUM", "LOW"]:
-            if sev in sev_counts:
-                print(f"    {sev}: {sev_counts[sev]}")
+        for f in findings:
+            sev = f.get("severity", "UNKNOWN")
+            ave_id = f.get("ave_id", "")
+            stats["by_severity"][sev] = stats["by_severity"].get(sev, 0) + 1
+            if ave_id:
+                stats["by_ave_id"][ave_id] = stats["by_ave_id"].get(ave_id, 0) + 1
+            for owasp in f.get("owasp_mcp", []):
+                stats["by_owasp_mcp"][owasp] = stats["by_owasp_mcp"].get(owasp, 0) + 1
 
-        print("\n  Most common rules:")
-        for rule, count in sorted(rule_counts.items(), key=lambda x: -x[1])[:5]:
-            print(f"    {rule}: {count}")
-
-    # Save results
-    output_path = args.output or f"smithery_scan_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.json"
-    with open(output_path, "w") as f:
-        json.dump(
+        results.append(
             {
-                "scan_date": datetime.utcnow().isoformat(),
-                "servers_scanned": len(servers),
-                "servers_with_findings": servers_with_findings,
-                "total_findings": total_findings,
-                "results": results,
-            },
-            f,
-            indent=2,
+                "rank": i,
+                "qualified_name": qname,
+                "display_name": details.get("displayName", qname),
+                "tools_count": len(details.get("tools", [])),
+                "risk_score": risk_score,
+                "findings_count": len(findings),
+                "toxic_flows_count": len(toxic_flows),
+                "findings": findings,
+                "toxic_flows": toxic_flows,
+                "scanned_at": datetime.now(timezone.utc).isoformat(),
+            }
         )
-    print(f"\n  Results saved → {output_path}")
+        completed.add(qname)
+
+        flag = (
+            "CRIT"
+            if any(f.get("severity") == "CRITICAL" for f in findings)
+            else "HIGH" if any(f.get("severity") == "HIGH" for f in findings) else "ok"
+        )
+        status = (
+            f"[{flag}] {len(findings)} finding(s)  risk {risk_score:.1f}"
+            if findings
+            else "[ok]  clean"
+        )
+        if toxic_flows:
+            status += f"  chain: {len(toxic_flows)}"
+
+        print(f"[{i:03d}/{len(servers)}] {qname[:45]:<45} {status}")
+
+        if i % 50 == 0:
+            Path(PROGRESS_FILE).write_text(
+                json.dumps({"completed": list(completed), "results": results})
+            )
+            flaw_rate = stats["with_findings"] / max(stats["scanned"], 1) * 100
+            print(
+                f"\n  Checkpoint: {stats['scanned']} scanned, "
+                f"{stats['with_findings']} with findings ({flaw_rate:.1f}%)\n"
+            )
+
+        time.sleep(0.1)
+
+    flaw_rate = stats["with_findings"] / max(stats["scanned"], 1) * 100
+    top_ave = sorted(stats["by_ave_id"].items(), key=lambda x: x[1], reverse=True)[:10]
+    top_owasp = sorted(stats["by_owasp_mcp"].items(), key=lambda x: x[1], reverse=True)[:5]
+
+    output = {
+        "scan_date": datetime.now(timezone.utc).isoformat(),
+        "source": "smithery",
+        "scanner_version": check.stdout.strip().splitlines()[0],
+        "servers_scanned": stats["scanned"],
+        "servers_with_findings": stats["with_findings"],
+        "servers_clean": stats["clean"],
+        "servers_with_toxic_flows": stats["with_toxic_flows"],
+        "total_findings": stats["total_findings"],
+        "total_toxic_flows": stats["total_toxic_flows"],
+        "flaw_rate_pct": round(flaw_rate, 1),
+        "by_severity": stats["by_severity"],
+        "top_ave_ids": top_ave,
+        "top_owasp_mcp": top_owasp,
+        "results": results,
+    }
+
+    Path(args.output).write_text(json.dumps(output, indent=2))
+
+    print("\n" + "-" * 60)
+    print("SCAN COMPLETE")
+    print("-" * 60)
+    print(f"Servers scanned:       {stats['scanned']}")
+    print(f"Servers with findings: {stats['with_findings']} ({flaw_rate:.1f}%)")
+    print(f"Servers clean:         {stats['clean']}")
+    print(f"Toxic flows detected:  {stats['with_toxic_flows']} servers")
+    print(f"Total findings:        {stats['total_findings']}")
+    print("")
+    for sev, count in stats["by_severity"].items():
+        if count:
+            print(f"  {sev}: {count}")
+    print("\nTop AVE IDs:")
+    for ave_id, count in top_ave[:5]:
+        print(f"  {ave_id}: {count} servers")
+    print(f"\nResults: {args.output}")
+
+    Path(PROGRESS_FILE).unlink(missing_ok=True)
+
+    # Upload to PiranhaDB
+    ingest_token = os.environ.get("PIRANHA_INGEST_TOKEN", "")
+    print("\nUploading to PiranhaDB...")
+    post_to_piranha(output, ingest_token)
 
 
 if __name__ == "__main__":

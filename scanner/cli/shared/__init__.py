@@ -1,5 +1,5 @@
 """
-Bawbel Scanner — shared CLI utilities.
+Bawbel Scanner - shared CLI utilities.
 
 Re-exports the most commonly used helpers so command modules can do:
 

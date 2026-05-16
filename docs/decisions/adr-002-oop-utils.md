@@ -1,39 +1,62 @@
-# ADR-002: OOP Utils with Function Aliases
+# ADR-002: OOP utils with function aliases
 
 **Status:** Accepted
-**Date:** April 2026
+**Date:** 2026-02-22
+
+---
+
+## Decision
+
+`scanner/utils.py` uses classes (`Logger`, `PathValidator`, `FileReader`,
+`SubprocessRunner`, `JsonParser`, `TextSanitiser`, `Timer`) internally, but
+exposes module-level function aliases for all commonly used operations.
 
 ---
 
 ## Context
 
-`scanner/utils.py` provides shared infrastructure used by all engines.
-Needed a structure that is both testable (OOP) and ergonomic to call (functions).
+The scanner has a clear security requirement: all path handling, subprocess execution,
+and file reading must follow strict contracts. The question was whether to express these
+contracts as functions, classes, or something else.
 
-## Decision
+---
 
-Utils are implemented as classes (`Logger`, `PathValidator`, `FileReader`,
-`SubprocessRunner`, `JsonParser`, `TextSanitiser`) with module-level function
-aliases that proxy to class methods.
+## Rationale
+
+**Classes enforce the contract.** `PathValidator.resolve()` always checks for symlinks
+before calling `Path.resolve()`. The class boundary makes it impossible to bypass the
+check by calling `Path.resolve()` directly. Security-critical logic belongs in a class
+where the method order is enforced.
+
+**Function aliases are cleaner at call sites.** Callers write:
 
 ```python
-# Class (testable, mockable, subclassable)
-class PathValidator:
-    @classmethod
-    def resolve(cls, file_path: str) -> tuple[...]: ...
+from scanner.utils import resolve_path, is_safe_path, read_file_safe
+```
 
-# Function alias (ergonomic for callers)
-def resolve_path(file_path: str) -> tuple[...]:
+Not:
+
+```python
+from scanner.utils import PathValidator, FileReader
+path, err = PathValidator.resolve(file_path)
+ok, err   = PathValidator.validate(path)
+content, err = FileReader.read_text(path)
+```
+
+The function aliases are one-liners that delegate to the class methods:
+
+```python
+def resolve_path(file_path: str) -> tuple[Optional[Path], Optional[str]]:
     return PathValidator.resolve(file_path)
 ```
 
+**Testability.** Classes can be instantiated and their methods patched independently.
+`monkeypatch.setattr(PathValidator, "resolve", ...)` is unambiguous.
+
+---
+
 ## Consequences
 
-**Callers** import and use functions — clean, minimal call sites.
-
-**Tests** can mock at the class level — `monkeypatch.setattr(PathValidator, "resolve", ...)`.
-
-**Future engines** can subclass utils (e.g. `class SecurePathValidator(PathValidator)`)
-without changing call sites.
-
-**New utility** = add a method to the right class + add a function alias at the bottom.
+- New utility functions should be methods on an appropriate class, then aliased at module level
+- Direct class imports (`from scanner.utils import PathValidator`) are acceptable for advanced use
+- The security contracts documented in each class docstring are the canonical spec

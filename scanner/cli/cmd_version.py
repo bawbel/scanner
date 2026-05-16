@@ -1,5 +1,5 @@
 """
-Bawbel Scanner — `bawbel version` command.
+Bawbel Scanner - `bawbel version` command.
 
 Prints the scanner version and detection engine status.
 """
@@ -32,9 +32,7 @@ def version_cmd() -> None:
     try:
         import yara
 
-        console.print(
-            f"  [bold #1DB894]✓[/]  YARA        " f"[dim]v{yara.__version__}  ·  active[/]"
-        )
+        console.print(f"  [bold #1DB894]✓[/]  YARA        [dim]v{yara.__version__}  ·  active[/]")
     except ImportError:
         console.print(
             "  [dim]✗  YARA        not installed  ·  " 'pip install "bawbel-scanner\\[yara]"[/]'
@@ -52,7 +50,7 @@ def version_cmd() -> None:
         )
         if r.returncode == 0:
             ver = r.stdout.strip().split()[-1]
-            console.print(f"  [bold #1DB894]✓[/]  Semgrep     " f"[dim]v{ver}  ·  active[/]")
+            console.print(f"  [bold #1DB894]✓[/]  Semgrep     [dim]v{ver}  ·  active[/]")
         else:
             raise FileNotFoundError
     except Exception:  # noqa: BLE001
@@ -74,7 +72,7 @@ def version_cmd() -> None:
 
     if llm_installed and active_model:
         console.print(
-            f"  [bold #1DB894]✓[/]  LLM         " f"[dim]{active_model}  ·  Stage 2 active[/]"
+            f"  [bold #1DB894]✓[/]  LLM         [dim]{active_model}  ·  Stage 2 active[/]"
         )
     elif llm_installed and not active_model:
         console.print(
@@ -90,13 +88,9 @@ def version_cmd() -> None:
 
     if SANDBOX_ENABLED:
         if is_docker_available():
-            console.print(
-                "  [bold #1DB894]✓[/]  Sandbox     " "[dim]active  ·  Docker available[/]"
-            )
+            console.print("  [bold #1DB894]✓[/]  Sandbox     [dim]active  ·  Docker available[/]")
         else:
-            console.print(
-                "  [dim]✗  Sandbox     Docker not running  ·  " "start Docker to enable[/]"
-            )
+            console.print("  [dim]✗  Sandbox     Docker not running  ·  start Docker to enable[/]")
     else:
         console.print(
             "  [dim]✗  Sandbox     disabled  ·  "
@@ -106,8 +100,8 @@ def version_cmd() -> None:
     console.print()
     console.print(
         "[dim]AVE Standard:  "
-        "[link=https://github.com/bawbel/bawbel-ave]"
-        "github.com/bawbel/bawbel-ave[/link][/]"
+        "[link=https://github.com/bawbel/ave]"
+        "github.com/bawbel/ave[/link][/]"
     )
-    console.print("[dim]Documentation: " "[link=https://bawbel.io/docs]bawbel.io/docs[/link][/]")
+    console.print("[dim]Documentation: [link=https://bawbel.io/docs]bawbel.io/docs[/link][/]")
     console.print()
