@@ -1,7 +1,7 @@
 """
-Bawbel Scanner — CLI display helpers.
+Bawbel Scanner - CLI display helpers.
 
-All Rich rendering lives here. Command modules call these functions —
+All Rich rendering lives here. Command modules call these functions -
 they never import Rich directly. This keeps the visual contract in one
 place so a redesign only touches this file.
 """
@@ -25,7 +25,7 @@ from scanner.owasp_mcp_map import get_owasp_mcp, OWASP_MCP_DESCRIPTIONS
 console = Console()
 
 
-# ── Severity helpers ──────────────────────────────────────────────────────────
+# ── Severity helpers ───────────────────────────────────────────────────────────
 
 
 def sev_value(sev) -> str:
@@ -49,26 +49,26 @@ def worst_severity_score(results: list[ScanResult]) -> int:
     return worst
 
 
-# ── Banner ────────────────────────────────────────────────────────────────────
+# ── Banner ─────────────────────────────────────────────────────────────────────
 
 
 def print_banner() -> None:
     console.print()
     console.print(
         f"[bold #1DB894]Bawbel Scanner[/] [dim]v{__version__}[/]  "
-        "[dim]·  github.com/bawbel/bawbel-scanner[/]"
+        "[dim]·  github.com/bawbel/scanner[/]"
     )
     console.print("[dim]" + "━" * 58 + "[/]")
     console.print()
 
 
-# ── Summary ───────────────────────────────────────────────────────────────────
+# ── Summary ────────────────────────────────────────────────────────────────────
 
 
 def print_summary(result: ScanResult) -> None:
-    console.print("[dim]" + "─" * 58 + "[/]")
+    console.print("[dim]" + "-" * 58 + "[/]")
     console.print("[bold white]SUMMARY[/]")
-    console.print("[dim]" + "─" * 58 + "[/]")
+    console.print("[dim]" + "-" * 58 + "[/]")
 
     max_sev = result.max_severity
     if max_sev:
@@ -90,7 +90,7 @@ def print_summary(result: ScanResult) -> None:
     console.print()
 
 
-# ── Scan result panel ─────────────────────────────────────────────────────────
+# ── Scan result panel ──────────────────────────────────────────────────────────
 
 
 def build_scan_renderables(
@@ -170,7 +170,7 @@ def build_scan_renderables(
                         (owasp_str, "dim"),
                     )
                 )
-            # OWASP MCP mapping is many-to-many: multiple MCPs per AVE and vice versa.
+            # OWASP MCP mapping
             owasp_mcp = get_owasp_mcp(f.ave_id)
             if owasp_mcp:
                 mcp_str = ", ".join(
@@ -182,8 +182,15 @@ def build_scan_renderables(
                         (mcp_str, "dim"),
                     )
                 )
+            # AIVSS score
+            items.append(
+                Text.assemble(
+                    ("   AIVSS:  ", "dim"),
+                    (f"{f.aivss_score:.1f}  (OWASP AIVSS v0.8)", "dim"),
+                )
+            )
 
-    # ── Toxic flows ───────────────────────────────────────────────────────────
+    # ── Toxic flows ────────────────────────────────────────────────────────────
     if hasattr(result, "toxic_flows") and result.toxic_flows:
         items.append(Text(""))
         items.append(Text("TOXIC FLOWS DETECTED", style="bold red"))
@@ -197,7 +204,7 @@ def build_scan_renderables(
                     (tf.severity, color),
                     ("  ", ""),
                     (tf.title, "bold white"),
-                    (f"  CVSS-AI {tf.cvss_ai}", "dim"),
+                    (f"  AIVSS {tf.aivss_score}", "dim"),
                 )
             )
             desc = tf.description[:120] + ("..." if len(tf.description) > 120 else "")
@@ -205,7 +212,7 @@ def build_scan_renderables(
             items.append(
                 Text.assemble(
                     ("  Chain:    ", "dim"),
-                    (" → ".join(tf.capabilities), "dim italic"),
+                    (" -> ".join(tf.capabilities), "dim italic"),
                 )
             )
             items.append(
@@ -275,7 +282,7 @@ def build_scan_renderables(
         items.append(Text(""))
         items.append(
             Text.assemble(
-                ("→  Run ", "dim"),
+                ("-> Run ", "dim"),
                 (f"bawbel report {display_path}", "bold dim"),
                 (" for full remediation guide", "dim"),
             )

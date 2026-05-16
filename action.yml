@@ -1,0 +1,133 @@
+name: Bawbel Scanner
+description: "Scan agentic AI components - MCP servers, skills, system prompts - for AVE vulnerabilities before they reach production."
+author: Bawbel
+
+branding:
+  icon: shield
+  color: green
+
+inputs:
+  path:
+    description: "Path to scan (file or directory)"
+    required: false
+    default: "."
+
+  recursive:
+    description: "Scan directories recursively"
+    required: false
+    default: "true"
+
+  fail-on-severity:
+    description: "Exit with code 2 if findings at this severity or above. One of: critical, high, medium, low, none"
+    required: false
+    default: "high"
+
+  format:
+    description: "Output format. One of: text, json, sarif"
+    required: false
+    default: "sarif"
+
+  no-ignore:
+    description: "Override all bawbel-ignore suppressions (audit mode)"
+    required: false
+    default: "false"
+
+  version:
+    description: "Bawbel Scanner version to install (default: latest)"
+    required: false
+    default: "latest"
+
+  extras:
+    description: "pip extras to install. One of: yara, semgrep, llm, magika, all"
+    required: false
+    default: "all"
+
+outputs:
+  sarif-file:
+    description: "Path to the generated SARIF file (when format is sarif)"
+    value: ${{ steps.scan.outputs.sarif-file }}
+
+  findings-count:
+    description: "Number of active findings"
+    value: ${{ steps.scan.outputs.findings-count }}
+
+  risk-score:
+    description: "Risk score 0.0 to 10.0"
+    value: ${{ steps.scan.outputs.risk-score }}
+
+  result:
+    description: "clean or findings"
+    value: ${{ steps.scan.outputs.result }}
+
+runs:
+  using: composite
+  steps:
+    - name: Install Bawbel Scanner
+      shell: bash
+      run: |
+        if [ "${{ inputs.version }}" = "latest" ]; then
+          pip install "bawbel-scanner[${{ inputs.extras }}]" --quiet
+        else
+          pip install "bawbel-scanner[${{ inputs.extras }}]==${{ inputs.version }}" --quiet
+        fi
+
+    - name: Run Bawbel scan
+      id: scan
+      shell: bash
+      run: |
+        ARGS="--format ${{ inputs.format }}"
+
+        if [ "${{ inputs.recursive }}" = "true" ]; then
+          ARGS="$ARGS --recursive"
+        fi
+
+        if [ "${{ inputs.no-ignore }}" = "true" ]; then
+          ARGS="$ARGS --no-ignore"
+        fi
+
+        if [ "${{ inputs.format }}" = "sarif" ]; then
+          SARIF_FILE="bawbel-results.sarif"
+          bawbel scan "${{ inputs.path }}" $ARGS > "$SARIF_FILE" 2>/dev/null || true
+          echo "sarif-file=$SARIF_FILE" >> $GITHUB_OUTPUT
+        fi
+
+        JSON_OUT=$(bawbel scan "${{ inputs.path }}" $ARGS --format json 2>/dev/null || echo "[]")
+
+        FINDINGS=$(echo "$JSON_OUT" | python3 -c "
+        import json,sys
+        data = json.load(sys.stdin)
+        total = sum(len(r.get('findings',[])) for r in data)
+        score = max((r.get('risk_score',0) for r in data), default=0)
+        result = 'findings' if total > 0 else 'clean'
+        print('count=' + str(total))
+        print('score=' + str(round(score, 1)))
+        print('result=' + result)
+        " 2>/dev/null || printf "count=0\nscore=0.0\nresult=clean")
+
+        echo "findings-count=$(echo "$FINDINGS" | grep count= | cut -d= -f2)" >> $GITHUB_OUTPUT
+        echo "risk-score=$(echo "$FINDINGS" | grep score= | cut -d= -f2)" >> $GITHUB_OUTPUT
+        echo "result=$(echo "$FINDINGS" | grep result= | cut -d= -f2)" >> $GITHUB_OUTPUT
+
+    - name: Check severity threshold
+      shell: bash
+      run: |
+        if [ "${{ inputs.fail-on-severity }}" = "none" ]; then
+          exit 0
+        fi
+
+        COUNT="${{ steps.scan.outputs.findings-count }}"
+        if [ -z "$COUNT" ] || [ "$COUNT" = "0" ]; then
+          exit 0
+        fi
+
+        EXTRA_ARGS=""
+        if [ "${{ inputs.recursive }}" = "true" ]; then
+          EXTRA_ARGS="$EXTRA_ARGS --recursive"
+        fi
+        if [ "${{ inputs.no-ignore }}" = "true" ]; then
+          EXTRA_ARGS="$EXTRA_ARGS --no-ignore"
+        fi
+
+        bawbel scan "${{ inputs.path }}" $EXTRA_ARGS \
+          --fail-on-severity "${{ inputs.fail-on-severity }}" \
+          --format text

@@ -1,7 +1,7 @@
 """
-Bawbel Scanner — Toxic Flow models.
+Bawbel Scanner - Toxic Flow models.
 
-A ToxicFlow is a detected attack chain — two or more findings whose
+A ToxicFlow is a detected attack chain - two or more findings whose
 capabilities combine to form a complete, exploitable attack path.
 
 Example:
@@ -9,7 +9,7 @@ Example:
     Finding 2: AVE-2026-00026  data-exfil       (encodes and transmits data)
     → ToxicFlow: credential-exfiltration  CRITICAL 9.8
 
-ToxicFlow is intentionally separate from Finding — it is a derived
+ToxicFlow is intentionally separate from Finding - it is a derived
 artifact, not a raw detection. It is always computed from two or more
 existing findings, never created directly by an engine.
 """
@@ -22,9 +22,9 @@ class ToxicFlow:
     """
     A detected attack chain formed by two or more findings.
 
-    Immutable — computed once after deduplication, never modified.
+    Immutable - computed once after deduplication, never modified.
 
-    Fields marked (stable) are public API — SARIF, JSON output,
+    Fields marked (stable) are public API - SARIF, JSON output,
     external tooling may depend on them.
     """
 
@@ -38,7 +38,7 @@ class ToxicFlow:
 
     # ── Scoring (stable) ─────────────────────────────────────────────────────
     severity: str  # (stable) "CRITICAL" | "HIGH" | "MEDIUM"
-    cvss_ai: float  # (stable) combined risk score — always >= max(individual scores)
+    aivss_score: float  # (stable) combined AIVSS v0.8 score - always >= max(individual scores)
 
     # ── Context ──────────────────────────────────────────────────────────────
     description: str  # what the combined attack achieves
@@ -53,7 +53,7 @@ class ToxicFlow:
             "ave_ids": list(self.ave_ids),
             "capabilities": list(self.capabilities),
             "severity": self.severity,
-            "cvss_ai": self.cvss_ai,
+            "aivss_score": self.aivss_score,
             "description": self.description,
             "owasp_mcp": list(self.owasp_mcp),
             "remediation": self.remediation,

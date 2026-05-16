@@ -1,5 +1,5 @@
 """
-Bawbel Scanner — Semgrep detection engine (Stage 1c).
+Bawbel Scanner - Semgrep detection engine (Stage 1c).
 
 Requires semgrep CLI. Skips silently if not installed.
 Rules file: scanner/rules/semgrep/ave_rules.yaml
@@ -30,7 +30,7 @@ SEMGREP_RULES_PATH = Path(__file__).parent.parent / "rules" / "semgrep" / "ave_r
 MAX_SCAN_TIMEOUT_SEC = 30
 MAX_MATCH_LENGTH = 80
 
-# Semgrep severity → AVE severity
+# Semgrep severity -> AVE severity
 _SEV_MAP: dict[str, str] = {
     "ERROR": "HIGH",
     "WARNING": "MEDIUM",
@@ -61,7 +61,7 @@ def _match_from_file(file_path: str, line_no: int) -> str:
     Read the actual matched line from the source file.
 
     semgrep's extra.lines field returns content from the rules YAML itself
-    when scanning generic-language files — not the scanned file.
+    when scanning generic-language files - not the scanned file.
     Reading the source file directly is always correct.
     """
     try:
@@ -77,14 +77,14 @@ def run_semgrep_scan(file_path: str, stripped_content: Optional[str] = None) -> 
     """
     Run Semgrep rules against the component file.
 
-    Requires semgrep CLI — skips silently if not installed.
+    Requires semgrep CLI - skips silently if not installed.
     All rule metadata (severity, ave_id, owasp) is read from ave_rules.yaml.
 
     Args:
         file_path:        Resolved absolute path to the component file.
         stripped_content: Pre-processed content with code fences blanked.
                           If provided, Semgrep scans this content via a temp
-                          file instead of the raw file — reduces false
+                          file instead of the raw file - reduces false
                           positives from documentation examples inside fences.
                           Line numbers in findings still map to the original
                           file because blanked lines preserve line count.
@@ -112,7 +112,7 @@ def run_semgrep_scan(file_path: str, stripped_content: Optional[str] = None) -> 
                 f.write(stripped_content)
             scan_target = tmp_path
         except OSError as e:
-            log.warning("Semgrep: could not write temp file, scanning original — %s", e)
+            log.warning("Semgrep: could not write temp file, scanning original - %s", e)
             tmp_path = None
             scan_target = file_path
 
@@ -158,22 +158,26 @@ def run_semgrep_scan(file_path: str, stripped_content: Optional[str] = None) -> 
             sev_str = _SEV_MAP.get(sev_raw, "MEDIUM")
             line_no = r.get("start", {}).get("line")
 
-            # Read match text from original source file — line numbers in
-            # findings map to the original file, not the temp file
+            # Read match text from original source file
             match_text = _match_from_file(file_path, line_no) if line_no else ""
+
+            ave_id = meta.get("ave_id") or None
+            piranha_url = f"https://api.piranha.bawbel.io/records/{ave_id}" if ave_id else None
 
             findings.append(
                 Finding(
                     rule_id=r.get("check_id", "semgrep-unknown"),
-                    ave_id=meta.get("ave_id") or None,
+                    ave_id=ave_id,
                     title=_clean_title(msg),
                     description=msg,
                     severity=Severity(sev_str),
-                    cvss_ai=parse_cvss(meta.get("cvss_ai_score", 5.0)),
+                    aivss_score=parse_cvss(meta.get("aivss_score", 5.0)),
                     line=line_no,
                     match=match_text,
                     engine="semgrep",
                     owasp=meta.get("owasp_mapping", []),
+                    owasp_mcp=meta.get("owasp_mcp", []),
+                    piranha_url=piranha_url,
                 )
             )
             log.debug(

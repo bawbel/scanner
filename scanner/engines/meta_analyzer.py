@@ -1,14 +1,14 @@
 """
-Bawbel Scanner — Meta-Analyzer (FP-4).
+Bawbel Scanner - Meta-Analyzer (FP-4).
 
 Enriched LLM false-positive filter. Runs AFTER all static engines and
 BEFORE confidence scoring. Sends all medium-confidence findings as a
-structured context package to the LLM — one call per file, not per finding.
+structured context package to the LLM - one call per file, not per finding.
 
 This is architecturally better than a naive LLM pass because:
   - The LLM sees ALL findings together, not in isolation
   - The LLM sees file metadata (name, path, detected type)
-  - One LLM call covers N findings — cost is O(files), not O(findings)
+  - One LLM call covers N findings - cost is O(files), not O(findings)
   - The prompt is a FP classification task, not a general security scan
 
 Inspired by Cisco's meta-analysis pipeline, but implemented as an
@@ -17,14 +17,14 @@ independent open-source component that works with any LiteLLM provider.
 Install:
     pip install "bawbel-scanner[llm]"   (same dependency as LLM engine)
 
-The meta-analyzer ONLY runs on medium-confidence findings (0.35–0.80).
-High-confidence findings (>0.80) are trusted as-is — no LLM call needed.
-Low-confidence findings (<0.35) are already suppressed — LLM not needed.
+The meta-analyzer ONLY runs on medium-confidence findings (0.35-0.80).
+High-confidence findings (>0.80) are trusted as-is - no LLM call needed.
+Low-confidence findings (<0.35) are already suppressed - LLM not needed.
 
 Output: findings reclassified as real | false_positive | needs_review
-  real          → kept in active findings, confidence boosted
-  false_positive → moved to suppressed_findings with reason
-  needs_review  → kept but confidence adjusted down slightly
+  real          -> kept in active findings, confidence boosted
+  false_positive -> moved to suppressed_findings with reason
+  needs_review  -> kept but confidence adjusted down slightly
 """
 
 from __future__ import annotations
@@ -41,7 +41,6 @@ log = get_logger(__name__)
 # ── Config ────────────────────────────────────────────────────────────────────
 META_ANALYZER_ENABLED = os.environ.get("BAWBEL_META_ANALYZER_ENABLED", "true").lower() != "false"
 
-# Confidence range for meta-analysis — only process medium-confidence findings
 META_MIN_CONFIDENCE: float = float(os.environ.get("BAWBEL_META_MIN_CONFIDENCE", "0.35"))
 META_MAX_CONFIDENCE: float = float(os.environ.get("BAWBEL_META_MAX_CONFIDENCE", "0.80"))
 
@@ -53,7 +52,7 @@ Your task: classify each finding as real, false_positive, or needs_review.
 Rules:
 - real: The finding is a genuine security concern in this context
 - false_positive: The finding is triggered by documentation, examples, or code comments
-- needs_review: Ambiguous — could be real or a false positive depending on intent
+- needs_review: Ambiguous - could be real or a false positive depending on intent
 
 Key signals for false_positive:
 - The match appears inside a documentation example or tutorial
@@ -83,7 +82,7 @@ def run_meta_analysis(
     """
     Run meta-analysis FP filter on medium-confidence findings.
 
-    Sends enriched context to LLM — one call per file covering all
+    Sends enriched context to LLM - one call per file covering all
     medium-confidence findings. Reclassifies based on LLM verdict.
 
     Args:
@@ -99,7 +98,6 @@ def run_meta_analysis(
     if not META_ANALYZER_ENABLED:
         return findings
 
-    # Only analyse medium-confidence findings
     medium = [f for f in findings if META_MIN_CONFIDENCE <= f.confidence <= META_MAX_CONFIDENCE]
 
     if not medium:
@@ -108,10 +106,9 @@ def run_meta_analysis(
     try:
         import litellm  # optional  # noqa: PLC0415,F401
     except ImportError:
-        log.debug("Meta-analyzer: litellm not installed — skipping FP filter")
+        log.debug("Meta-analyzer: litellm not installed - skipping FP filter")
         return findings
 
-    # Check any LLM provider is configured
     provider_keys = [
         "ANTHROPIC_API_KEY",
         "OPENAI_API_KEY",
@@ -123,7 +120,7 @@ def run_meta_analysis(
     has_provider = model_override or any(os.environ.get(k) for k in provider_keys)
 
     if not has_provider:
-        log.debug("Meta-analyzer: no LLM provider configured — skipping")
+        log.debug("Meta-analyzer: no LLM provider configured - skipping")
         return findings
 
     log.debug(
@@ -144,7 +141,6 @@ def run_meta_analysis(
         t.elapsed_ms,
     )
 
-    # Apply verdicts
     verdict_map = {v["rule_id"]: v for v in verdicts}
     for f in findings:
         verdict_data = verdict_map.get(f.rule_id)
@@ -158,16 +154,14 @@ def run_meta_analysis(
             f.suppressed = True
             f.suppression_reason = f"meta_analyzer_fp: {reason}"
             log.info(
-                "Meta-analyzer: %s classified as false_positive — %s",
+                "Meta-analyzer: %s classified as false_positive - %s",
                 f.rule_id,
                 reason,
             )
         elif verdict == "real":
-            # Boost confidence slightly — LLM confirmed it
             f.confidence = min(1.0, f.confidence + 0.15)
             log.debug("Meta-analyzer: %s confirmed real", f.rule_id)
         elif verdict == "needs_review":
-            # Slight confidence reduction — LLM is uncertain
             f.confidence = max(0.0, f.confidence - 0.05)
 
     return findings
@@ -179,22 +173,18 @@ def _call_llm(
     file_path: str,
     magika_label: str,
 ) -> list[dict] | None:
-    """
-    Build the enriched context package and call the LLM.
-
-    Returns list of verdict dicts, or None on error.
-    """
+    """Build the enriched context package and call the LLM."""
     import litellm  # noqa: PLC0415,F401
 
     path = Path(file_path)
 
-    # Build enriched context for the LLM
     findings_context = [
         {
             "rule_id": f.rule_id,
             "ave_id": f.ave_id or "N/A",
             "title": f.title,
             "severity": f.severity.value,
+            "aivss_score": f.aivss_score,
             "engine": f.engine,
             "line": f.line,
             "match": f.match or "",
@@ -203,7 +193,6 @@ def _call_llm(
         for f in findings
     ]
 
-    # Include surrounding context lines for each finding
     content_lines = content.splitlines()
     for fc in findings_context:
         line_no = fc.get("line")
@@ -225,7 +214,6 @@ def _call_llm(
         indent=2,
     )
 
-    # Resolve model
     model = os.environ.get("BAWBEL_LLM_MODEL", "")
     if not model:
         if os.environ.get("ANTHROPIC_API_KEY"):
@@ -253,7 +241,6 @@ def _call_llm(
         )
         raw = response.choices[0].message.content.strip()
 
-        # Strip markdown fences if present
         if raw.startswith("```"):
             raw = raw.split("\n", 1)[-1]
             raw = raw.rsplit("```", 1)[0].strip()
@@ -266,11 +253,11 @@ def _call_llm(
         return verdicts
 
     except json.JSONDecodeError as e:
-        log.warning("Meta-analyzer: could not parse LLM response as JSON — %s", e)
+        log.warning("Meta-analyzer: could not parse LLM response as JSON - %s", e)
         return None
     except Exception as e:  # nosec B110  # noqa: S110
         log.warning(
-            "Meta-analyzer: LLM call failed — %s: %s",
+            "Meta-analyzer: LLM call failed - %s: %s",
             type(e).__name__,
             str(e)[:100],
         )

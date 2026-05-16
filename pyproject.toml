@@ -6,8 +6,8 @@ build-backend = "setuptools.build_meta"
 # ── Project metadata ──────────────────────────────────────────────────────────
 [project]
 name            = "bawbel-scanner"
-version         = "1.1.1"
-description     = "Agentic AI component security scanner — detects AVE vulnerabilities"
+version         = "1.2.0"
+description     = "Agentic AI component security scanner. Detects AVE vulnerabilities. Produces OWASP AIVSS v0.8 scores."
 readme          = "README.md"
 license         = { text = "Apache-2.0" }
 requires-python = ">=3.10"
@@ -17,6 +17,7 @@ authors         = [
 keywords = [
     "security", "ai", "scanner", "ave", "agentic",
     "mcp", "llm", "skill", "prompt-injection",
+    "aivss", "owasp",
 ]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -33,7 +34,7 @@ classifiers = [
     "Topic :: Software Development :: Quality Assurance",
 ]
 
-# Core dependencies — installed on every pip install bawbel-scanner
+# Core dependencies - installed on every pip install bawbel-scanner
 dependencies = [
     "click>=8.1.0",
     "rich>=13.7.0",
@@ -43,7 +44,7 @@ dependencies = [
 # ── Optional dependencies ─────────────────────────────────────────────────────
 [project.optional-dependencies]
 
-# Detection engines (optional — scanner works without them)
+# Detection engines (optional - scanner works without them)
 yara    = ["yara-python>=4.5.0"]
 semgrep = ["semgrep>=1.60.0"]
 llm     = ["litellm>=1.30.0", "jsonschema~=4.25.1"]
@@ -77,18 +78,18 @@ dev = [
 [project.urls]
 Homepage      = "https://bawbel.io"
 Documentation = "https://bawbel.io/docs"
-Repository    = "https://github.com/bawbel/bawbel-scanner"
-"Bug Tracker" = "https://github.com/bawbel/bawbel-scanner/issues"
-Changelog     = "https://github.com/bawbel/bawbel-scanner/releases"
-"AVE Standard" = "https://github.com/bawbel/bawbel-ave"
+Repository    = "https://github.com/bawbel/scanner"
+"Bug Tracker" = "https://github.com/bawbel/scanner/issues"
+Changelog     = "https://github.com/bawbel/scanner/releases"
+"AVE Standard" = "https://github.com/bawbel/ave"
 
 # ── CLI entry point ───────────────────────────────────────────────────────────
-# Points to scanner/cli.py:main() — inside the package, always importable
+# Points to scanner/cli.py:main() - inside the package, always importable
 [project.scripts]
 bawbel = "scanner.cli:main"
 
 # ── Package discovery ─────────────────────────────────────────────────────────
-# Explicitly include scanner/ and config/ — exclude tests and scripts
+# Explicitly include scanner/ and config/ - exclude tests and scripts
 [tool.setuptools.packages.find]
 where   = ["."]
 include = ["scanner*", "config*"]
@@ -141,8 +142,8 @@ exclude_lines = [
 exclude_dirs = [".venv", "tests", "build", "dist"]
 skips = [
     "B101",  # assert in tests
-    "B404",  # subprocess — intentional for semgrep integration
-    "B603",  # subprocess list args — correct, never shell=True
+    "B404",  # subprocess - intentional for semgrep integration
+    "B603",  # subprocess list args - correct, never shell=True
 ]
 severity = "medium"
 

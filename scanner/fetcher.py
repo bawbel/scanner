@@ -1,12 +1,12 @@
 """
-Bawbel Scanner — Remote content fetcher.
+Bawbel Scanner - Remote content fetcher.
 
 Fetches MCP server-cards and other remote agentic AI components
 for scanning. Extracts attack surface content into a flat text
 representation that the scan pipeline can process.
 
 Supported sources:
-    MCP Server-Card  — .well-known/mcp-server-card/server.json
+    MCP Server-Card  - .well-known/mcp-server-card/server.json
 """
 
 import json
@@ -18,7 +18,7 @@ from scanner.utils import get_logger
 
 log = get_logger(__name__)
 
-# Paths to try in order — spec is still draft, servers use different paths.
+# Paths to try in order - spec is still draft, servers use different paths.
 # SEP-1649 draft: .well-known/mcp.json
 # Earlier draft:  .well-known/mcp-server-card/server.json
 SERVER_CARD_PATHS = [
@@ -37,7 +37,7 @@ def fetch_url(url: str) -> tuple[Optional[dict], Optional[str]]:
     Fetch a URL and parse the response as JSON.
 
     Returns:
-        (data, error) — data is the parsed JSON dict, error is a string
+        (data, error) - data is the parsed JSON dict, error is a string
         if something went wrong. Exactly one of them is None.
     """
     try:
@@ -46,7 +46,7 @@ def fetch_url(url: str) -> tuple[Optional[dict], Optional[str]]:
 
         req = urllib.request.Request(
             url,
-            headers={"User-Agent": "bawbel-scanner/1.0 (github.com/bawbel/bawbel-scanner)"},
+            headers={"User-Agent": "bawbel-scanner/1.0 (github.com/bawbel/scanner)"},
         )
         with urllib.request.urlopen(req, timeout=FETCH_TIMEOUT) as resp:  # nosec B310  # noqa: S310
             raw = resp.read().decode("utf-8", errors="replace")
@@ -54,13 +54,13 @@ def fetch_url(url: str) -> tuple[Optional[dict], Optional[str]]:
             return data, None
 
     except urllib.error.HTTPError as e:
-        return None, f"HTTP {e.code}: {e.reason} — {url}"
+        return None, f"HTTP {e.code}: {e.reason} - {url}"
     except urllib.error.URLError as e:
-        return None, f"Connection failed: {e.reason} — {url}"
+        return None, f"Connection failed: {e.reason} - {url}"
     except json.JSONDecodeError as e:
-        return None, f"Invalid JSON: {e} — {url}"
+        return None, f"Invalid JSON: {e} - {url}"
     except Exception as e:  # noqa: BLE001
-        return None, f"Fetch error: {e} — {url}"
+        return None, f"Fetch error: {e} - {url}"
 
 
 # ── Server-card URL builder ───────────────────────────────────────────────────
@@ -73,9 +73,9 @@ def build_server_card_url(base_url: str) -> str:
     Handles trailing slashes and existing paths gracefully.
 
     Examples:
-        https://api.example.com   → https://api.example.com/<SERVER_CARD_PATH>
-        https://api.example.com/  → https://api.example.com/<SERVER_CARD_PATH>
-        https://api.example.com/<SERVER_CARD_PATH> → unchanged
+        https://api.example.com  → https://api.example.com/.well-known/mcp-server-card/server.json
+        https://api.example.com/ → https://api.example.com/.well-known/mcp-server-card/server.json
+        https://api.example.com/.well-known/mcp-server-card/server.json → unchanged
     """
     url = base_url.rstrip("/")
     if SERVER_CARD_PATH in url:
@@ -92,7 +92,7 @@ def build_server_card_content(data: dict, source_url: str) -> str:
 
     Extracts every field that is an attack surface:
     - Server name and description
-    - Tool names and descriptions (primary attack surface — AVE-2026-00002)
+    - Tool names and descriptions (primary attack surface - AVE-2026-00002)
     - Tool input parameter descriptions
     - Config schema property descriptions
     - Connection config
@@ -101,7 +101,7 @@ def build_server_card_content(data: dict, source_url: str) -> str:
     """
     lines: list[str] = []
 
-    # Header — source URL so findings reference the real origin
+    # Header - source URL so findings reference the real origin
     lines.append(f"# MCP Server-Card: {source_url}")
     lines.append(f"# Fetched from: {build_server_card_url(source_url)}")
     lines.append("")
@@ -118,7 +118,7 @@ def build_server_card_content(data: dict, source_url: str) -> str:
         lines.append("## Description")
         lines.append(description)
 
-    # Tools — primary attack surface for tool description poisoning
+    # Tools - primary attack surface for tool description poisoning
     tools = data.get("tools", [])
     if tools:
         lines.append("")
@@ -208,7 +208,7 @@ def fetch_server_card(base_url: str) -> tuple[Optional[str], Optional[str]]:
                   e.g. "https://api.example.com" or a full server-card URL
 
     Returns:
-        (content, error) — content is the scannable text string,
+        (content, error) - content is the scannable text string,
         error is a message if nothing was found at any path.
     """
     # If the URL already contains a well-known path, try it directly
@@ -217,7 +217,7 @@ def fetch_server_card(base_url: str) -> tuple[Optional[str], Optional[str]]:
         if err:
             return None, err
         if not isinstance(data, dict):
-            return None, f"Expected JSON object, got {type(data).__name__} — {base_url}"
+            return None, f"Expected JSON object, got {type(data).__name__} - {base_url}"
         return build_server_card_content(data, base_url), None
 
     # Otherwise try each known path in order
@@ -231,10 +231,10 @@ def fetch_server_card(base_url: str) -> tuple[Optional[str], Optional[str]]:
             last_err = err
             continue  # try next path
         if not isinstance(data, dict):
-            last_err = f"Expected JSON object, got {type(data).__name__} — {url}"
+            last_err = f"Expected JSON object, got {type(data).__name__} - {url}"
             continue
         content = build_server_card_content(data, base_url)
-        log.debug("Server-card found at %s — %d lines", path, content.count("\n"))
+        log.debug("Server-card found at %s - %d lines", path, content.count("\n"))
         return content, None
 
     return None, (

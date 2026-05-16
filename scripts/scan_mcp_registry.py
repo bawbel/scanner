@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-scan_mcp_registry.py — Bawbel scanner for the official MCP Registry
+scan_mcp_registry.py - Bawbel scanner for the official MCP Registry
 
 Fetches servers from registry.modelcontextprotocol.io and scans
 their descriptions, titles, and remote URLs for AVE vulnerabilities.
@@ -16,7 +16,7 @@ Requirements:
 
 import argparse
 import json
-import subprocess  # nosec B404  # noqa: S404
+import subprocess  # noqa: S404
 import sys
 import tempfile
 import time
@@ -71,11 +71,11 @@ def build_scan_content(entry: dict) -> str:
     Build a scannable text representation of one MCP registry entry.
 
     The registry schema (2025-12-11) exposes:
-      server.name        — qualified name (e.g. "ac.inference.sh/mcp")
-      server.title       — display title
-      server.description — primary attack surface
-      server.remotes     — list of {type, url} transport endpoints
-      server.repository  — source repo URL
+      server.name        - qualified name (e.g. "ac.inference.sh/mcp")
+      server.title       - display title
+      server.description - primary attack surface
+      server.remotes     - list of {type, url} transport endpoints
+      server.repository  - source repo URL
     """
     server = entry.get("server", {})
     lines: list[str] = []
@@ -87,7 +87,7 @@ def build_scan_content(entry: dict) -> str:
         lines.append(f"# Title: {title}")
     lines.append("")
 
-    # Description — primary attack surface
+    # Description - primary attack surface
     desc = server.get("description", "")
     if desc:
         lines.append("## Description")
@@ -288,7 +288,7 @@ def main() -> None:
             sev = result.get("max_severity", "?")
             print(f"⚠  {n} finding(s) [{sev}] risk {result.get('risk_score', 0):.1f}/10")
             for f in result["findings"]:
-                print(f"     [{f['severity']}] {f.get('ave_id','?')} — {f['title']}")
+                print(f"     [{f['severity']}] {f.get('ave_id','?')} - {f['title']}")
                 if f.get("line"):
                     print(f"       line {f['line']}: {f.get('match','')[:70]}")
         else:
@@ -298,7 +298,7 @@ def main() -> None:
 
     # Summary
     print(f"\n{'═' * 60}")
-    print(f"SCAN COMPLETE — {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}")
+    print(f"SCAN COMPLETE - {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}")
     print(f"{'═' * 60}")
     print(f"  Source:                {REGISTRY_BASE}")
     print(f"  Servers scanned:       {len(entries)}")

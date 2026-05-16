@@ -1,16 +1,16 @@
 """
-Bawbel Scanner — Toxic flow definitions.
+Bawbel Scanner - Toxic flow definitions.
 
 Each FlowDef defines a toxic pair: two capability tags that, when
 detected together in the same file, form a complete attack chain.
 
-Flow definitions are pure data — no logic here. The detector in
+Flow definitions are pure data - no logic here. The detector in
 detector.py reads this table. Adding a new flow = one new entry.
 
 Design principles:
     - Capabilities pair in one direction only (A → B, not B → A twice)
-    - severity is the COMBINED risk — always >= max(individual findings)
-    - cvss_ai_boost is added on top of the highest individual finding score
+    - severity is the COMBINED risk - always >= max(individual findings)
+    - aivss_boost is added on top of the highest individual finding score
     - Each flow has a unique flow_id in kebab-case
     - owasp_mcp maps to OWASP MCP Top 10 for the combined attack class
 
@@ -32,7 +32,7 @@ class FlowDef:
     Definition of a toxic capability pair.
 
     cap_a + cap_b in the same file → ToxicFlow is detected.
-    cap_a and cap_b are interchangeable — order does not matter for detection.
+    cap_a and cap_b are interchangeable - order does not matter for detection.
     """
 
     flow_id: str  # unique kebab-case identifier
@@ -40,14 +40,14 @@ class FlowDef:
     cap_a: str  # first capability tag
     cap_b: str  # second capability tag (different from cap_a)
     severity: str  # CRITICAL | HIGH | MEDIUM
-    cvss_ai: float  # combined risk score
+    aivss_score: float  # combined AIVSS v0.8 score
     description: str  # what the combined attack achieves
     owasp_mcp: tuple[str, ...]
     remediation: str
 
 
 # ── Flow definitions ──────────────────────────────────────────────────────────
-# Ordered by combined CVSS-AI score descending.
+# Ordered by combined AIVSS score descending.
 
 FLOW_DEFINITIONS: list[FlowDef] = [
     FlowDef(
@@ -56,15 +56,15 @@ FLOW_DEFINITIONS: list[FlowDef] = [
         cap_a="credential-read",
         cap_b="data-exfil",
         severity="CRITICAL",
-        cvss_ai=9.8,
+        aivss_score=9.8,
         description=(
             "Component reads credentials or secrets AND transmits data externally. "
-            "Complete credential theft attack chain — reads API keys, .env files, or "
+            "Complete credential theft attack chain - reads API keys, .env files, or "
             "tokens, then encodes and exfiltrates them to an attacker-controlled endpoint."
         ),
         owasp_mcp=("MCP01", "MCP05"),
         remediation=(
-            "1. Remove all credential-read patterns — agent should never instruct "
+            "1. Remove all credential-read patterns - agent should never instruct "
             "the model to read .env, API keys, or tokens. "
             "2. Remove all external transmission instructions. "
             "3. If both cannot be removed, isolate them into separate components "
@@ -77,15 +77,15 @@ FLOW_DEFINITIONS: list[FlowDef] = [
         cap_a="external-fetch",
         cap_b="command-exec",
         severity="CRITICAL",
-        cvss_ai=9.7,
+        aivss_score=9.7,
         description=(
             "Component fetches instructions from an external URL AND executes shell "
-            "commands. Classic RCE attack chain — fetches a malicious script from an "
+            "commands. Classic RCE attack chain - fetches a malicious script from an "
             "attacker-controlled server and pipes it directly to bash or sh."
         ),
         owasp_mcp=("MCP04", "MCP05"),
         remediation=(
-            "1. Remove all external URL fetches — instructions must be embedded, "
+            "1. Remove all external URL fetches - instructions must be embedded, "
             "not fetched at runtime. "
             "2. Remove all shell execution patterns. "
             "3. Never combine external fetch with command execution in the same component."
@@ -97,10 +97,10 @@ FLOW_DEFINITIONS: list[FlowDef] = [
         cap_a="supply-chain",
         cap_b="command-exec",
         severity="CRITICAL",
-        cvss_ai=9.6,
+        aivss_score=9.6,
         description=(
             "Component imports or modifies a third-party skill or plugin AND executes "
-            "shell commands. Supply chain attack chain — installs a malicious component "
+            "shell commands. Supply chain attack chain - installs a malicious component "
             "that executes arbitrary code on the target system."
         ),
         owasp_mcp=("MCP04", "MCP05"),
@@ -116,11 +116,11 @@ FLOW_DEFINITIONS: list[FlowDef] = [
         cap_a="goal-override",
         cap_b="command-exec",
         severity="CRITICAL",
-        cvss_ai=9.5,
+        aivss_score=9.5,
         description=(
             "Component overrides agent goals AND executes shell commands. "
             "The override disables safety constraints, then execution runs "
-            "arbitrary commands — a complete safety bypass + RCE chain."
+            "arbitrary commands - a complete safety bypass + RCE chain."
         ),
         owasp_mcp=("MCP06", "MCP05"),
         remediation=(
@@ -135,10 +135,10 @@ FLOW_DEFINITIONS: list[FlowDef] = [
         cap_a="lateral-move",
         cap_b="command-exec",
         severity="CRITICAL",
-        cvss_ai=9.4,
+        aivss_score=9.4,
         description=(
             "Component instructs the agent to pivot to other systems AND execute "
-            "commands. Complete lateral movement chain — gains foothold on adjacent "
+            "commands. Complete lateral movement chain - gains foothold on adjacent "
             "system and executes arbitrary code."
         ),
         owasp_mcp=("MCP05", "MCP02"),
@@ -154,11 +154,11 @@ FLOW_DEFINITIONS: list[FlowDef] = [
         cap_a="tool-poison",
         cap_b="data-exfil",
         severity="CRITICAL",
-        cvss_ai=9.3,
+        aivss_score=9.3,
         description=(
             "Component poisons tool descriptions AND exfiltrates data. "
             "The tool poisoning hijacks agent behavior, while the exfil "
-            "instructions transmit the stolen data — a silent harvest chain."
+            "instructions transmit the stolen data - a silent harvest chain."
         ),
         owasp_mcp=("MCP03", "MCP01"),
         remediation=(
@@ -173,11 +173,11 @@ FLOW_DEFINITIONS: list[FlowDef] = [
         cap_a="identity-spoof",
         cap_b="permission-claim",
         severity="CRITICAL",
-        cvss_ai=9.2,
+        aivss_score=9.2,
         description=(
             "Component impersonates a trusted entity AND claims elevated permissions. "
             "The impersonation establishes false trust, the permission claim exploits "
-            "it — a complete privilege escalation via social engineering chain."
+            "it - a complete privilege escalation via social engineering chain."
         ),
         owasp_mcp=("MCP09", "MCP02"),
         remediation=(
@@ -192,11 +192,11 @@ FLOW_DEFINITIONS: list[FlowDef] = [
         cap_a="persistence",
         cap_b="data-exfil",
         severity="CRITICAL",
-        cvss_ai=9.1,
+        aivss_score=9.1,
         description=(
             "Component establishes persistence AND exfiltrates data. "
             "The persistence ensures the exfiltration continues across "
-            "sessions and context resets — a long-running data harvest chain."
+            "sessions and context resets - a long-running data harvest chain."
         ),
         owasp_mcp=("MCP06", "MCP01"),
         remediation=(
@@ -211,17 +211,17 @@ FLOW_DEFINITIONS: list[FlowDef] = [
         cap_a="context-inject",
         cap_b="memory-write",
         severity="HIGH",
-        cvss_ai=8.9,
+        aivss_score=8.9,
         description=(
             "Component injects instructions via context AND writes to agent memory. "
             "The context injection delivers the payload, the memory write ensures "
-            "it persists across turns — a durable behavioral modification chain."
+            "it persists across turns - a durable behavioral modification chain."
         ),
         owasp_mcp=("MCP10", "MCP06"),
         remediation=(
             "1. Remove all context injection patterns. "
             "2. Remove all instructions to write to agent memory. "
-            "3. Treat all external content as untrusted — never inject into memory."
+            "3. Treat all external content as untrusted - never inject into memory."
         ),
     ),
     FlowDef(
@@ -230,11 +230,11 @@ FLOW_DEFINITIONS: list[FlowDef] = [
         cap_a="goal-override",
         cap_b="data-exfil",
         severity="HIGH",
-        cvss_ai=8.8,
+        aivss_score=8.8,
         description=(
             "Component overrides agent goals AND exfiltrates data. "
             "The override disables safety constraints, the exfil transmits "
-            "whatever the agent can access — a combined hijack + harvest chain."
+            "whatever the agent can access - a combined hijack + harvest chain."
         ),
         owasp_mcp=("MCP06", "MCP01"),
         remediation=(
@@ -248,11 +248,11 @@ FLOW_DEFINITIONS: list[FlowDef] = [
         cap_a="scope-expand",
         cap_b="data-exfil",
         severity="HIGH",
-        cvss_ai=8.7,
+        aivss_score=8.7,
         description=(
             "Component expands its declared scope to access undeclared resources "
             "AND exfiltrates data. Accesses more than declared, transmits the excess "
-            "— a scope creep + exfiltration chain."
+            "- a scope creep + exfiltration chain."
         ),
         owasp_mcp=("MCP02", "MCP01"),
         remediation=(
@@ -267,11 +267,11 @@ FLOW_DEFINITIONS: list[FlowDef] = [
         cap_a="covert-channel",
         cap_b="persistence",
         severity="HIGH",
-        cvss_ai=8.6,
+        aivss_score=8.6,
         description=(
             "Component uses a covert channel (steganography, timing) to exfiltrate "
             "data AND establishes persistence. The covert channel evades detection, "
-            "the persistence ensures long-term access — a stealthy harvest chain."
+            "the persistence ensures long-term access - a stealthy harvest chain."
         ),
         owasp_mcp=("MCP08", "MCP06"),
         remediation=(

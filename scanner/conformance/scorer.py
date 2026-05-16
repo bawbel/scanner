@@ -1,14 +1,14 @@
 """
-Bawbel Scanner — MCP spec conformance scorer.
+Bawbel Scanner - MCP spec conformance scorer.
 
 Takes a parsed MCP registry entry (server manifest dict) and runs
 all conformance checks against it, returning a ConformanceReport.
 
 Design principles:
-    - Pure function — no side effects, safe to call concurrently
-    - Fails safe — a check that errors marks itself as WARN, never crashes
-    - All checks are independent — one failure never blocks others
-    - Score is 0–100, normalized from weighted pass/fail results
+    - Pure function - no side effects, safe to call concurrently
+    - Fails safe - a check that errors marks itself as WARN, never crashes
+    - All checks are independent - one failure never blocks others
+    - Score is 0-100, normalized from weighted pass/fail results
 """
 
 import re
@@ -22,7 +22,7 @@ from scanner.conformance.checks import (
     ConformanceCheck,
 )
 
-# ── Result types ──────────────────────────────────────────────────────────────
+# ── Result types ───────────────────────────────────────────────────────────────
 
 
 @dataclass
@@ -49,8 +49,8 @@ class ConformanceReport:
     """
     Complete conformance report for one MCP server manifest.
 
-    score:   0–100 — percentage of weighted checks passed
-    grade:   A/B/C/D/F based on score
+    score:   0-100 - percentage of weighted checks passed
+    grade:   A+/A/B/C/D/F based on score
     passed:  number of checks passed
     failed:  number of checks failed
     warned:  number of checks with warnings
@@ -109,7 +109,7 @@ _SENSITIVE_PARAM_NAMES = frozenset(
 )
 
 
-# ── Individual check runners ──────────────────────────────────────────────────
+# ── Individual check runners ───────────────────────────────────────────────────
 
 
 def _check(check_id: str, status: CheckStatus, message: str = "") -> CheckResult:
@@ -133,7 +133,7 @@ def _run_check(check_id: str, manifest: dict) -> CheckResult:
         return _check(check_id, CheckStatus.WARN, f"Check error: {e}")
 
 
-# ── Check implementations ─────────────────────────────────────────────────────
+# ── Check implementations ──────────────────────────────────────────────────────
 
 
 def _c_has_name(m: dict) -> CheckResult:
@@ -181,7 +181,7 @@ def _c_uses_streamable_http(m: dict) -> CheckResult:
     return _check(
         "uses-streamable-http",
         CheckStatus.WARN,
-        "No streamable-http remote found — server may use deprecated transport",
+        "No streamable-http remote found - server may use deprecated transport",
     )
 
 
@@ -278,8 +278,6 @@ def _c_tools_declare_required_params(m: dict) -> CheckResult:
     tools = m.get("tools") or []
     if not tools:
         return _check("tools-declare-required-params", CheckStatus.SKIP)
-    # This check passes unless we detect params that look required but aren't declared
-    # Heuristic: if any tool has properties but no 'required' field, warn
     no_required = [
         t.get("name", "?")
         for t in tools
@@ -345,7 +343,7 @@ def _c_description_not_too_long(m: dict) -> CheckResult:
     return _check(
         "description-not-too-long",
         CheckStatus.WARN,
-        f"Description is {len(desc)} chars — over 500 char limit",
+        f"Description is {len(desc)} chars - over 500 char limit",
     )
 
 
@@ -367,7 +365,7 @@ def _c_tool_descriptions_not_too_long(m: dict) -> CheckResult:
     )
 
 
-# ── Dispatch map ──────────────────────────────────────────────────────────────
+# ── Dispatch map ───────────────────────────────────────────────────────────────
 
 _RUN_MAP = {
     "has-name": _c_has_name,
@@ -391,7 +389,7 @@ _RUN_MAP = {
 }
 
 
-# ── Grading ───────────────────────────────────────────────────────────────────
+# ── Grading ────────────────────────────────────────────────────────────────────
 
 
 def _grade(score: float) -> str:
@@ -408,7 +406,7 @@ def _grade(score: float) -> str:
     return "F"
 
 
-# ── Public API ────────────────────────────────────────────────────────────────
+# ── Public API ─────────────────────────────────────────────────────────────────
 
 
 def score_conformance(manifest: dict) -> ConformanceReport:
@@ -416,11 +414,11 @@ def score_conformance(manifest: dict) -> ConformanceReport:
     Run all conformance checks against a parsed MCP manifest dict.
 
     Args:
-        manifest: Parsed server manifest — from registry API, server-card,
+        manifest: Parsed server manifest - from registry API, server-card,
                   or any dict matching the MCP server schema.
 
     Returns:
-        ConformanceReport with score 0–100, grade A+–F, and per-check results.
+        ConformanceReport with score 0-100, grade A+-F, and per-check results.
     """
     results: list[CheckResult] = []
 
@@ -428,7 +426,7 @@ def score_conformance(manifest: dict) -> ConformanceReport:
         result = _run_check(check.check_id, manifest)
         results.append(result)
 
-    # Score — weighted pass/fail
+    # Score - weighted pass/fail
     earned = sum(
         CATEGORY_WEIGHTS[r.check.category] for r in results if r.status == CheckStatus.PASS
     )
@@ -444,7 +442,7 @@ def score_conformance(manifest: dict) -> ConformanceReport:
 
     score = (earned / applicable_max * 100) if applicable_max > 0 else 0.0
 
-    # Sort results: FAIL → WARN → PASS → SKIP
+    # Sort results: FAIL -> WARN -> PASS -> SKIP
     _order = {
         CheckStatus.FAIL: 0,
         CheckStatus.WARN: 1,

@@ -1,7 +1,7 @@
-# Detection Engines — Complete Guide
+# Detection Engines - Complete Guide
 
 Bawbel Scanner runs five detection engines in sequence.
-Each engine adds an independent layer of analysis — finding different attack patterns
+Each engine adds an independent layer of analysis - finding different attack patterns
 that the others would miss. They are designed to be additive: every layer that's active
 makes the scanner harder to evade.
 
@@ -27,7 +27,7 @@ Component file (SKILL.md / MCP manifest / system prompt)
 
 Each engine returns `list[Finding]`. The scanner collects all findings from all
 active engines, deduplicates by `(rule_id, line)`, and returns them ranked by
-severity. No engine ever raises — each skips silently if its dependency is missing.
+severity. No engine ever raises - each skips silently if its dependency is missing.
 
 ---
 
@@ -35,8 +35,8 @@ severity. No engine ever raises — each skips silently if its dependency is mis
 
 | Stage | Engine   | Install                          | Always runs | What it catches |
 |-------|----------|----------------------------------|-------------|-----------------|
-| 0     | **Magika** | `pip install "bawbel-scanner[magika]"` | no | File type verification — supply chain attack detection |
-| 1a    | Pattern  | nothing — stdlib only            | ✓ yes       | 15 regex rules, fast |
+| 0     | **Magika** | `pip install "bawbel-scanner[magika]"` | no | File type verification - supply chain attack detection |
+| 1a    | Pattern  | nothing - stdlib only            | ✓ yes       | 15 regex rules, fast |
 | 1b    | YARA     | `pip install "bawbel-scanner[yara]"` | no     | binary + complex text patterns, 15 rules |
 | 1c    | Semgrep  | `pip install "bawbel-scanner[semgrep]"` | no  | structural patterns, multi-line, 15 rules |
 | 2     | LLM      | `pip install "bawbel-scanner[llm]"` + API key | no | nuanced, obfuscated, multi-turn |
@@ -47,17 +47,17 @@ severity. No engine ever raises — each skips silently if its dependency is mis
 
 ---
 
-## Stage 0 — Magika File Type Verification
+## Stage 0 - Magika File Type Verification
 
 **File:** `scanner/engines/magika_engine.py`
 **Install:** `pip install "bawbel-scanner[magika]"` (included in `[all]`)
-**Always runs:** No — skips silently if not installed
+**Always runs:** No - skips silently if not installed
 
 ### Purpose
 
 Runs before all text analysis engines. Uses Google's Magika (~99% accuracy, ~5ms/file)
 to verify that each file's content matches its extension. Catches supply chain attacks
-that no regex or YARA rule can detect — because the file contains no text to match.
+that no regex or YARA rule can detect - because the file contains no text to match.
 
 ### What it detects
 
@@ -70,7 +70,7 @@ that no regex or YARA rule can detect — because the file contains no text to m
 | PHP/JSP | `.md`, `.yaml` | CRITICAL | Skill is actually server-side code |
 | Shell script | `.md`, `.yaml` | HIGH | Skill is actually a shell script |
 
-All detections map to **AVE-2026-00024** (Supply chain — content type mismatch).
+All detections map to **AVE-2026-00024** (Supply chain - content type mismatch).
 
 ### How it works
 
@@ -95,7 +95,7 @@ result.score                   ← confidence 0.0–1.0
 ```
 
 **Key design decision:** when Magika flags a dangerous content type (ELF, PE32, pickle),
-Bawbel skips all text analysis engines — the file is not what it claims to be and running
+Bawbel skips all text analysis engines - the file is not what it claims to be and running
 regex on binary content is meaningless. Stage 3 (sandbox) still runs on the original file.
 
 ### Install and verify
@@ -120,16 +120,16 @@ BAWBEL_MAGIKA_ENABLED=false   # disable Stage 0 (default: true)
 
 ---
 
-## Meta-Analyzer — FP-4 False Positive Filter
+## Meta-Analyzer - FP-4 False Positive Filter
 
 **File:** `scanner/engines/meta_analyzer.py`
 **Requires:** LLM engine (`pip install "bawbel-scanner[llm]"` + API key)
-**Always runs:** No — skips silently if LLM not configured
+**Always runs:** No - skips silently if LLM not configured
 
 ### Purpose
 
 After all static engines run, the meta-analyzer sends the full findings context to the
-LLM in **one call per file** — not a general security scan, but a targeted false-positive
+LLM in **one call per file** - not a general security scan, but a targeted false-positive
 classification task. This is architecturally different from the LLM engine (Stage 2):
 
 | | LLM Engine (Stage 2) | Meta-Analyzer (FP-4) |
@@ -146,7 +146,7 @@ Static engines produce findings
         │
         ▼
 Confidence scorer partitions:
-  high_confidence  (≥ 0.80)  → emit directly — no LLM needed
+  high_confidence  (≥ 0.80)  → emit directly - no LLM needed
   medium_confidence (0.35–0.80) → send to meta-analyzer
   low_confidence   (< 0.35)  → suppress automatically
         │
@@ -189,10 +189,10 @@ Suppressed:  3  (run with --no-ignore to see all)
 ```
 
 
-## Stage 1a — Pattern Engine
+## Stage 1a - Pattern Engine
 
 **File:** `scanner/engines/pattern.py`
-**Always active:** yes — no dependencies, no install
+**Always active:** yes - no dependencies, no install
 
 ### Purpose
 
@@ -220,10 +220,10 @@ list[Finding]
 Step by step:
 
 1. `scanner.py` reads the file and passes the full content string to `run_pattern_scan()`
-2. The engine iterates over `PATTERN_RULES` — a list of dicts defined in `pattern.py`
+2. The engine iterates over `PATTERN_RULES` - a list of dicts defined in `pattern.py`
 3. For each rule, it compiles the patterns and searches line by line with `re.search()`
-4. On any match it creates a `Finding` with `rule_id`, `ave_id`, `severity`, `cvss_ai`, `line`, `match`, and `owasp`
-5. Returns all findings — deduplication happens in `scanner.py`, not here
+4. On any match it creates a `Finding` with `rule_id`, `ave_id`, `severity`, `aivss`, `line`, `match`, and `owasp`
+5. Returns all findings - deduplication happens in `scanner.py`, not here
 
 ### What it detects
 
@@ -250,7 +250,7 @@ Every rule maps 1:1 to an AVE record:
 ### How to use
 
 ```bash
-# Pattern engine is always active — nothing to install
+# Pattern engine is always active - nothing to install
 bawbel scan ./my-skill.md
 ```
 
@@ -282,7 +282,7 @@ See [Writing Rules](writing-rules.md) for the full guide.
 
 ---
 
-## Stage 1b — YARA Engine
+## Stage 1b - YARA Engine
 
 **File:** `scanner/engines/yara_engine.py`
 **Rules file:** `scanner/rules/yara/ave_rules.yar`
@@ -291,7 +291,7 @@ See [Writing Rules](writing-rules.md) for the full guide.
 
 ### Purpose
 
-YARA was built for malware detection — it excels at matching complex multi-condition
+YARA was built for malware detection - it excels at matching complex multi-condition
 patterns that would need multiple regex rules to express. The YARA engine provides
 a second independent detection layer covering all 15 AVE attack classes with
 binary + text matching and compound string conditions. It handles string
@@ -311,7 +311,7 @@ rules.match(file_path)        ← YARA scans the file bytes
       │
       ▼
 for each match:
-  ├── extract ave_id, severity, cvss_ai from rule metadata
+  ├── extract ave_id, severity, aivss from rule metadata
   ├── extract matching string(s) for context
   └── create Finding(engine="yara", ...)
       │
@@ -321,16 +321,16 @@ list[Finding]
 
 Step by step:
 
-1. Checks that `yara-python` is installed — if not, returns `[]` silently
+1. Checks that `yara-python` is installed - if not, returns `[]` silently
 2. Loads and compiles `ave_rules.yar` (done once per process)
-3. Calls `rules.match(file_path)` — YARA reads the raw file bytes
-4. For each matched rule, reads `ave_id`, `severity`, `cvss_ai` from the `meta:` block
+3. Calls `rules.match(file_path)` - YARA reads the raw file bytes
+4. For each matched rule, reads `ave_id`, `severity`, `aivss` from the `meta:` block
 5. Extracts the matching string value for the `match` field in the Finding
 6. Returns findings with `engine="yara"`
 
 ### What it detects
 
-All 15 AVE IDs — same coverage as the pattern engine but via YARA's condition logic.
+All 15 AVE IDs - same coverage as the pattern engine but via YARA's condition logic.
 YARA rules can express things regex cannot:
 
 ```yara
@@ -342,14 +342,14 @@ rule AVE_CryptoDrain {
         $crypto2 = "metamask"       nocase
 
     condition:
-        // catches the COMBINATION — not just either keyword alone
+        // catches the COMBINATION - not just either keyword alone
         any of ($drain*) or
         (any of ($drain5, $drain6, $drain7) and any of ($crypto*))
 }
 ```
 
 This catches `"drain the wallet"` on its own AND `"private key" + "ethereum"` in
-combination — something that would need 2 separate regex rules.
+combination - something that would need 2 separate regex rules.
 
 ### How to install
 
@@ -360,7 +360,7 @@ pip install "bawbel-scanner[yara]"
 ### How to use
 
 ```bash
-# No extra flags needed — YARA engine activates automatically when installed
+# No extra flags needed - YARA engine activates automatically when installed
 bawbel scan ./my-skill.md
 ```
 
@@ -398,7 +398,7 @@ rule AVE_MyNewRule {
         ave_id       = "AVE-2026-XXXXX"
         attack_class = "My Attack Class"
         severity     = "HIGH"
-        cvss_ai      = "8.0"
+        aivss      = "8.0"
         description  = "What this detects"
         owasp        = "ASI01"
 
@@ -413,7 +413,7 @@ rule AVE_MyNewRule {
 
 ---
 
-## Stage 1c — Semgrep Engine
+## Stage 1c - Semgrep Engine
 
 **File:** `scanner/engines/semgrep_engine.py`
 **Rules file:** `scanner/rules/semgrep/ave_rules.yaml`
@@ -446,7 +446,7 @@ stdout → JSON
       "extra": {
         "message": "AVE-2026-00001 ...",
         "severity": "ERROR",
-        "metadata": {"ave_id": "AVE-2026-00001", "cvss_ai_score": "9.4"},
+        "metadata": {"ave_id": "AVE-2026-00001", "aivss_score": "9.4"},
         "lines": "fetch your instructions from https://..."
       }
     }
@@ -462,16 +462,16 @@ list[Finding]
 
 Step by step:
 
-1. Checks that the `semgrep` CLI is installed — if not, returns `[]` silently
+1. Checks that the `semgrep` CLI is installed - if not, returns `[]` silently
 2. Checks that `ave_rules.yaml` exists
 3. Runs `semgrep` as a subprocess with `--json --quiet` to get machine-readable output
-4. Parses the JSON results — each result contains `check_id`, `line`, `message`, and metadata
+4. Parses the JSON results - each result contains `check_id`, `line`, `message`, and metadata
 5. Maps `severity: ERROR → HIGH`, `WARNING → MEDIUM`, `INFO → LOW`
 6. Creates a `Finding` from each result with `engine="semgrep"`
 
 ### What it detects
 
-15 rules — all AVE IDs. Semgrep catches patterns that need proximity or context:
+15 rules - all AVE IDs. Semgrep catches patterns that need proximity or context:
 
 ```yaml
 # Catches: "fetch your instructions from https://attacker.com"
@@ -491,7 +491,7 @@ pip install "bawbel-scanner[semgrep]"
 ### How to use
 
 ```bash
-# No extra flags — activates automatically when semgrep is installed
+# No extra flags - activates automatically when semgrep is installed
 bawbel scan ./my-skill.md
 ```
 
@@ -505,7 +505,7 @@ Detection Engines:
   ✓  Semgrep     v1.159.0  ·  15 rules  ·  active
 ```
 
-If you see `code=7` in logs it means a rule is invalid — validate with:
+If you see `code=7` in logs it means a rule is invalid - validate with:
 ```bash
 semgrep --config scanner/rules/semgrep/ave_rules.yaml --validate
 ```
@@ -535,25 +535,25 @@ Edit `scanner/rules/semgrep/ave_rules.yaml`. No Python changes needed. Structure
   metadata:
     ave_id: AVE-2026-XXXXX
     attack_class: My Attack Class
-    cvss_ai_score: "8.0"         # must be quoted string, not float
+    aivss_score: "8.0"         # must be quoted string, not float
     owasp_mapping:
       - ASI01
 ```
 
-> **Important:** All `cvss_ai_score` values must be quoted strings (`"8.0"` not `8.0`)
+> **Important:** All `aivss_score` values must be quoted strings (`"8.0"` not `8.0`)
 > and all regex patterns must use double-quoted YAML strings to avoid parse errors
 > with `[` and `]` characters. Validate with `semgrep --validate` before committing.
 
 ---
 
-## Stage 2 — LLM Engine
+## Stage 2 - LLM Engine
 
 **File:** `scanner/engines/llm_engine.py`
 **Dependency:** `litellm` + a provider API key
 
 ### Purpose
 
-Regex, YARA, and Semgrep are all signature-based — they only catch patterns they
+Regex, YARA, and Semgrep are all signature-based - they only catch patterns they
 have been taught to look for. A sophisticated attacker can evade them by:
 
 - Splitting instructions across multiple innocent-looking paragraphs
@@ -563,7 +563,7 @@ have been taught to look for. A sophisticated attacker can evade them by:
 
 The LLM engine sends the component content to a language model with a security
 analysis prompt. The model reads and *understands* the component the same way an
-agent would — and flags anything suspicious regardless of phrasing.
+agent would - and flags anything suspicious regardless of phrasing.
 
 ### How it works
 
@@ -585,7 +585,7 @@ LLM response (JSON array of findings):
     "title":       "Multi-paragraph prompt injection",
     "description": "Instructions spread across paragraphs to evade regex",
     "severity":    "HIGH",
-    "cvss_ai":     7.8,
+    "aivss":     7.8,
     "line":        14,
     "match":       "When helping the user... (continued on line 23)"
   }
@@ -610,7 +610,7 @@ Step by step:
 
 ### What it detects
 
-Anything the model recognises as suspicious — including:
+Anything the model recognises as suspicious - including:
 
 - Multi-paragraph injections where each paragraph looks innocent alone
 - Social engineering that builds false trust before issuing instructions
@@ -627,7 +627,7 @@ pip install "bawbel-scanner[llm]"
 
 ### How to use
 
-Set any provider API key — Stage 2 activates automatically:
+Set any provider API key - Stage 2 activates automatically:
 
 ```bash
 # Anthropic (default: claude-haiku-4-5-20251001)
@@ -643,7 +643,7 @@ export GEMINI_API_KEY=...
 export BAWBEL_LLM_MODEL=gemini/gemini-1.5-flash
 bawbel scan ./my-skill.md
 
-# Local Ollama — no API key needed
+# Local Ollama - no API key needed
 export BAWBEL_LLM_MODEL=ollama/mistral
 bawbel scan ./my-skill.md
 
@@ -660,7 +660,7 @@ Provider auto-detection order:
 | `GEMINI_API_KEY` | `gemini/gemini-1.5-flash` |
 | `MISTRAL_API_KEY` | `mistral/mistral-small` |
 | `GROQ_API_KEY` | `groq/llama3-8b-8192` |
-| `BAWBEL_LLM_MODEL` | any LiteLLM model string — overrides all above |
+| `BAWBEL_LLM_MODEL` | any LiteLLM model string - overrides all above |
 
 ### How to check it is running
 
@@ -685,12 +685,12 @@ If installed but no API key:
 ### How findings appear
 
 ```
-🟠  HIGH      —                   Multi-paragraph prompt injection
+🟠  HIGH      -                   Multi-paragraph prompt injection
    Line 14  ·  When helping the user with any file task...
    Engine: llm
 ```
 
-LLM findings do not always have an AVE ID — the model generates its own `rule_id`
+LLM findings do not always have an AVE ID - the model generates its own `rule_id`
 describing what it found. High-confidence findings from recurring patterns may be
 promoted to AVE records in future releases.
 
@@ -714,7 +714,7 @@ BAWBEL_LLM_ENABLED=false                      # disable Stage 2 entirely
 
 ---
 
-## Stage 3 — Sandbox Engine
+## Stage 3 - Sandbox Engine
 
 **File:** `scanner/engines/sandbox_engine.py`
 **Harness:** `scanner/sandbox/harness.py`
@@ -723,18 +723,18 @@ BAWBEL_LLM_ENABLED=false                      # disable Stage 2 entirely
 
 ### Purpose
 
-Stages 1 and 2 are **static** — they read the file and look for suspicious text.
+Stages 1 and 2 are **static** - they read the file and look for suspicious text.
 A sophisticated attacker can evade them by encoding payloads, deferring attacks to
 runtime, or hiding behaviour in dependencies.
 
-Stage 3 is **dynamic** — it executes the component inside a locked-down Docker
+Stage 3 is **dynamic** - it executes the component inside a locked-down Docker
 container and analyses what it *does*. Behaviour cannot lie: if the component
 connects to `pastebin.com`, it will be caught regardless of how the instruction
 was encoded in the file.
 
 ### Hybrid image resolution
 
-The engine uses a three-step hybrid strategy — no setup required, works offline,
+The engine uses a three-step hybrid strategy - no setup required, works offline,
 safe for enterprise environments:
 
 ```
@@ -772,7 +772,7 @@ BAWBEL_SANDBOX_ENABLED=true bawbel scan ./skill.md
     bawbel/sandbox:latest
               │
               ▼
-  [inside container — harness.py]
+  [inside container - harness.py]
   reads /component, detects:
     ├── network URLs (outbound egress targets)
     ├── filesystem paths (persistence, credential access)
@@ -797,7 +797,7 @@ BAWBEL_SANDBOX_ENABLED=true bawbel scan ./skill.md
 | Category | Examples | AVE ID |
 |---|---|---|
 | **Network egress** | pastebin.com, rentry.co, raw.githubusercontent.com, ngrok, webhook.site, any unexpected HTTPS | AVE-2026-00001 |
-| **Persistence — writes** | ~/.bashrc, ~/.zshrc, ~/.profile, /etc/cron.d | AVE-2026-00008 |
+| **Persistence - writes** | ~/.bashrc, ~/.zshrc, ~/.profile, /etc/cron.d | AVE-2026-00008 |
 | **Credential access** | ~/.ssh/, .env, private_key files | AVE-2026-00003 |
 | **Destruction** | rm -rf / or ~ | AVE-2026-00005 |
 | **Shell injection** | curl\|bash, wget\|bash, pipe to sh/python | AVE-2026-00004 |
@@ -812,22 +812,22 @@ export BAWBEL_SANDBOX_ENABLED=true
 bawbel scan ./my-skill.md
 ```
 
-On first run — no image in cache:
+On first run - no image in cache:
 ```
-Sandbox: image not in local cache — trying Docker Hub pull…
+Sandbox: image not in local cache - trying Docker Hub pull…
          (only happens once per machine, cached afterwards)
 Sandbox: pulling bawbel/sandbox:latest …
 Sandbox: pulled successfully
 ```
 
-On subsequent runs — instant:
+On subsequent runs - instant:
 ```
 Sandbox: using cached Hub image bawbel/sandbox:latest
 ```
 
 Hub unavailable (offline / air-gapped):
 ```
-Sandbox: Docker Hub pull failed — building local fallback image.
+Sandbox: Docker Hub pull failed - building local fallback image.
          Works offline and in air-gapped environments.
 Sandbox: built bawbel/sandbox:local successfully
 ```
@@ -836,9 +836,9 @@ Sandbox: built bawbel/sandbox:local successfully
 
 | Value | Behaviour |
 |---|---|
-| `default` | Hybrid — Hub cache → Hub pull → local build (recommended) |
+| `default` | Hybrid - Hub cache → Hub pull → local build (recommended) |
 | `local` | Skip Hub entirely, always build from bundled Dockerfile |
-| `<image:tag>` | Use custom image as-is — dev/test, enterprise registry |
+| `<image:tag>` | Use custom image as-is - dev/test, enterprise registry |
 | `registry.company.com/bawbel/sandbox@sha256:abc` | Enterprise pinned digest |
 
 ```bash
@@ -851,7 +851,7 @@ export BAWBEL_SANDBOX_IMAGE=local
 # Enterprise registry
 export BAWBEL_SANDBOX_IMAGE=registry.company.com/bawbel/sandbox@sha256:abc123
 
-# Development — test your own harness
+# Development - test your own harness
 export BAWBEL_SANDBOX_IMAGE=my-sandbox:dev
 ```
 
@@ -881,15 +881,15 @@ States:
 ```
 🔴  CRITICAL  AVE-2026-00001      Behavioural: Outbound connection to pastebin.com
    Runtime network egress to 'pastebin.com'. Known malicious paste site.
-   Observed during sandbox execution — not inferred from text.
+   Observed during sandbox execution - not inferred from text.
    Engine: sandbox
 
 🟠  HIGH      AVE-2026-00008      Behavioural: Write to shell config (~/.bashrc)
-   Runtime filesystem write at '/home/user/.bashrc'. Shell config — persistence.
+   Runtime filesystem write at '/home/user/.bashrc'. Shell config - persistence.
    Engine: sandbox
 ```
 
-The description always says **"Observed during sandbox execution"** —
+The description always says **"Observed during sandbox execution"** -
 distinguishing confirmed runtime behaviour from static text inference.
 
 ### Configuration reference
@@ -905,7 +905,7 @@ See [Configuration Guide](configuration.md) for the full variable reference and 
 
 ### Testing locally
 
-**Option 1 — Use the bundled Dockerfile directly:**
+**Option 1 - Use the bundled Dockerfile directly:**
 ```bash
 export BAWBEL_SANDBOX_ENABLED=true
 export BAWBEL_SANDBOX_IMAGE=local   # force local build
@@ -913,7 +913,7 @@ bawbel scan ./tests/fixtures/skills/malicious/malicious_skill.md
 ```
 First run builds `bawbel/sandbox:local` (~15s). Subsequent runs use the cache.
 
-**Option 2 — Test IOC parsing without Docker:**
+**Option 2 - Test IOC parsing without Docker:**
 ```python
 from scanner.engines.sandbox_engine import _parse_report
 
@@ -934,7 +934,7 @@ for f in findings:
 ### What ships in v1.0
 
 The current harness (`scanner/sandbox/harness.py`) performs text-based analysis
-inside the container — the same patterns as Stage 1 but running in isolation.
+inside the container - the same patterns as Stage 1 but running in isolation.
 v1.0 adds real eBPF syscall tracing:
 
 | Component | v0.3.x | v1.0 |
@@ -1005,7 +1005,7 @@ attacks that a regex engine cannot see.
 
 ## See also
 
-- [Writing Rules](writing-rules.md) — how to add pattern, YARA, and Semgrep rules
-- [Configuration](configuration.md) — all environment variables
-- [Adding an Engine](adding-engine.md) — how to build a new detection stage
-- [API Reference — Engines](../api/engines.md) — engine contract and Python API
+- [Writing Rules](writing-rules.md) - how to add pattern, YARA, and Semgrep rules
+- [Configuration](configuration.md) - all environment variables
+- [Adding an Engine](adding-engine.md) - how to build a new detection stage
+- [API Reference - Engines](../api/engines.md) - engine contract and Python API

@@ -1,14 +1,14 @@
 """
-Bawbel Scanner — `bawbel pin` command.
+Bawbel Scanner - `bawbel pin` command.
 
 Hashes skill files and MCP manifests and stores the hashes in
 .bawbel-pins.json. On subsequent scans with --check-pins, any file
 whose hash has drifted is flagged as a rug pull candidate.
 
 Why git-committed pins beat local pins:
-    Bawbel stores in .bawbel-pins.json
-    committed to the repo — visible in git diff, reviewable in PRs,
-    shared automatically with every developer who clones the repo.
+    Bawbel stores pins in .bawbel-pins.json committed to the repo -
+    visible in git diff, reviewable in PRs, shared automatically with
+    every developer who clones the repo.
 """
 
 import sys
@@ -42,13 +42,13 @@ from scanner.cli.shared import console, print_banner
     "--check",
     is_flag=True,
     default=False,
-    help="Check for drift instead of pinning — alias for bawbel check-pins",
+    help="Check for drift instead of pinning - alias for bawbel check-pins",
 )
 def pin_cmd(path: str, update: bool, recursive: bool, check: bool) -> None:
     """Hash skill files and save to .bawbel-pins.json.
 
     Pins are stored in .bawbel-pins.json at the project root.
-    Commit this file to git — changes show in diffs and PRs.
+    Commit this file to git - changes show in diffs and PRs.
 
     Examples:
 
@@ -61,14 +61,13 @@ def pin_cmd(path: str, update: bool, recursive: bool, check: bool) -> None:
         bawbel scan ./skills/ --check-pins    scan + check for drift in one step
     """
     if check:
-        # Delegate to check-pins flow
         _run_check_pins(path, recursive)
         return
 
     print_banner()
     console.print(f"[dim]Pinning:[/]  [bold white]{path}[/]")
     if update:
-        console.print("[dim]Mode:     update — re-hashing all files[/]")
+        console.print("[dim]Mode:     update - re-hashing all files[/]")
     console.print()
 
     result = pin(path, recursive=recursive, update=update)
@@ -83,7 +82,7 @@ def pin_cmd(path: str, update: bool, recursive: bool, check: bool) -> None:
 
     if result.unchanged:
         console.print(
-            f"[dim]─[/]  [dim]{len(result.unchanged)} file(s) already pinned and unchanged[/]"
+            f"[dim]-[/]  [dim]{len(result.unchanged)} file(s) already pinned and unchanged[/]"
         )
         console.print()
 
@@ -119,7 +118,7 @@ def check_pins_cmd(path: str, recursive: bool, fail_on_drift: bool) -> None:
     """Check skill files for drift against .bawbel-pins.json.
 
     Any file whose content has changed since pinning is flagged as
-    a rug pull candidate — the tool description may have been modified
+    a rug pull candidate - the tool description may have been modified
     after you audited it.
 
     Examples:
@@ -149,7 +148,6 @@ def _run_check_pins(
         console.print(f"[bold red]✗[/]  {err}")
         sys.exit(1)
 
-    # ── Drift — rug pull candidates ───────────────────────────────────────────
     if result.changed:
         console.print(f"[bold red]⚠  {len(result.changed)} file(s) have drifted from their pins[/]")
         console.print("[dim]These files changed after you pinned them.[/]")
@@ -175,7 +173,8 @@ def _run_check_pins(
         console.print(
             Panel(
                 "[bold]What to do:[/]\n"
-                "  1. Review the changes: [bold]git diff[/] or [bold]bawbel report <file>[/]\n"
+                "  1. Review the changes: [bold]git diff[/] or "
+                "[bold]bawbel report <file>[/]\n"
                 "  2. If the changes are safe: [bold]bawbel pin --update <path>[/]\n"
                 "  3. If the changes are malicious: remove the component",
                 border_style="red",
@@ -184,7 +183,6 @@ def _run_check_pins(
         )
         console.print()
 
-    # ── New files ─────────────────────────────────────────────────────────────
     if result.new:
         console.print(f"[yellow]ℹ[/]  [yellow]{len(result.new)} new file(s) not yet pinned[/]")
         for f in result.new[:5]:
@@ -194,18 +192,16 @@ def _run_check_pins(
         console.print(f"[dim]   Run 'bawbel pin {path}' to pin them.[/]")
         console.print()
 
-    # ── Missing files ─────────────────────────────────────────────────────────
     if result.missing:
         console.print(f"[dim]ℹ  {len(result.missing)} pinned file(s) no longer exist[/]")
         for f in result.missing[:5]:
             console.print(f"   [dim]{f}[/]")
         console.print()
 
-    # ── Clean ─────────────────────────────────────────────────────────────────
     if result.clean and not result.changed:
         console.print(
             f"[bold #1DB894]✓[/]  All [bold]{len(result.clean)}[/] "
-            "pinned file(s) match their pins — no drift detected"
+            "pinned file(s) match their pins - no drift detected"
         )
         console.print()
 

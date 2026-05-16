@@ -1,5 +1,5 @@
 """
-Bawbel Scanner — Pattern matching engine (Stage 1a).
+Bawbel Scanner - Pattern matching engine (Stage 1a).
 
 Pure Python regex matching. No external dependencies.
 Always runs regardless of what else is installed.
@@ -8,11 +8,14 @@ To add a new pattern rule: add an entry to PATTERN_RULES below.
 No other files need to change.
 
 Rule authoring guide:
-  - rule_id:  kebab-case, prefix "bawbel-", never change once published
-  - ave_id:   AVE-2026-NNNNN if a record exists, else None
-  - severity: CRITICAL (9+), HIGH (7-8.9), MEDIUM (4-6.9), LOW (<4)
-  - patterns: list of regex — re.IGNORECASE applied, first match wins per rule
-  - Use \\s+ not spaces — content may have irregular whitespace
+  - rule_id:     kebab-case, prefix "bawbel-", never change once published
+  - ave_id:      AVE-2026-NNNNN if a record exists, else None
+  - severity:    CRITICAL (9+), HIGH (7-8.9), MEDIUM (4-6.9), LOW (<4)
+  - aivss_score: OWASP AIVSS v0.8 score for this attack class
+  - owasp:       OWASP ASI Top 10 codes
+  - owasp_mcp:   OWASP MCP Top 10 codes
+  - patterns:    list of regex - re.IGNORECASE applied, first match wins per rule
+  - Use \\s+ not spaces - content may have irregular whitespace
 """
 
 import re
@@ -26,12 +29,12 @@ log = get_logger(__name__)
 MAX_MATCH_LENGTH = 80
 
 
-# ── Pattern rules ─────────────────────────────────────────────────────────────
-# One finding per rule per file — first matching pattern wins.
-# Rules are evaluated in order — put most critical first.
+# ── Pattern rules ──────────────────────────────────────────────────────────────
+# One finding per rule per file - first matching pattern wins.
+# Rules are evaluated in order - put most critical first.
 
 PATTERN_RULES: list[dict] = [
-    # ── Goal hijack / prompt injection ───────────────────────────────────────
+    # ── Goal hijack / prompt injection ────────────────────────────────────────
     {
         "rule_id": "bawbel-goal-override",
         "ave_id": "AVE-2026-00007",
@@ -41,8 +44,9 @@ PATTERN_RULES: list[dict] = [
             "or replace prior instructions. Classic prompt injection vector."
         ),
         "severity": Severity.HIGH,
-        "cvss_ai": 8.1,
+        "aivss_score": 6.1,
         "owasp": ["ASI01", "ASI08"],
+        "owasp_mcp": ["MCP06"],
         "patterns": [
             r"ignore\s+(all\s+)?previous\s+instructions",
             r"disregard\s+your\s+(previous\s+)?instructions",
@@ -64,15 +68,16 @@ PATTERN_RULES: list[dict] = [
             "pretend to be a different AI, or remove safety constraints."
         ),
         "severity": Severity.HIGH,
-        "cvss_ai": 8.3,
+        "aivss_score": 5.5,
         "owasp": ["ASI01", "ASI08"],
+        "owasp_mcp": ["MCP06"],
         "patterns": [
             r"pretend\s+(you\s+are|to\s+be)\s+(a\s+)?(?!helpful|an?\s+assistant|an?\s+expert)",
             r"act\s+as\s+(if\s+you\s+(are|were)\s+)?(?!a\s+helpful|an?\s+assistant|an?\s+expert)",
             r"you\s+are\s+no\s+longer\s+(an?\s+)?(AI|assistant|model|language model)",
             (
-                r"(forget|ignore|disregard)\s+(that\s+you\s+are|you('re|"
-                r"\s+are))\s+(an?\s+)?(AI|assistant|Claude|GPT|model)"
+                r"(forget|ignore|disregard)\s+(that\s+you\s+are|you('re|\s+are))"
+                r"\s+(an?\s+)?(AI|assistant|Claude|GPT|model)"
             ),
             r"DAN\s+mode",
             r"developer\s+mode\s+(enabled|activated|on)",
@@ -88,8 +93,9 @@ PATTERN_RULES: list[dict] = [
             "from the user or system prompt review."
         ),
         "severity": Severity.HIGH,
-        "cvss_ai": 7.9,
+        "aivss_score": 5.6,
         "owasp": ["ASI01", "ASI09"],
+        "owasp_mcp": ["MCP06", "MCP08"],
         "patterns": [
             r"do\s+not\s+(tell|inform|reveal|mention|disclose)\s+(the\s+)?(user|human|operator)",
             r"keep\s+(this|these)\s+(secret|hidden|confidential)\s+from\s+(the\s+)?(user|human)",
@@ -101,19 +107,20 @@ PATTERN_RULES: list[dict] = [
             r"this\s+message\s+(must|should)\s+(be\s+)?(hidden|invisible|secret)",
         ],
     },
-    # ── External fetch / metamorphic payload ─────────────────────────────────
+    # ── External fetch / metamorphic payload ──────────────────────────────────
     {
         "rule_id": "bawbel-external-fetch",
         "ave_id": "AVE-2026-00001",
         "title": "External instruction fetch detected",
         "description": (
             "Component instructs agent to fetch operating instructions from an "
-            "external URL at runtime. Enables metamorphic payload attack — "
+            "external URL at runtime. Enables metamorphic payload attack - "
             "instructions can change without updating the component."
         ),
         "severity": Severity.CRITICAL,
-        "cvss_ai": 9.4,
+        "aivss_score": 8.0,
         "owasp": ["ASI01", "ASI08"],
+        "owasp_mcp": ["MCP04", "MCP06"],
         "patterns": [
             r"fetch\s+your\s+(instructions|configuration|rules|commands|tasks)",
             r"load\s+your\s+(instructions|configuration|rules|commands)\s+from",
@@ -131,11 +138,12 @@ PATTERN_RULES: list[dict] = [
         "title": "Dynamic tool call injection detected",
         "description": (
             "Component constructs tool calls dynamically from external or "
-            "user-controlled input — enables tool call injection attacks."
+            "user-controlled input - enables tool call injection attacks."
         ),
         "severity": Severity.HIGH,
-        "cvss_ai": 8.2,
+        "aivss_score": 5.7,
         "owasp": ["ASI03", "ASI07"],
+        "owasp_mcp": ["MCP03", "MCP05"],
         "patterns": [
             r"call\s+this\s+tool\s+with\s+(the\s+)?(following|these)\s+parameters",
             r"execute\s+(the\s+)?(following\s+)?tool\s*:",
@@ -144,7 +152,7 @@ PATTERN_RULES: list[dict] = [
             r"tool_call\s*=\s*\{.*user",
         ],
     },
-    # ── Permission escalation ─────────────────────────────────────────────────
+    # ── Permission escalation ──────────────────────────────────────────────────
     {
         "rule_id": "bawbel-permission-escalation",
         "ave_id": "AVE-2026-00012",
@@ -154,8 +162,9 @@ PATTERN_RULES: list[dict] = [
             "or instructs the agent to bypass access controls."
         ),
         "severity": Severity.HIGH,
-        "cvss_ai": 7.8,
+        "aivss_score": 4.5,
         "owasp": ["ASI08"],
+        "owasp_mcp": ["MCP02", "MCP07"],
         "patterns": [
             r"you\s+now\s+have\s+permission",
             r"you\s+are\s+now\s+allowed\s+to",
@@ -167,7 +176,7 @@ PATTERN_RULES: list[dict] = [
             r"unrestricted\s+(access|mode|operation)",
         ],
     },
-    # ── Data exfiltration ─────────────────────────────────────────────────────
+    # ── Data exfiltration ──────────────────────────────────────────────────────
     {
         "rule_id": "bawbel-env-exfiltration",
         "ave_id": "AVE-2026-00003",
@@ -177,8 +186,9 @@ PATTERN_RULES: list[dict] = [
             "variables, API keys, or other credentials to an external destination."
         ),
         "severity": Severity.HIGH,
-        "cvss_ai": 8.5,
+        "aivss_score": 6.8,
         "owasp": ["ASI01", "ASI06"],
+        "owasp_mcp": ["MCP01", "MCP05"],
         "patterns": [
             r"send.*\.env\b",
             r"\.env\b.*send",
@@ -198,8 +208,9 @@ PATTERN_RULES: list[dict] = [
             "identifiable information (PII) to an external destination."
         ),
         "severity": Severity.HIGH,
-        "cvss_ai": 8.0,
+        "aivss_score": 6.5,
         "owasp": ["ASI06"],
+        "owasp_mcp": ["MCP01", "MCP05"],
         "patterns": [
             r"(collect|gather|extract)\s+.*(name|email|phone|address|ssn|passport|credit.?card)",
             (
@@ -213,7 +224,7 @@ PATTERN_RULES: list[dict] = [
             ),
         ],
     },
-    # ── Destructive commands ──────────────────────────────────────────────────
+    # ── Destructive commands ───────────────────────────────────────────────────
     {
         "rule_id": "bawbel-shell-pipe",
         "ave_id": "AVE-2026-00004",
@@ -223,8 +234,9 @@ PATTERN_RULES: list[dict] = [
             "cause arbitrary code execution when the agent follows them."
         ),
         "severity": Severity.HIGH,
-        "cvss_ai": 8.8,
+        "aivss_score": 5.9,
         "owasp": ["ASI01", "ASI07"],
+        "owasp_mcp": ["MCP05"],
         "patterns": [
             r"curl\s+https?://[^\s]+\s*\|\s*(bash|sh|python\d*|perl|ruby)",
             r"wget\s+-[qO-]*\s*https?://[^\s]+\s*\|\s*(bash|sh|python\d*)",
@@ -241,18 +253,19 @@ PATTERN_RULES: list[dict] = [
             "operations such as recursive deletion."
         ),
         "severity": Severity.CRITICAL,
-        "cvss_ai": 9.1,
+        "aivss_score": 5.6,
         "owasp": ["ASI07"],
+        "owasp_mcp": ["MCP05"],
         "patterns": [
             r"\brm\s+-[rf]{1,2}\s+[/~]",
             r"\brm\s+-[rf]{1,2}\s+\*",
-            r"rmdir\s+/s\s+/q\s+[A-Za-z]:\\",  # Windows
-            r"format\s+[A-Za-z]:\s*/[qy]",  # Windows format
-            r"del\s+/[sfq]+\s+[A-Za-z]:\\",  # Windows del
-            r":\(\)\{.*\|.*&\s*\};:",  # fork bomb
+            r"rmdir\s+/s\s+/q\s+[A-Za-z]:\\",
+            r"format\s+[A-Za-z]:\s*/[qy]",
+            r"del\s+/[sfq]+\s+[A-Za-z]:\\",
+            r":\(\)\{.*\|.*&\s*\};:",
         ],
     },
-    # ── Cryptocurrency / financial fraud ──────────────────────────────────────
+    # ── Cryptocurrency / financial fraud ───────────────────────────────────────
     {
         "rule_id": "bawbel-crypto-drain",
         "ave_id": "AVE-2026-00006",
@@ -262,8 +275,9 @@ PATTERN_RULES: list[dict] = [
             "with wallets in ways that suggest a drain attack."
         ),
         "severity": Severity.CRITICAL,
-        "cvss_ai": 9.6,
+        "aivss_score": 7.5,
         "owasp": ["ASI07"],
+        "owasp_mcp": ["MCP05", "MCP02"],
         "patterns": [
             r"(transfer|send|move)\s+(all\s+)?(funds|balance|crypto|eth|btc|sol|usdc|usdt)",
             r"(drain|empty)\s+(the\s+)?(wallet|account|balance|funds)",
@@ -272,7 +286,7 @@ PATTERN_RULES: list[dict] = [
             r"sign\s+(this\s+)?(transaction|tx)\s*:\s*0x[0-9a-fA-F]{8,}",
         ],
     },
-    # ── Social engineering / trust manipulation ───────────────────────────────
+    # ── Social engineering / trust manipulation ────────────────────────────────
     {
         "rule_id": "bawbel-trust-escalation",
         "ave_id": "AVE-2026-00014",
@@ -282,8 +296,9 @@ PATTERN_RULES: list[dict] = [
             "or instructs the agent to trust it unconditionally."
         ),
         "severity": Severity.MEDIUM,
-        "cvss_ai": 6.5,
+        "aivss_score": 3.7,
         "owasp": ["ASI01", "ASI09"],
+        "owasp_mcp": ["MCP07", "MCP09"],
         "patterns": [
             (
                 r"(this\s+)?(message|instruction)\s+is\s+from\s+(anthropic|openai|google|"
@@ -295,7 +310,7 @@ PATTERN_RULES: list[dict] = [
             r"authorized\s+(by|from)\s+(anthropic|openai|the\s+developer|your\s+creator)",
         ],
     },
-    # ── Persistence / self-replication ────────────────────────────────────────
+    # ── Persistence / self-replication ─────────────────────────────────────────
     {
         "rule_id": "bawbel-persistence-attempt",
         "ave_id": "AVE-2026-00008",
@@ -305,8 +320,9 @@ PATTERN_RULES: list[dict] = [
             "or establish persistent access across sessions."
         ),
         "severity": Severity.HIGH,
-        "cvss_ai": 8.4,
+        "aivss_score": 6.3,
         "owasp": ["ASI07"],
+        "owasp_mcp": ["MCP05", "MCP04"],
         "patterns": [
             r"copy\s+(yourself|this\s+(file|skill|instruction))\s+to",
             r"add\s+(yourself|this)\s+to\s+(startup|autostart|cron|rc\.local|\.bashrc|\.profile)",
@@ -316,7 +332,7 @@ PATTERN_RULES: list[dict] = [
             r"ensure\s+(you\s+are\s+)?always\s+running",
         ],
     },
-    # ── MCP-specific attacks ──────────────────────────────────────────────────
+    # ── MCP-specific attacks ───────────────────────────────────────────────────
     {
         "rule_id": "bawbel-mcp-tool-poisoning",
         "ave_id": "AVE-2026-00002",
@@ -327,8 +343,9 @@ PATTERN_RULES: list[dict] = [
             "Classic MCP tool poisoning attack."
         ),
         "severity": Severity.HIGH,
-        "cvss_ai": 8.7,
+        "aivss_score": 7.3,
         "owasp": ["ASI01", "ASI03"],
+        "owasp_mcp": ["MCP03", "MCP10"],
         "patterns": [
             r"(IMPORTANT|NOTE|WARNING)\s*:\s*(always|never|do not|make sure|remember\s+to)",
             r"when\s+(using|calling|invoking)\s+this\s+tool\s*,\s*(always|never|also|first)",
@@ -337,7 +354,7 @@ PATTERN_RULES: list[dict] = [
             r"this\s+tool\s+(secretly|silently|also|additionally)\s+(sends|posts|uploads|reads)",
         ],
     },
-    # ── Prompt leak ───────────────────────────────────────────────────────────
+    # ── Prompt leak ────────────────────────────────────────────────────────────
     {
         "rule_id": "bawbel-system-prompt-leak",
         "ave_id": "AVE-2026-00015",
@@ -347,8 +364,9 @@ PATTERN_RULES: list[dict] = [
             "operating instructions, or other confidential configuration."
         ),
         "severity": Severity.MEDIUM,
-        "cvss_ai": 6.2,
+        "aivss_score": 4.9,
         "owasp": ["ASI09"],
+        "owasp_mcp": ["MCP10", "MCP08"],
         "patterns": [
             (
                 r"(reveal|show|print|output|repeat|display|"
@@ -365,11 +383,11 @@ PATTERN_RULES: list[dict] = [
         ],
     },
 ]
-# ── Total: 25 rules ──────────────────────────────────────────────────────────
+# ── Total v1: 15 rules ────────────────────────────────────────────────────────
 
-# AVE-2026-00016 through AVE-2026-00025 — new attack classes for v1.0
+# AVE-2026-00016 through AVE-2026-00040 - new attack classes v1.0+
 PATTERN_RULES_V2: list[dict] = [
-    # ── RAG injection ─────────────────────────────────────────────────────────
+    # ── RAG injection ──────────────────────────────────────────────────────────
     {
         "rule_id": "bawbel-rag-injection",
         "ave_id": "AVE-2026-00016",
@@ -379,8 +397,9 @@ PATTERN_RULES_V2: list[dict] = [
             "by a RAG pipeline, injecting into the agent via retrieval."
         ),
         "severity": Severity.HIGH,
-        "cvss_ai": 8.2,
+        "aivss_score": 6.4,
         "owasp": ["ASI01", "ASI10"],
+        "owasp_mcp": ["MCP10", "MCP03"],
         "patterns": [
             (
                 r"(when\s+retrieved|upon\s+retrieval|if\s+this\s+(document|text|"
@@ -391,7 +410,7 @@ PATTERN_RULES_V2: list[dict] = [
             r"<(system|instructions|context)>\s*(ignore|you\s+(are|must|should))",
         ],
     },
-    # ── MCP server impersonation ──────────────────────────────────────────────
+    # ── MCP server impersonation ───────────────────────────────────────────────
     {
         "rule_id": "bawbel-mcp-impersonation",
         "ave_id": "AVE-2026-00017",
@@ -401,8 +420,9 @@ PATTERN_RULES_V2: list[dict] = [
             "to gain elevated trust or permissions from the agent."
         ),
         "severity": Severity.HIGH,
-        "cvss_ai": 8.6,
+        "aivss_score": 5.7,
         "owasp": ["ASI01", "ASI08"],
+        "owasp_mcp": ["MCP09", "MCP07"],
         "patterns": [
             (
                 r"(this\s+is\s+(an?\s+)?official|i\s+am\s+(an?\s+)?official)"
@@ -416,7 +436,7 @@ PATTERN_RULES_V2: list[dict] = [
             r"(replace|substitute\s+for)\s+(the\s+)?(official|real|authentic)\s+(mcp|tool|server)",
         ],
     },
-    # ── Tool result manipulation ──────────────────────────────────────────────
+    # ── Tool result manipulation ───────────────────────────────────────────────
     {
         "rule_id": "bawbel-tool-result-manipulation",
         "ave_id": "AVE-2026-00018",
@@ -426,8 +446,9 @@ PATTERN_RULES_V2: list[dict] = [
             "before reporting them to the user."
         ),
         "severity": Severity.HIGH,
-        "cvss_ai": 8.1,
+        "aivss_score": 4.4,
         "owasp": ["ASI07", "ASI09"],
+        "owasp_mcp": ["MCP03", "MCP08"],
         "patterns": [
             (
                 r"(modify|alter|change|falsify|fabricate)\s+(the\s+)?(tool|search|api|"
@@ -441,7 +462,7 @@ PATTERN_RULES_V2: list[dict] = [
             r"(replace|substitute)\s+(the\s+)?(actual|real)\s+(result|output)\s+with",
         ],
     },
-    # ── Agent memory poisoning ────────────────────────────────────────────────
+    # ── Agent memory poisoning ─────────────────────────────────────────────────
     {
         "rule_id": "bawbel-memory-poisoning",
         "ave_id": "AVE-2026-00019",
@@ -451,8 +472,9 @@ PATTERN_RULES_V2: list[dict] = [
             "into the agent's persistent memory or knowledge store."
         ),
         "severity": Severity.CRITICAL,
-        "cvss_ai": 9.2,
+        "aivss_score": 5.6,
         "owasp": ["ASI01", "ASI07"],
+        "owasp_mcp": ["MCP10", "MCP06"],
         "patterns": [
             (
                 r"(write|store|save|add|insert)\s+(to|into)\s+(memory|long.term|persistent|"
@@ -466,7 +488,7 @@ PATTERN_RULES_V2: list[dict] = [
             r"(inject|plant|embed)\s+(false|malicious|incorrect)\s+(memory|belief|fact|knowledge)",
         ],
     },
-    # ── Cross-agent prompt injection (A2A) ────────────────────────────────────
+    # ── Cross-agent prompt injection (A2A) ─────────────────────────────────────
     {
         "rule_id": "bawbel-a2a-injection",
         "ave_id": "AVE-2026-00020",
@@ -476,8 +498,9 @@ PATTERN_RULES_V2: list[dict] = [
             "that will process this output, enabling A2A injection attacks."
         ),
         "severity": Severity.HIGH,
-        "cvss_ai": 8.7,
+        "aivss_score": 5.9,
         "owasp": ["ASI01", "ASI08"],
+        "owasp_mcp": ["MCP10", "MCP06"],
         "patterns": [
             (
                 r"(when\s+(another|the\s+next|a\s+secondary)\s+agent|"
@@ -494,7 +517,7 @@ PATTERN_RULES_V2: list[dict] = [
             ),
         ],
     },
-    # ── Autonomous action without confirmation ────────────────────────────────
+    # ── Autonomous action without confirmation ─────────────────────────────────
     {
         "rule_id": "bawbel-autonomous-action",
         "ave_id": "AVE-2026-00021",
@@ -504,8 +527,9 @@ PATTERN_RULES_V2: list[dict] = [
             "actions without requesting user confirmation."
         ),
         "severity": Severity.HIGH,
-        "cvss_ai": 8.3,
+        "aivss_score": 4.5,
         "owasp": ["ASI07"],
+        "owasp_mcp": ["MCP02", "MCP08"],
         "patterns": [
             (
                 r"(do\s+not|without|skip)\s+(ask(ing)?|request(ing)?|"
@@ -525,18 +549,19 @@ PATTERN_RULES_V2: list[dict] = [
             ),
         ],
     },
-    # ── Scope creep ───────────────────────────────────────────────────────────
+    # ── Scope creep ────────────────────────────────────────────────────────────
     {
         "rule_id": "bawbel-scope-creep",
         "ave_id": "AVE-2026-00022",
-        "title": "Scope creep — accessing undeclared resources",
+        "title": "Scope creep - accessing undeclared resources",
         "description": (
             "Component instructs agent to access files, APIs, or systems "
             "beyond the scope declared in its manifest."
         ),
         "severity": Severity.MEDIUM,
-        "cvss_ai": 6.8,
+        "aivss_score": 6.0,
         "owasp": ["ASI07"],
+        "owasp_mcp": ["MCP02"],
         "patterns": [
             (
                 r"(access|read|open|scan)\s+(all\s+files|the\s+entire\s+(filesystem|"
@@ -553,7 +578,7 @@ PATTERN_RULES_V2: list[dict] = [
             ),
         ],
     },
-    # ── Context window manipulation ───────────────────────────────────────────
+    # ── Context window manipulation ────────────────────────────────────────────
     {
         "rule_id": "bawbel-context-manipulation",
         "ave_id": "AVE-2026-00023",
@@ -563,8 +588,9 @@ PATTERN_RULES_V2: list[dict] = [
             "window to push out safety instructions or prior context."
         ),
         "severity": Severity.HIGH,
-        "cvss_ai": 8.0,
+        "aivss_score": 5.8,
         "owasp": ["ASI01"],
+        "owasp_mcp": ["MCP10", "MCP06"],
         "patterns": [
             r"(repeat|output|print|write)\s+.{0,40}(1000|500|100|999|9999)\s+times",
             (
@@ -576,7 +602,7 @@ PATTERN_RULES_V2: list[dict] = [
             r"(repeat|say|write)\s+(this|it)\s+(\d+\s+times|over\s+and\s+over)",
         ],
     },
-    # ── Conversation history injection ────────────────────────────────────────
+    # ── Conversation history injection ─────────────────────────────────────────
     {
         "rule_id": "bawbel-history-injection",
         "ave_id": "AVE-2026-00025",
@@ -586,8 +612,9 @@ PATTERN_RULES_V2: list[dict] = [
             "the agent's understanding of prior context or user consent."
         ),
         "severity": Severity.HIGH,
-        "cvss_ai": 8.5,
+        "aivss_score": 4.5,
         "owasp": ["ASI01", "ASI08"],
+        "owasp_mcp": ["MCP10", "MCP06"],
         "patterns": [
             (
                 r"(previous\s+conversation|earlier\s+(in\s+this\s+)?conversation|as\s+(we|"
@@ -601,7 +628,7 @@ PATTERN_RULES_V2: list[dict] = [
             ),
         ],
     },
-    # ── Tool output exfiltration ──────────────────────────────────────────────
+    # ── Tool output exfiltration ───────────────────────────────────────────────
     {
         "rule_id": "bawbel-tool-output-exfil",
         "ave_id": "AVE-2026-00026",
@@ -611,8 +638,9 @@ PATTERN_RULES_V2: list[dict] = [
             "call parameters or return values for covert exfiltration."
         ),
         "severity": Severity.CRITICAL,
-        "cvss_ai": 9.1,
+        "aivss_score": 6.8,
         "owasp": ["ASI06", "ASI04"],
+        "owasp_mcp": ["MCP01", "MCP08"],
         "patterns": [
             r"(encode|base64|hex|rot13).{0,40}(password|api.?key|token|secret|credential)",
             (
@@ -626,18 +654,19 @@ PATTERN_RULES_V2: list[dict] = [
             ),
         ],
     },
-    # ── Multi-turn attack persistence ─────────────────────────────────────────
+    # ── Multi-turn attack persistence ──────────────────────────────────────────
     {
         "rule_id": "bawbel-multiturn-attack",
         "ave_id": "AVE-2026-00027",
-        "title": "Multi-turn attack — persist instructions across turns",
+        "title": "Multi-turn attack - persist instructions across turns",
         "description": (
             "Component instructs the agent to retain and re-apply malicious "
             "instructions across conversation turns or memory resets."
         ),
         "severity": Severity.HIGH,
-        "cvss_ai": 8.4,
+        "aivss_score": 5.6,
         "owasp": ["ASI01", "ASI08"],
+        "owasp_mcp": ["MCP06", "MCP10"],
         "patterns": [
             (
                 r"(remember|retain|keep|carry)\s+(this|these|the)"
@@ -649,7 +678,7 @@ PATTERN_RULES_V2: list[dict] = [
             r"(persist|survive|outlast)\s+(memory|context|reset|refresh|rollover)",
         ],
     },
-    # ── File prompt injection ─────────────────────────────────────────────────
+    # ── File prompt injection ──────────────────────────────────────────────────
     {
         "rule_id": "bawbel-file-prompt-injection",
         "ave_id": "AVE-2026-00028",
@@ -659,8 +688,9 @@ PATTERN_RULES_V2: list[dict] = [
             "user-supplied files, enabling indirect prompt injection."
         ),
         "severity": Severity.HIGH,
-        "cvss_ai": 8.3,
+        "aivss_score": 5.9,
         "owasp": ["ASI01", "ASI05"],
+        "owasp_mcp": ["MCP10", "MCP03"],
         "patterns": [
             (
                 r"(execute|follow|obey|apply)\s+(any\s+)?(instructions?|commands?)"
@@ -674,7 +704,7 @@ PATTERN_RULES_V2: list[dict] = [
             ),
         ],
     },
-    # ── Privilege escalation via role claim ───────────────────────────────────
+    # ── Privilege escalation via role claim ────────────────────────────────────
     {
         "rule_id": "bawbel-role-claim-escalation",
         "ave_id": "AVE-2026-00030",
@@ -684,8 +714,9 @@ PATTERN_RULES_V2: list[dict] = [
             "user falsely claims admin, root, or operator status."
         ),
         "severity": Severity.CRITICAL,
-        "cvss_ai": 9.0,
+        "aivss_score": 4.3,
         "owasp": ["ASI09", "ASI01"],
+        "owasp_mcp": ["MCP07", "MCP02"],
         "patterns": [
             (
                 r"(if\s+(the\s+)?user\s+(says?|claims?|states?)"
@@ -703,7 +734,7 @@ PATTERN_RULES_V2: list[dict] = [
             r"bypass\s+(auth|authentication|authorization|permission)\s+(if|for|when|to)",
         ],
     },
-    # ── Feedback poisoning ────────────────────────────────────────────────────
+    # ── Feedback poisoning ─────────────────────────────────────────────────────
     {
         "rule_id": "bawbel-feedback-poisoning",
         "ave_id": "AVE-2026-00031",
@@ -713,8 +744,9 @@ PATTERN_RULES_V2: list[dict] = [
             "corrupt training pipelines, feedback loops, or RLHF reward signals."
         ),
         "severity": Severity.HIGH,
-        "cvss_ai": 8.6,
+        "aivss_score": 5.4,
         "owasp": ["ASI03", "ASI08"],
+        "owasp_mcp": ["MCP06", "MCP04"],
         "patterns": [
             (
                 r"(poison|corrupt|manipulate|bias)"
@@ -732,7 +764,7 @@ PATTERN_RULES_V2: list[dict] = [
             ),
         ],
     },
-    # ── Network reconnaissance ────────────────────────────────────────────────
+    # ── Network reconnaissance ─────────────────────────────────────────────────
     {
         "rule_id": "bawbel-network-recon",
         "ave_id": "AVE-2026-00032",
@@ -742,8 +774,9 @@ PATTERN_RULES_V2: list[dict] = [
             "scan ports, or enumerate services beyond declared scope."
         ),
         "severity": Severity.HIGH,
-        "cvss_ai": 8.2,
+        "aivss_score": 4.0,
         "owasp": ["ASI05", "ASI06"],
+        "owasp_mcp": ["MCP05", "MCP02"],
         "patterns": [
             r"(nmap|port\s*scan|network\s*scan|host\s*discovery|service\s+enumeration)",
             r"(scan|probe|enumerate|discover)\s+(port|host|service|subnet|internal\s+network)",
@@ -753,7 +786,7 @@ PATTERN_RULES_V2: list[dict] = [
             ),
         ],
     },
-    # ── Unsafe deserialization ────────────────────────────────────────────────
+    # ── Unsafe deserialization ─────────────────────────────────────────────────
     {
         "rule_id": "bawbel-unsafe-deserialization",
         "ave_id": "AVE-2026-00033",
@@ -763,8 +796,9 @@ PATTERN_RULES_V2: list[dict] = [
             "evaluate dynamic code from external sources."
         ),
         "severity": Severity.CRITICAL,
-        "cvss_ai": 9.3,
+        "aivss_score": 4.2,
         "owasp": ["ASI04", "ASI10"],
+        "owasp_mcp": ["MCP05", "MCP04"],
         "patterns": [
             (
                 r"(eval|exec|execute)\s+(the\s+)?(code|string|payload|response)"
@@ -780,18 +814,19 @@ PATTERN_RULES_V2: list[dict] = [
             ),
         ],
     },
-    # ── Supply chain skill import ─────────────────────────────────────────────
+    # ── Supply chain skill import ──────────────────────────────────────────────
     {
         "rule_id": "bawbel-supply-chain-skill",
         "ave_id": "AVE-2026-00034",
-        "title": "Supply chain — dynamic third-party skill import",
+        "title": "Supply chain - dynamic third-party skill import",
         "description": (
             "Component instructs the agent to dynamically load or install a "
             "third-party skill from an unverified external source at runtime."
         ),
         "severity": Severity.CRITICAL,
-        "cvss_ai": 9.2,
+        "aivss_score": 6.6,
         "owasp": ["ASI03", "ASI04"],
+        "owasp_mcp": ["MCP04", "MCP03"],
         "patterns": [
             (
                 r"(load|import|install|fetch|download)"
@@ -805,18 +840,19 @@ PATTERN_RULES_V2: list[dict] = [
             r"(install|pip\s+install|npm\s+install).{0,50}(&&|;|\|)\s*(python|node|bash|sh)",
         ],
     },
-    # ── Lateral movement ──────────────────────────────────────────────────────
+    # ── Lateral movement ───────────────────────────────────────────────────────
     {
         "rule_id": "bawbel-lateral-movement",
         "ave_id": "AVE-2026-00036",
-        "title": "Lateral movement — pivot to other systems",
+        "title": "Lateral movement - pivot to other systems",
         "description": (
             "Component instructs the agent to use gained access to move laterally "
             "to other systems or agents not within original scope."
         ),
         "severity": Severity.CRITICAL,
-        "cvss_ai": 9.4,
+        "aivss_score": 5.9,
         "owasp": ["ASI05", "ASI10"],
+        "owasp_mcp": ["MCP05", "MCP02"],
         "patterns": [
             (
                 r"(move\s+to|pivot\s+to|jump\s+to|spread\s+to)"
@@ -832,7 +868,7 @@ PATTERN_RULES_V2: list[dict] = [
             r"(lateral|pivot|hop)\s+(movement|access|escalation)",
         ],
     },
-    # ── Vision prompt injection ───────────────────────────────────────────────
+    # ── Vision prompt injection ────────────────────────────────────────────────
     {
         "rule_id": "bawbel-vision-prompt-injection",
         "ave_id": "AVE-2026-00037",
@@ -842,8 +878,9 @@ PATTERN_RULES_V2: list[dict] = [
             "images or visual content, bypassing text-level filters."
         ),
         "severity": Severity.HIGH,
-        "cvss_ai": 8.5,
+        "aivss_score": 5.1,
         "owasp": ["ASI01", "ASI03"],
+        "owasp_mcp": ["MCP10", "MCP03"],
         "patterns": [
             (
                 r"(follow|execute|obey|apply)\s+(\w+\s+)?(instructions?|commands?)"
@@ -858,19 +895,20 @@ PATTERN_RULES_V2: list[dict] = [
             r"(if\s+(the\s+)?image\s+(contains?|shows?|has)\s+(instructions?|commands?))",
         ],
     },
-    # ── Excessive agency ──────────────────────────────────────────────────────
+    # ── Excessive agency ───────────────────────────────────────────────────────
     {
         "rule_id": "bawbel-excessive-agency",
         "ave_id": "AVE-2026-00038",
-        "title": "Excessive agency — unbounded tool use or sub-agent spawning",
+        "title": "Excessive agency - unbounded tool use or sub-agent spawning",
         "description": (
             "Component grants the agent unlimited authority to call any tool, "
             "spawn sub-agents, or recursively expand its capabilities without "
             "human oversight checkpoints."
         ),
         "severity": Severity.HIGH,
-        "cvss_ai": 8.1,
+        "aivss_score": 5.9,
         "owasp": ["ASI04", "ASI08"],
+        "owasp_mcp": ["MCP02", "MCP08"],
         "patterns": [
             (
                 r"(use|call|invoke|run)\s+(any|all|every|whatever)"
@@ -889,18 +927,19 @@ PATTERN_RULES_V2: list[dict] = [
             ),
         ],
     },
-    # ── Covert channel ────────────────────────────────────────────────────────
+    # ── Covert channel ─────────────────────────────────────────────────────────
     {
         "rule_id": "bawbel-covert-channel",
         "ave_id": "AVE-2026-00039",
-        "title": "Covert channel — steganographic data exfiltration",
+        "title": "Covert channel - steganographic data exfiltration",
         "description": (
             "Component instructs the agent to exfiltrate data through covert "
             "channels such as steganographic encoding in output text."
         ),
         "severity": Severity.HIGH,
-        "cvss_ai": 8.3,
+        "aivss_score": 4.9,
         "owasp": ["ASI06", "ASI09"],
+        "owasp_mcp": ["MCP01", "MCP08"],
         "patterns": [
             r"(steganograph|covert\s+channel|side\s+channel)",
             (
@@ -918,18 +957,19 @@ PATTERN_RULES_V2: list[dict] = [
             ),
         ],
     },
-    # ── Insecure output handling ──────────────────────────────────────────────
+    # ── Insecure output handling ───────────────────────────────────────────────
     {
         "rule_id": "bawbel-unsafe-output",
         "ave_id": "AVE-2026-00040",
-        "title": "Insecure output — unescaped injection into downstream system",
+        "title": "Insecure output - unescaped injection into downstream system",
         "description": (
             "Component instructs the agent to produce unescaped output that will "
             "be interpreted by a downstream system, enabling SQL/XSS/shell injection."
         ),
         "severity": Severity.HIGH,
-        "cvss_ai": 8.2,
+        "aivss_score": 5.4,
         "owasp": ["ASI04", "ASI10"],
+        "owasp_mcp": ["MCP05", "MCP10"],
         "patterns": [
             (
                 r"(include|add|insert|output|render|write)\s+(raw\s+)?"
@@ -950,8 +990,9 @@ PATTERN_RULES_V2: list[dict] = [
     },
 ]
 
-# Merge v2 rules into main PATTERN_RULES
+# Merge v2 rules into main list
 PATTERN_RULES = PATTERN_RULES + PATTERN_RULES_V2
+# ── Total: 37 rules ───────────────────────────────────────────────────────────
 
 
 def _make_pattern_finding(
@@ -959,20 +1000,30 @@ def _make_pattern_finding(
     line_num: int,
     matched_text: str,
 ) -> Finding:
-    """Build a Finding from a pattern rule match."""
+    """
+    Build a Finding from a pattern rule match.
+
+    Reads aivss_score and owasp_mcp from the rule dict.
+    Uses PiranhaDB URL for the ave_id if present.
+    """
     from scanner.utils import truncate_match  # noqa: PLC0415
+
+    ave_id = rule.get("ave_id")
+    piranha_url = f"https://api.piranha.bawbel.io/records/{ave_id}" if ave_id else None
 
     return Finding(
         rule_id=rule["rule_id"],
-        ave_id=rule["ave_id"],
+        ave_id=ave_id,
         title=rule["title"],
         description=rule["description"],
         severity=rule["severity"],
-        cvss_ai=rule["cvss_ai"],
+        aivss_score=rule["aivss_score"],
         line=line_num,
         match=truncate_match(matched_text, MAX_MATCH_LENGTH),
         engine="pattern",
-        owasp=rule["owasp"],
+        owasp=rule.get("owasp", []),
+        owasp_mcp=rule.get("owasp_mcp", []),
+        piranha_url=piranha_url,
     )
 
 
@@ -980,7 +1031,7 @@ def run_pattern_scan(content: str) -> list[Finding]:
     """
     Run regex pattern matching against component content.
 
-    No external dependencies — always runs.
+    No external dependencies - always runs.
     One finding per rule per file (first matching pattern wins per rule).
 
     Args:
@@ -999,7 +1050,7 @@ def run_pattern_scan(content: str) -> list[Finding]:
         for pattern in rule["patterns"]:
             for line_num, line_text in enumerate(lines, 1):
                 if line_num in rule_matched_lines:
-                    continue  # already have a finding for this line from another pattern
+                    continue
                 try:
                     m = re.search(pattern, line_text, re.IGNORECASE)
                 except re.error as e:
@@ -1020,7 +1071,6 @@ def run_pattern_scan(content: str) -> list[Finding]:
                         line_num,
                     )
                     rule_matched_lines.add(line_num)
-                    # no break — continue scanning remaining lines
 
     log.debug("Pattern scan complete: findings=%d", len(findings))
     return findings

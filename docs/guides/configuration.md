@@ -1,4 +1,4 @@
-# Configuration — Bawbel Scanner
+# Configuration - Bawbel Scanner
 
 All configuration is controlled via environment variables.
 No config files required.
@@ -14,7 +14,7 @@ No config files required.
 | `BAWBEL_LOG_LEVEL` | `WARNING` | Log verbosity: `DEBUG`, `INFO`, `WARNING`, `ERROR` |
 
 ```bash
-# Silent (default — production)
+# Silent (default - production)
 bawbel scan ./skill.md
 
 # Lifecycle events only
@@ -40,7 +40,7 @@ BAWBEL_SCAN_TIMEOUT_SEC=10 bawbel scan ./skills/
 ```
 
 #
-## Stage 0 — Magika
+## Stage 0 - Magika
 
 ```bash
 BAWBEL_MAGIKA_ENABLED=true          # enable file type verification (default: true)
@@ -52,23 +52,23 @@ BAWBEL_MAGIKA_ENABLED=true          # enable file type verification (default: tr
 ```bash
 BAWBEL_META_ANALYZER_ENABLED=true   # enable LLM-based FP filter (default: true)
 BAWBEL_META_MIN_CONFIDENCE=0.35     # lower bound for meta-analysis
-BAWBEL_META_MAX_CONFIDENCE=0.80     # upper bound — high-confidence findings skip LLM
+BAWBEL_META_MAX_CONFIDENCE=0.80     # upper bound - high-confidence findings skip LLM
                                     # requires: BAWBEL_LLM_ENABLED=true + API key
 ```
 
 ## Stage 2: LLM Semantic Analysis (optional)
 
-Stage 2 uses [LiteLLM](https://docs.litellm.ai) — works with any LLM provider.
+Stage 2 uses [LiteLLM](https://docs.litellm.ai) - works with any LLM provider.
 Install first: `pip install "bawbel-scanner[llm]"`
 
 | Variable | Default | Description |
 |---|---|---|
-| `BAWBEL_LLM_MODEL` | auto-detected | LiteLLM model string — any provider |
+| `BAWBEL_LLM_MODEL` | auto-detected | LiteLLM model string - any provider |
 | `BAWBEL_LLM_MAX_CHARS` | `8000` | Max content chars sent to LLM |
 | `BAWBEL_LLM_TIMEOUT` | `30` | LLM call timeout in seconds |
 | `BAWBEL_LLM_ENABLED` | `true` | Set `false` to disable Stage 2 |
 
-Provider API keys — set whichever you use:
+Provider API keys - set whichever you use:
 
 | Key | Default model |
 |---|---|
@@ -103,13 +103,13 @@ bawbel scan ./skill.md
 ### Stage 3: Behavioral Sandbox (optional)
 
 Stage 3 runs the component inside an isolated Docker container.
-Uses a **hybrid image strategy** — Hub cache, Hub pull, then local build fallback.
+Uses a **hybrid image strategy** - Hub cache, Hub pull, then local build fallback.
 Skips silently if Docker is not running.
 
 | Variable | Default | Description |
 |---|---|---|
 | `BAWBEL_SANDBOX_ENABLED` | `false` | Set `true` to enable Stage 3 |
-| `BAWBEL_SANDBOX_IMAGE` | `default` | Image strategy — see below |
+| `BAWBEL_SANDBOX_IMAGE` | `default` | Image strategy - see below |
 | `BAWBEL_SANDBOX_TIMEOUT` | `30` | Container timeout in seconds |
 | `BAWBEL_SANDBOX_NETWORK` | `none` | `none`=isolated, `bridge`=internet |
 
@@ -119,7 +119,7 @@ Skips silently if Docker is not running.
 |---|---|
 | `default` | Hybrid: local cache → Hub pull → local build (recommended) |
 | `local` | Skip Hub, always build from bundled Dockerfile |
-| `<image>` | Custom image — enterprise registry or dev/test |
+| `<image>` | Custom image - enterprise registry or dev/test |
 
 ```bash
 # Enable with Docker running
@@ -170,26 +170,26 @@ llm:
 python3 -c "
 try:
     import yara
-    print('✓ yara-python — Stage 1b enabled')
+    print('✓ yara-python - Stage 1b enabled')
 except ImportError:
-    print('✗ yara-python — install: pip install yara-python')
+    print('✗ yara-python - install: pip install yara-python')
 
 import subprocess
 r = subprocess.run(['semgrep', '--version'], capture_output=True)
 if r.returncode == 0:
-    print('✓ semgrep — Stage 1c enabled')
+    print('✓ semgrep - Stage 1c enabled')
 else:
-    print('✗ semgrep — install: pip install semgrep')
+    print('✗ semgrep - install: pip install semgrep')
 
 try:
     import litellm
     from scanner.engines.llm_engine import _resolve_model
     model = _resolve_model()
     if model:
-        print(f'✓ LLM Stage 2 enabled — model={model}')
+        print(f'✓ LLM Stage 2 enabled - model={model}')
     else:
-        print('✗ LLM installed but no model set — set BAWBEL_LLM_MODEL or a provider API key')
+        print('✗ LLM installed but no model set - set BAWBEL_LLM_MODEL or a provider API key')
 except ImportError:
-    print('✗ litellm not installed — pip install "bawbel-scanner[llm]"')
+    print('✗ litellm not installed - pip install "bawbel-scanner[llm]"')
 "
 ```

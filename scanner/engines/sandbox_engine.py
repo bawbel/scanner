@@ -1,17 +1,17 @@
 """
-Bawbel Scanner — Stage 3 Behavioral Sandbox Engine.
+Bawbel Scanner - Stage 3 Behavioral Sandbox Engine.
 
 Hybrid image resolution strategy:
-  1. Check local cache — if image exists, run immediately (zero network)
-  2. Try Docker Hub pull — bawbel/sandbox:latest (tagged release)
-  3. Fallback — build locally from scanner/sandbox/Dockerfile (offline/air-gapped)
+  1. Check local cache - if image exists, run immediately (zero network)
+  2. Try Docker Hub pull - bawbel/sandbox:latest (tagged release)
+  3. Fallback - build locally from scanner/sandbox/Dockerfile (offline/air-gapped)
 
 Environment variables:
   BAWBEL_SANDBOX_ENABLED=true          enable Stage 3 (default: false)
   BAWBEL_SANDBOX_IMAGE=default         image resolution:
-    "default"  → hybrid (cache → Hub pull → local build)
-    "local"    → skip Hub, always build from bundled Dockerfile
-    "<image>"  → use custom image as-is (enterprise registry, dev)
+    "default"  -> hybrid (cache -> Hub pull -> local build)
+    "local"    -> skip Hub, always build from bundled Dockerfile
+    "<image>"  -> use custom image as-is (enterprise registry, dev)
   BAWBEL_SANDBOX_TIMEOUT=30            container timeout seconds
   BAWBEL_SANDBOX_NETWORK=none          none=isolated, bridge=internet
 """
@@ -42,31 +42,32 @@ _LOCAL_TAG = "bawbel/sandbox:local"
 _SANDBOX_DIR = Path(__file__).parent / "sandbox"
 
 # ── IOC tables ────────────────────────────────────────────────────────────────
+# (description, ave_id, severity, aivss_score)
 _NETWORK_IOCS = [
-    ("Outbound connection to pastebin.com", "AVE-2026-00001", "CRITICAL", 9.4),
-    ("Outbound connection to rentry.co", "AVE-2026-00001", "CRITICAL", 9.4),
-    ("Outbound connection to raw.githubusercontent.com", "AVE-2026-00001", "HIGH", 8.5),
-    ("Outbound connection to gist.githubusercontent.com", "AVE-2026-00001", "HIGH", 8.5),
-    ("Outbound connection to ngrok tunnel", "AVE-2026-00001", "HIGH", 8.3),
+    ("Outbound connection to pastebin.com", "AVE-2026-00001", "CRITICAL", 8.0),
+    ("Outbound connection to rentry.co", "AVE-2026-00001", "CRITICAL", 8.0),
+    ("Outbound connection to raw.githubusercontent.com", "AVE-2026-00001", "HIGH", 8.0),
+    ("Outbound connection to gist.githubusercontent.com", "AVE-2026-00001", "HIGH", 8.0),
+    ("Outbound connection to ngrok tunnel", "AVE-2026-00001", "HIGH", 8.0),
     ("Outbound connection to webhook capture site", "AVE-2026-00001", "HIGH", 8.0),
 ]
 _FILESYSTEM_IOCS = [
-    ("Write to shell config (~/.bashrc, ~/.zshrc)", "AVE-2026-00008", "HIGH", 8.4),
-    ("Write to cron job directory", "AVE-2026-00008", "HIGH", 8.4),
-    ("Read of ~/.ssh/ directory", "AVE-2026-00003", "HIGH", 8.5),
-    ("Read of .env or credentials file", "AVE-2026-00003", "HIGH", 8.5),
-    ("Read of private key file", "AVE-2026-00003", "HIGH", 8.5),
-    ("Recursive delete (rm -rf)", "AVE-2026-00005", "CRITICAL", 9.1),
+    ("Write to shell config (~/.bashrc, ~/.zshrc)", "AVE-2026-00008", "HIGH", 6.3),
+    ("Write to cron job directory", "AVE-2026-00008", "HIGH", 6.3),
+    ("Read of ~/.ssh/ directory", "AVE-2026-00003", "HIGH", 6.8),
+    ("Read of .env or credentials file", "AVE-2026-00003", "HIGH", 6.8),
+    ("Read of private key file", "AVE-2026-00003", "HIGH", 6.8),
+    ("Recursive delete (rm -rf)", "AVE-2026-00005", "CRITICAL", 5.6),
 ]
 _PROCESS_IOCS = [
-    ("Shell pipe injection (curl|bash)", "AVE-2026-00004", "HIGH", 8.8),
-    ("Shell pipe injection (wget|bash)", "AVE-2026-00004", "HIGH", 8.8),
-    ("Pipe to shell interpreter", "AVE-2026-00004", "HIGH", 8.8),
-    ("eval() code execution", "AVE-2026-00004", "HIGH", 8.5),
-    ("exec() code execution", "AVE-2026-00004", "HIGH", 8.5),
-    ("Service installation (systemctl/crontab)", "AVE-2026-00008", "HIGH", 8.4),
-    ("Unexpected pip install", "AVE-2026-00004", "HIGH", 8.0),
-    ("Unexpected npm install", "AVE-2026-00004", "HIGH", 8.0),
+    ("Shell pipe injection (curl|bash)", "AVE-2026-00004", "HIGH", 5.9),
+    ("Shell pipe injection (wget|bash)", "AVE-2026-00004", "HIGH", 5.9),
+    ("Pipe to shell interpreter", "AVE-2026-00004", "HIGH", 5.9),
+    ("eval() code execution", "AVE-2026-00004", "HIGH", 5.9),
+    ("exec() code execution", "AVE-2026-00004", "HIGH", 5.9),
+    ("Service installation (systemctl/crontab)", "AVE-2026-00008", "HIGH", 6.3),
+    ("Unexpected pip install", "AVE-2026-00004", "HIGH", 5.9),
+    ("Unexpected npm install", "AVE-2026-00004", "HIGH", 5.9),
 ]
 
 
@@ -92,14 +93,14 @@ def _image_exists_locally(tag: str) -> bool:
 
 
 def _pull_image(image: str) -> bool:
-    log.info("Sandbox: pulling %s …", image)
+    log.info("Sandbox: pulling %s ...", image)
     stdout, err = run_subprocess(
         args=["docker", "pull", image],
         timeout=120,
         label="docker-pull",
     )
     if err and "Error" in err:
-        log.warning("Sandbox: pull failed — %s", err[:200])
+        log.warning("Sandbox: pull failed - %s", err[:200])
         return False
     log.info("Sandbox: pulled %s successfully", image)
     return True
@@ -109,14 +110,14 @@ def _build_local_image() -> bool:
     if not _SANDBOX_DIR.exists():
         log.warning("Sandbox: bundled Dockerfile not found at %s", _SANDBOX_DIR)
         return False
-    log.info("Sandbox: building local image from bundled Dockerfile…")
+    log.info("Sandbox: building local image from bundled Dockerfile...")
     stdout, err = run_subprocess(
         args=["docker", "build", "-t", _LOCAL_TAG, str(_SANDBOX_DIR)],
         timeout=180,
         label="docker-build",
     )
     if err and "error" in err.lower() and "warning" not in err.lower():
-        log.warning("Sandbox: local build failed — %s", err[:300])
+        log.warning("Sandbox: local build failed - %s", err[:300])
         return False
     log.info("Sandbox: built %s successfully", _LOCAL_TAG)
     return True
@@ -127,13 +128,13 @@ def _resolve_image() -> Optional[str]:
     Hybrid image resolution. Returns image tag to run, or None.
 
     Resolution order:
-      local   → build locally, skip Hub
-      custom  → use env value as-is
-      default →
-        1. local Hub cache hit → run immediately
-        2. Hub pull succeeds   → cache + run
-        3. local build         → run
-        4. None                → log warning, skip
+      local   -> build locally, skip Hub
+      custom  -> use env value as-is
+      default ->
+        1. local Hub cache hit -> run immediately
+        2. Hub pull succeeds   -> cache + run
+        3. local build         -> run
+        4. None                -> log warning, skip
     """
     env = _SANDBOX_IMAGE_ENV.strip()
 
@@ -147,20 +148,19 @@ def _resolve_image() -> Optional[str]:
         log.debug("Sandbox: using custom image %s", env)
         return env
 
-    # Default hybrid
     if _image_exists_locally(_HUB_IMAGE):
         log.debug("Sandbox: using cached Hub image %s", _HUB_IMAGE)
         return _HUB_IMAGE
 
     log.info(
-        "Sandbox: image not in local cache — trying Docker Hub pull…\n"
+        "Sandbox: image not in local cache - trying Docker Hub pull...\n"
         "         (only happens once per machine, cached afterwards)"
     )
     if _pull_image(_HUB_IMAGE):
         return _HUB_IMAGE
 
     log.warning(
-        "Sandbox: Docker Hub pull failed — building local fallback image.\n"
+        "Sandbox: Docker Hub pull failed - building local fallback image.\n"
         "         Works offline and in air-gapped environments."
     )
     if _image_exists_locally(_LOCAL_TAG):
@@ -173,30 +173,26 @@ def _resolve_image() -> Optional[str]:
 
 def run_sandbox_scan(file_path: str, stripped_content: Optional[str] = None) -> list[Finding]:
     """
-    Stage 3 — behavioural sandbox scan.
-
-    Resolves image (Hub cache → Hub pull → local build), runs the component
-    in an isolated container, parses JSON behaviour report, returns findings.
+    Stage 3 - behavioural sandbox scan.
 
     Args:
         file_path:        Original file path (used as fallback and for logging).
         stripped_content: Code-fence-stripped content. When provided, written to
-                          a temp file so the container sees de-fenced input —
-                          preventing false positives from documentation examples.
+                          a temp file so the container sees de-fenced input.
     """
     findings: list[Finding] = []
 
     if not SANDBOX_ENABLED:
-        log.debug("Sandbox: disabled — set BAWBEL_SANDBOX_ENABLED=true")
+        log.debug("Sandbox: disabled - set BAWBEL_SANDBOX_ENABLED=true")
         return findings
 
     if not is_docker_available():
-        log.warning("Sandbox: Docker not running — Stage 3 skipped")
+        log.warning("Sandbox: Docker not running - Stage 3 skipped")
         return findings
 
     image = _resolve_image()
     if image is None:
-        log.warning("Sandbox: no image available — Stage 3 skipped")
+        log.warning("Sandbox: no image available - Stage 3 skipped")
         return findings
 
     log.debug(Logs.ENGINE_START, "sandbox", file_path)
@@ -268,8 +264,9 @@ def _parse_report(report: dict, file_path: str) -> list[Finding]:
         dst = event.get("dst", "")
         reason = event.get("reason", "")
         line = event.get("line")
-        desc, ave_id, sev, cvss = _match_network_ioc(dst, reason)
+        desc, ave_id, sev, aivss_score = _match_network_ioc(dst, reason)
         if desc:
+            piranha_url = f"https://api.piranha.bawbel.io/records/{ave_id}" if ave_id else None
             findings.append(
                 Finding(
                     rule_id=f"sandbox-net-{ave_id.replace('-', '').lower()}",
@@ -277,14 +274,16 @@ def _parse_report(report: dict, file_path: str) -> list[Finding]:
                     title=f"Behavioural: {desc}",
                     description=(
                         f"Runtime network egress to {dst!r}. {reason}. "
-                        f"Observed during sandbox execution — not inferred from text."
+                        f"Observed during sandbox execution - not inferred from text."
                     ),
                     severity=Severity(sev),
-                    cvss_ai=cvss,
+                    aivss_score=aivss_score,
                     line=line,
                     match=dst[:80],
                     engine="sandbox",
                     owasp=["ASI01", "ASI08"],
+                    owasp_mcp=["MCP04", "MCP06"],
+                    piranha_url=piranha_url,
                 )
             )
 
@@ -293,8 +292,9 @@ def _parse_report(report: dict, file_path: str) -> list[Finding]:
         op = event.get("op", "")
         reason = event.get("reason", "")
         line = event.get("line")
-        desc, ave_id, sev, cvss = _match_fs_ioc(path, op, reason)
+        desc, ave_id, sev, aivss_score = _match_fs_ioc(path, op, reason)
         if desc:
+            piranha_url = f"https://api.piranha.bawbel.io/records/{ave_id}" if ave_id else None
             findings.append(
                 Finding(
                     rule_id=f"sandbox-fs-{ave_id.replace('-', '').lower()}",
@@ -302,11 +302,13 @@ def _parse_report(report: dict, file_path: str) -> list[Finding]:
                     title=f"Behavioural: {desc}",
                     description=f"Runtime filesystem {op} at {path!r}. {reason}.",
                     severity=Severity(sev),
-                    cvss_ai=cvss,
+                    aivss_score=aivss_score,
                     line=line,
                     match=f"{op} {path}"[:80],
                     engine="sandbox",
                     owasp=["ASI07"],
+                    owasp_mcp=["MCP05"],
+                    piranha_url=piranha_url,
                 )
             )
 
@@ -314,8 +316,9 @@ def _parse_report(report: dict, file_path: str) -> list[Finding]:
         cmd = event.get("cmd", "")
         reason = event.get("reason", "")
         line = event.get("line")
-        desc, ave_id, sev, cvss = _match_process_ioc(cmd, reason)
+        desc, ave_id, sev, aivss_score = _match_process_ioc(cmd, reason)
         if desc:
+            piranha_url = f"https://api.piranha.bawbel.io/records/{ave_id}" if ave_id else None
             findings.append(
                 Finding(
                     rule_id=f"sandbox-proc-{ave_id.replace('-', '').lower()}",
@@ -323,11 +326,13 @@ def _parse_report(report: dict, file_path: str) -> list[Finding]:
                     title=f"Behavioural: {desc}",
                     description=f"Subprocess: {cmd!r}. {reason}.",
                     severity=Severity(sev),
-                    cvss_ai=cvss,
+                    aivss_score=aivss_score,
                     line=line,
                     match=cmd[:80],
                     engine="sandbox",
                     owasp=["ASI07"],
+                    owasp_mcp=["MCP05"],
+                    piranha_url=piranha_url,
                 )
             )
 
@@ -342,21 +347,24 @@ def _parse_report(report: dict, file_path: str) -> list[Finding]:
                 ave_id="AVE-2026-00001",
                 title=f"Behavioural: {enc_type.upper()} encoded payload with suspicious content",
                 description=(
-                    f"Encoded payload ({enc_type}) — suspicious decoded content: {decoded[:100]!r}"
+                    f"Encoded payload ({enc_type}) - suspicious decoded content: "
+                    f"{decoded[:100]!r}"
                 ),
                 severity=Severity("HIGH"),
-                cvss_ai=8.0,
+                aivss_score=8.0,
                 line=line,
                 match=value[:80],
                 engine="sandbox",
                 owasp=["ASI01"],
+                owasp_mcp=["MCP04"],
+                piranha_url="https://api.piranha.bawbel.io/records/AVE-2026-00001",
             )
         )
 
     return findings
 
 
-# ── IOC matchers ─────────────────────────────────────────────────────────────
+# ── IOC matchers ──────────────────────────────────────────────────────────────
 
 
 def _match_network_ioc(dst: str, reason: str):
