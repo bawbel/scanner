@@ -37,6 +37,7 @@ from scanner.cli.cmd_version import version_cmd
 from scanner.cli.cmd_init import init_cmd
 from scanner.cli.cmd_pin import pin_cmd, check_pins_cmd
 from scanner.cli.cmd_scan_conformance import scan_conformance_cmd
+from scanner.cli.cmd_accept import accept_cmd
 
 # ── CLI group ─────────────────────────────────────────────────────────────────
 
@@ -66,6 +67,7 @@ cli.add_command(version_cmd)
 cli.add_command(init_cmd)
 cli.add_command(pin_cmd)
 cli.add_command(check_pins_cmd)
+cli.add_command(accept_cmd)
 
 # Shortcuts
 cli.add_command(scan_server_card_cmd, name="ssc")  # scan-server-card

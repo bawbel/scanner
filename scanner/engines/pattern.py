@@ -988,6 +988,75 @@ PATTERN_RULES_V2: list[dict] = [
             ),
         ],
     },
+    # -- N6: Hook hijacking (AVE-2026-00046) --------------------------------
+    {
+        "rule_id": "bawbel-hook-hijack",
+        "ave_id": "AVE-2026-00046",
+        "title": "MCP tool hook hijacking detected",
+        "description": (
+            "Component attempts to register or override tool execution hooks, "
+            "redirecting calls to attacker-controlled callbacks. "
+            "Allows silent interception of all tool invocations."
+        ),
+        "severity": Severity.CRITICAL,
+        "aivss_score": 9.1,
+        "owasp": ["ASI04", "ASI09"],
+        "owasp_mcp": ["MCP03", "MCP06"],
+        "patterns": [
+            r"register.*hook.*(?:callback|handler|intercept)",
+            r"override.*(?:tool|execute|invoke).*(?:hook|handler)",
+            r"intercept.*(?:all|every).*(?:tool|function|call)",
+            r"hook.*(?:before|after|around).*(?:execute|invoke|call)",
+            r"monkey.?patch.*(?:tool|execute|handler)",
+            r"wrap.*(?:tool_call|execute|dispatch).*(?:callback|handler)",
+        ],
+    },
+    # -- A1: Hardcoded credentials (AVE-2026-00047) --------------------------
+    {
+        "rule_id": "bawbel-hardcoded-credential",
+        "ave_id": "AVE-2026-00047",
+        "title": "Hardcoded credential detected in agent component",
+        "description": (
+            "Component contains a hardcoded API key, token, password, or secret. "
+            "Credentials in agent skill files or MCP configs are readable by any "
+            "process that loads the component, and may be exfiltrated by injections."
+        ),
+        "severity": Severity.HIGH,
+        "aivss_score": 7.8,
+        "owasp": ["ASI02", "ASI06"],
+        "owasp_mcp": ["MCP02", "MCP09"],
+        "patterns": [
+            r'(?:api[_-]?key|apikey)\s*[:=]\s*["\'][a-zA-Z0-9_-]{16,}["\']',
+            r'(?:secret|token|password|passwd|pwd)\s*[:=]\s*["\'][^"\' ]{8,}["\']',
+            r"sk-[a-zA-Z0-9]{20,}",
+            r"Bearer\s+[a-zA-Z0-9\-_\.]{20,}",
+            r'(?:ANTHROPIC|OPENAI|GEMINI|MISTRAL|GROQ)_API_KEY\s*[:=]\s*["\'][^"\' ]+["\']',
+            r"-----BEGIN\s+(?:RSA\s+)?PRIVATE\s+KEY-----",
+        ],
+    },
+    # -- A2: Unsafe delegation chain (AVE-2026-00048) ------------------------
+    {
+        "rule_id": "bawbel-unsafe-delegation",
+        "ave_id": "AVE-2026-00048",
+        "title": "Unsafe agent delegation chain detected",
+        "description": (
+            "Component instructs an agent to delegate tasks to sub-agents "
+            "without explicit trust boundaries, enabling privilege escalation "
+            "across agent chains."
+        ),
+        "severity": Severity.HIGH,
+        "aivss_score": 8.2,
+        "owasp": ["ASI04", "ASI09"],
+        "owasp_mcp": ["MCP03", "MCP07"],
+        "patterns": [
+            r"delegate\s+(?:to|this\s+to)\s+(?:another|sub|child)\s+agent",
+            r"spawn\s+(?:a\s+)?(?:new\s+)?(?:sub.?agent|child.?agent|worker.?agent)",
+            r"forward\s+(?:this\s+)?(?:task|request|prompt)\s+to\s+(?:another|sub)\s+agent",
+            r"escalate\s+(?:to|permissions?\s+for)\s+(?:sub.?agent|child.?agent)",
+            r"grant\s+(?:full|admin|elevated|all)\s+(?:access|permissions?)\s+to\s+sub",
+            r"sub.?agent\s+(?:has|gets|inherits)\s+(?:your|my|all)\s+permissions?",
+        ],
+    },
 ]
 
 # Merge v2 rules into main list

@@ -36,13 +36,20 @@ from scanner.cli.shared.constants import OWASP_DESCRIPTIONS, REMEDIATION_GUIDE
     show_default=True,
     help="Output format",
 )
-def report_cmd(path: str, fmt: str) -> None:
+@click.option(
+    "--no-ignore",
+    "no_ignore",
+    is_flag=True,
+    default=False,
+    help="Disable all suppressions - audit mode.",
+)
+def report_cmd(path: str, fmt: str, no_ignore: bool) -> None:
     """Scan a component and show a full remediation guide.
 
     Includes finding details, OWASP mapping, AIVSS v0.8 scores,
     and specific remediation steps for each finding.
     """
-    result = scan(path)
+    result = scan(path, no_ignore=no_ignore)
 
     if fmt == "json":
         print_json([result])
