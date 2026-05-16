@@ -1,5 +1,5 @@
 """
-Bawbel Scanner — `bawbel scan-server-card` command.
+Bawbel Scanner - `bawbel scan-server-card` command.
 
 Fetches an MCP server-card from a URL and scans it for AVE vulnerabilities.
 
@@ -84,7 +84,7 @@ def scan_server_card_cmd(url: str, fmt: str, fail_on_severity: str) -> None:
     tmp_path = write_temp_scan_file(content)
     try:
         result = scan(str(tmp_path))
-        result.file_path = url  # show URL not temp path in output
+        result.file_path = url
     finally:
         tmp_path.unlink(missing_ok=True)
 

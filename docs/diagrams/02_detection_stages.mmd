@@ -1,0 +1,23 @@
+flowchart TD
+    FILE[File content] --> P & Y & S & L & M & SB
+
+    subgraph ENGINES["Detection engines"]
+        P["Pattern\n37+ regex rules\nalways on"]
+        Y["YARA\n39 behavioral rules\noptional"]
+        S["Semgrep\n41 structural rules\noptional"]
+        L["LLM\nsemantic analysis\noptional"]
+        M["Magika\ncontent-type check\noptional"]
+        SB["Sandbox\nbehavioral execution\noptional"]
+    end
+
+    P & Y & S & L & M & SB --> MERGE[Merge and deduplicate]
+    MERGE --> TF[Toxic flow detector]
+    TF --> SCORE[AIVSS scorer per AVE record]
+    SCORE --> OUT["Finding: aivss_score · severity · owasp_mcp · piranha_url"]
+
+    style P fill:#1a4a3a,color:#fff
+    style Y fill:#1a3a4a,color:#fff
+    style S fill:#1a3a4a,color:#fff
+    style L fill:#1a3a4a,color:#fff
+    style M fill:#1a3a4a,color:#fff
+    style SB fill:#3a2a4a,color:#fff

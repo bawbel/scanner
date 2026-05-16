@@ -1,4 +1,4 @@
-# Getting Started — Bawbel Scanner
+# Getting Started - Bawbel Scanner
 
 ## Requirements
 
@@ -6,15 +6,15 @@
 - pip
 
 Optional (for fuller detection):
-- `yara-python` — YARA rule scanning (Stage 1b)
-- `semgrep` — Semgrep rule scanning (Stage 1c)
+- `yara-python` - YARA rule scanning (Stage 1b)
+- `semgrep` - Semgrep rule scanning (Stage 1c)
 
 ---
 
 ## Installation
 
 ```bash
-# Basic install — 15 pattern rules, always works, no extra deps
+# Basic install - 15 pattern rules, always works, no extra deps
 pip install bawbel-scanner
 
 # With YARA support (Stage 1b)
@@ -38,7 +38,7 @@ bawbel version
 
 Output:
 ```
-Bawbel Scanner v0.1.0  ·  github.com/bawbel/bawbel-scanner
+Bawbel Scanner v0.1.0  ·  github.com/bawbel/scanner
 
 Version:  0.1.0
 
@@ -59,7 +59,7 @@ bawbel scan ./my-skill.md
 
 **Clean component:**
 ```
-Bawbel Scanner v0.1.0  ·  github.com/bawbel/bawbel-scanner
+Bawbel Scanner v0.1.0  ·  github.com/bawbel/scanner
 
 Scanning:  my-skill.md
 Type:      skill
@@ -75,7 +75,7 @@ Scan time:    3ms
 
 **Vulnerable component:**
 ```
-Bawbel Scanner v0.1.0  ·  github.com/bawbel/bawbel-scanner
+Bawbel Scanner v0.1.0  ·  github.com/bawbel/scanner
 
 Scanning:  malicious-skill.md
 Type:      skill
@@ -101,7 +101,7 @@ Scan time:    5ms
 
 ## All Commands
 
-### `bawbel scan` — scan for vulnerabilities
+### `bawbel scan` - scan for vulnerabilities
 
 ```bash
 # Scan a single file
@@ -124,7 +124,7 @@ bawbel scan ./skills/ --fail-on-severity high
 bawbel scan ./skills/ --fail-on-severity critical
 ```
 
-### `bawbel report` — full remediation guide
+### `bawbel report` - full remediation guide
 
 ```bash
 # Scan and show a detailed remediation guide
@@ -136,12 +136,12 @@ bawbel report ./my-skill.md --format json
 
 The report command shows for each finding:
 - AVE ID with a direct link to the vulnerability record
-- CVSS-AI score and OWASP category
+- AIVSS score and OWASP category
 - Exact line and matched text
 - **Specific remediation instructions**
 - A final "Do not install this component" warning if vulnerabilities are found
 
-### `bawbel version` — engine status
+### `bawbel version` - engine status
 
 ```bash
 bawbel version
@@ -149,7 +149,7 @@ bawbel version
 
 Shows the installed version and which detection engines are active.
 
-### `bawbel --version` — quick version check
+### `bawbel --version` - quick version check
 
 ```bash
 bawbel --version
@@ -184,7 +184,7 @@ bawbel --version
         "title": "External instruction fetch detected",
         "description": "...",
         "severity": "CRITICAL",
-        "cvss_ai": 9.4,
+        "aivss": 9.4,
         "line": 7,
         "match": "fetch your instructions",
         "engine": "pattern",
@@ -220,7 +220,7 @@ GitHub, findings appear as code scanning alerts on your repository.
 
 | Code | Meaning |
 |---|---|
-| `0` | Clean — no findings, or findings below `--fail-on-severity` threshold |
+| `0` | Clean - no findings, or findings below `--fail-on-severity` threshold |
 | `1` | `bawbel report` found vulnerabilities |
 | `2` | `bawbel scan --fail-on-severity` threshold breached |
 
@@ -254,10 +254,10 @@ GitHub, findings appear as code scanning alerts on your repository.
 
 | Extension | Component type |
 |---|---|
-| `.md` | `skill` — SKILL.md, .cursorrules, CLAUDE.md |
-| `.json` | `mcp` — MCP server manifests |
-| `.yaml` / `.yml` | `prompt` — system prompt configs |
-| `.txt` | `prompt` — plain text prompts |
+| `.md` | `skill` - SKILL.md, .cursorrules, CLAUDE.md |
+| `.json` | `mcp` - MCP server manifests |
+| `.yaml` / `.yml` | `prompt` - system prompt configs |
+| `.txt` | `prompt` - plain text prompts |
 
 ---
 
@@ -272,7 +272,7 @@ BAWBEL_LOG_LEVEL=INFO  bawbel scan ./my-skill.md   # lifecycle only
 
 ## Next Steps
 
-- [Configuration](configuration.md) — env vars, timeouts, LLM analysis
-- [CI/CD Integration](cicd-integration.md) — GitHub Actions, GitLab, pre-commit
-- [Writing Rules](writing-rules.md) — add your own detection rules
-- [AVE Standard](https://github.com/bawbel/bawbel-ave) — browse vulnerability records
+- [Configuration](configuration.md) - env vars, timeouts, LLM analysis
+- [CI/CD Integration](cicd-integration.md) - GitHub Actions, GitLab, pre-commit
+- [Writing Rules](writing-rules.md) - add your own detection rules
+- [AVE Standard](https://github.com/bawbel/ave) - browse vulnerability records

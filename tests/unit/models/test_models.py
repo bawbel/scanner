@@ -25,7 +25,7 @@ class TestSeverity:
         assert SEVERITY_SCORES["LOW"] > SEVERITY_SCORES["INFO"]
 
     def test_str_comparison(self):
-        """Severity extends str — can compare to string literals."""
+        """Severity extends str - can compare to string literals."""
         assert Severity.CRITICAL == "CRITICAL"
         assert Severity.HIGH == "HIGH"
 
@@ -46,7 +46,7 @@ class TestFinding:
             title="Test finding",
             description="Test description",
             severity=Severity.HIGH,
-            cvss_ai=7.5,
+            aivss_score=7.5,
             line=1,
             match="matched text",
             engine="pattern",
@@ -76,22 +76,50 @@ class TestFinding:
         f = self._make(owasp=[])
         assert f.owasp == []
 
+    def test_owasp_mcp_defaults_to_empty_list(self):
+        f = self._make()
+        assert f.owasp_mcp == []
+
+    def test_piranha_url_defaults_to_none(self):
+        f = self._make()
+        assert f.piranha_url is None
+
+    def test_suppressed_defaults_to_false(self):
+        f = self._make()
+        assert f.suppressed is False
+        assert f.suppression_reason is None
+
+    def test_aivss_score_stored(self):
+        f = self._make(aivss_score=9.4)
+        assert f.aivss_score == 9.4
+
+    def test_aivss_spec_version_default(self):
+        f = self._make()
+        assert f.aivss_spec_version == "0.8"
+
     def test_severity_value(self):
         f = self._make(severity=Severity.CRITICAL)
         assert f.severity.value == "CRITICAL"
+
+    def test_to_aivss_dict(self):
+        f = self._make(aivss_score=8.0)
+        d = f.to_aivss_dict()
+        assert "aivss_score" in d
+        assert d["aivss_score"] == 8.0
+        assert d.get("spec_version") == "0.8"
 
 
 class TestScanResult:
     """ScanResult computed properties."""
 
-    def _make_finding(self, severity: Severity, cvss: float) -> Finding:
+    def _make_finding(self, severity: Severity, aivss_score: float) -> Finding:
         return Finding(
             rule_id=f"rule-{severity.value.lower()}",
             ave_id=None,
             title="Test",
             description="Test",
             severity=severity,
-            cvss_ai=cvss,
+            aivss_score=aivss_score,
             line=None,
             match=None,
             engine="pattern",
@@ -136,7 +164,7 @@ class TestScanResult:
         r = ScanResult(file_path="/f.md", component_type="skill")
         assert r.risk_score == 0.0
 
-    def test_risk_score_returns_max_cvss(self):
+    def test_risk_score_returns_max_aivss(self):
         findings = [
             self._make_finding(Severity.LOW, 2.0),
             self._make_finding(Severity.HIGH, 8.5),
@@ -147,3 +175,39 @@ class TestScanResult:
     def test_scan_time_defaults_zero(self):
         r = ScanResult(file_path="/f.md", component_type="skill")
         assert r.scan_time_ms == 0
+
+    def test_toxic_flows_defaults_empty(self):
+        r = ScanResult(file_path="/f.md", component_type="skill")
+        assert r.toxic_flows == []
+
+    def test_findings_by_severity(self):
+        findings = [
+            self._make_finding(Severity.HIGH, 7.0),
+            self._make_finding(Severity.MEDIUM, 5.0),
+            self._make_finding(Severity.HIGH, 6.5),
+        ]
+        r = ScanResult(file_path="/f.md", component_type="skill", findings=findings)
+        by_sev = r.findings_by_severity
+        assert len(by_sev["HIGH"]) == 2
+        assert len(by_sev["MEDIUM"]) == 1
+        assert len(by_sev["CRITICAL"]) == 0
+
+    def test_to_dict_structure(self):
+        r = ScanResult(file_path="/f.md", component_type="skill")
+        d = r.to_dict()
+        for key in (
+            "file_path",
+            "component_type",
+            "risk_score",
+            "max_severity",
+            "scan_time_ms",
+            "findings",
+            "toxic_flows",
+        ):
+            assert key in d, f"Missing key: {key}"
+
+    def test_to_dict_findings_have_aivss_score(self):
+        f = self._make_finding(Severity.HIGH, 8.0)
+        r = ScanResult(file_path="/f.md", component_type="skill", findings=[f])
+        d = r.to_dict()
+        assert d["findings"][0]["aivss_score"] == 8.0

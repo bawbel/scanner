@@ -1,5 +1,5 @@
 """
-Bawbel Scanner — Toxic flow detector.
+Bawbel Scanner - Toxic flow detector.
 
 Takes a deduplicated list of Finding objects and returns a list of
 ToxicFlow objects representing detected attack chains.
@@ -13,7 +13,7 @@ Performance:
     In practice this runs in < 1ms on any realistic input.
 
 Design:
-    - Zero side effects — pure function
+    - Zero side effects - pure function
     - Does not modify Finding objects
     - Does not call external APIs or engines
     - Safe to call concurrently
@@ -35,7 +35,7 @@ def detect_toxic_flows(findings: list[Finding]) -> list[ToxicFlow]:
         findings: Deduplicated list of Finding objects from the scan pipeline.
 
     Returns:
-        List of ToxicFlow objects, sorted by cvss_ai descending.
+        List of ToxicFlow objects, sorted by aivss_score descending.
         Empty list if no toxic flows are detected.
     """
     if len(findings) < 2:
@@ -56,7 +56,7 @@ def detect_toxic_flows(findings: list[Finding]) -> list[ToxicFlow]:
     if len(all_caps) < 2:
         return []
 
-    # Check all capability pairs for toxic flows — O(c²) where c ≤ ~16
+    # Check all capability pairs for toxic flows - O(c²) where c ≤ ~16
     detected: list[ToxicFlow] = []
     seen_flow_ids: set[str] = set()
 
@@ -65,7 +65,7 @@ def detect_toxic_flows(findings: list[Finding]) -> list[ToxicFlow]:
         if flow_def is None:
             continue
         if flow_def.flow_id in seen_flow_ids:
-            continue  # dedup — a capability can match multiple AVE IDs
+            continue  # dedup - a capability can match multiple AVE IDs
 
         # Collect contributing AVE IDs from both sides of the chain
         ave_ids_a = cap_to_ave[cap_a]
@@ -79,7 +79,7 @@ def detect_toxic_flows(findings: list[Finding]) -> list[ToxicFlow]:
                 ave_ids=contributing,
                 capabilities=(flow_def.cap_a, flow_def.cap_b),
                 severity=flow_def.severity,
-                cvss_ai=flow_def.cvss_ai,
+                aivss_score=flow_def.aivss_score,
                 description=flow_def.description,
                 owasp_mcp=flow_def.owasp_mcp,
                 remediation=flow_def.remediation,
@@ -87,6 +87,6 @@ def detect_toxic_flows(findings: list[Finding]) -> list[ToxicFlow]:
         )
         seen_flow_ids.add(flow_def.flow_id)
 
-    # Sort by combined risk score — highest first
-    detected.sort(key=lambda tf: tf.cvss_ai, reverse=True)
+    # Sort by combined risk score - highest first
+    detected.sort(key=lambda tf: tf.aivss_score, reverse=True)
     return detected

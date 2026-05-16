@@ -41,7 +41,7 @@ def today_human() -> str:
 def update_timestamp(src: str) -> str:
     """Update or add the Last modified timestamp."""
     timestamp = f"Last modified: {now_utc()}"
-    pattern   = r"Last modified: \d{4}-\d{2}-\d{2} \d{2}:\d{2} UTC"
+    pattern = r"Last modified: \d{4}-\d{2}-\d{2} \d{2}:\d{2} UTC"
 
     if re.search(pattern, src):
         return re.sub(pattern, timestamp, src)
@@ -61,11 +61,10 @@ def append_activity(src: str, message: str) -> str:
     Append a timestamped activity note under today's date heading.
     Creates the heading if it does not exist.
     """
-    today    = today_date()
-    human    = today_human()
+    human = today_human()
     time_str = datetime.now(timezone.utc).strftime("%H:%M UTC")
-    note     = f"- `{time_str}` — {message}"
-    heading  = f"### Activity — {human}"
+    note = f"- `{time_str}` — {message}"
+    heading = f"### Activity — {human}"
 
     if heading in src:
         # Insert note after the heading
@@ -83,7 +82,8 @@ def append_activity(src: str, message: str) -> str:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Update Bawbel progress log")
     parser.add_argument(
-        "--message", "-m",
+        "--message",
+        "-m",
         type=str,
         default=None,
         help="Optional activity note to append (e.g. 'Pushed bawbel-scanner v0.1.0')",

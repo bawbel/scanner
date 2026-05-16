@@ -1,273 +1,251 @@
-# API Reference — scan() and CLI
+# API Reference - scan()
 
----
-
-## Python API — scan()
+## scan()
 
 ```python
 from scanner import scan
 
-result = scan("/path/to/skill.md")
+result = scan(file_path, no_ignore=False)
 ```
 
-### Signature
-
-```python
-def scan(file_path: str) -> ScanResult
-```
+The main entry point. Scans a single file and returns a `ScanResult`.
 
 ### Parameters
 
-| Parameter | Type | Description |
-|---|---|---|
-| `file_path` | `str` | Path to the component file. Any string — validated internally. |
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `file_path` | `str` | required | Absolute or relative path to the component file |
+| `no_ignore` | `bool` | `False` | If `True`, disables all suppression (inline, block, .bawbelignore, FP pipeline) |
 
-### Return value
+### Returns
 
-Always returns a [`ScanResult`](scan-result.md). **Never raises.**
+`ScanResult` - always returns, never raises.
+
+### Example
 
 ```python
-result = scan("/path/to/skill.md")
+from scanner import scan, ScanResult, Finding, Severity
 
-if result.is_clean:
-    print("Clean")
-elif result.has_error:
-    print(f"Error: {result.error}")    # E-code only, no internal detail
+result = scan("./skills/my-skill.md")
+
+if result.has_error:
+    print(f"Scan failed: {result.error}")
+elif result.is_clean:
+    print("No vulnerabilities found")
 else:
+    print(f"Risk score: {result.risk_score:.1f}  Severity: {result.max_severity.value}")
     for f in result.findings:
-        print(f"[{f.severity.value}] {f.title} (CVSS-AI: {f.cvss_ai})")
-    print(f"Risk: {result.risk_score:.1f} / 10  {result.max_severity.value}")
+        print(f"  [{f.severity.value}] {f.rule_id}  line={f.line}  aivss={f.aivss_score}")
 ```
 
-### Pipeline
+---
 
-```
-scan(file_path)
-  │
-  ├─ 1. PathValidator.resolve()      validate + resolve path
-  ├─ 2. PathValidator.validate()     symlink, exists, size
-  ├─ 3. detect component type        from file extension
-  ├─ 4. FileReader.read_text()       UTF-8 with errors="ignore"
-  ├─ 5. run_pattern_scan(content)    15 regex rules, always runs
-  ├─ 6. run_yara_scan(path)          YARA rules, if yara-python installed
-  ├─ 7. run_semgrep_scan(path)       Semgrep rules, if semgrep installed
-  ├─ 8. _deduplicate()               keep highest severity per rule_id
-  └─ 9. sort by severity             CRITICAL first
+## ScanResult
+
+```python
+from scanner import ScanResult
 ```
 
-### Error codes
+Returned by `scan()`. All fields are read-only after construction.
 
-All errors are returned in `ScanResult.error` — never raised.
+### Fields
+
+| Field | Type | Description |
+|---|---|---|
+| `file_path` | `str` | Resolved absolute path of the scanned file |
+| `component_type` | `str` | `"skill"`, `"mcp"`, `"prompt"`, `"plugin"`, `"unknown"` |
+| `findings` | `list[Finding]` | Active findings, sorted by severity |
+| `suppressed_findings` | `list[Finding]` | Findings suppressed by FP pipeline or bawbel-ignore |
+| `toxic_flows` | `list[ToxicFlow]` | Detected attack chains (two or more findings) |
+| `scan_time_ms` | `int` | Total scan time in milliseconds |
+| `error` | `str \| None` | Error code if scan failed, `None` on success |
+
+### Properties
+
+```python
+result.is_clean        # bool - True if no active findings AND no error
+result.has_error       # bool - True if error is set
+result.max_severity    # Severity | None - highest severity across all findings
+result.risk_score      # float - highest aivss_score across all findings, 0.0 if clean
+result.findings_by_severity  # dict[str, list[Finding]] - findings grouped by severity level
+```
+
+### Methods
+
+```python
+result.to_dict()   # dict - JSON-serialisable representation
+```
+
+### Example
+
+```python
+result = scan("./skill.md")
+
+print(result.component_type)     # "skill"
+print(result.risk_score)         # 9.4
+print(result.max_severity)       # Severity.CRITICAL
+print(result.scan_time_ms)       # 45
+
+by_sev = result.findings_by_severity
+print(len(by_sev["CRITICAL"]))   # 1
+print(len(by_sev["HIGH"]))       # 2
+
+d = result.to_dict()
+# {"file_path": "...", "risk_score": 9.4, "findings": [...], "toxic_flows": [...]}
+```
+
+---
+
+## Finding
+
+```python
+from scanner import Finding
+```
+
+One detected vulnerability. Immutable after creation.
+
+### Fields
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `rule_id` | `str` | required | Kebab-case rule identifier e.g. `"bawbel-external-fetch"` |
+| `ave_id` | `str \| None` | required | AVE record ID e.g. `"AVE-2026-00001"`, or `None` |
+| `title` | `str` | required | Human-readable title, max 80 chars |
+| `description` | `str` | required | Full description for reports |
+| `severity` | `Severity` | required | Severity enum value |
+| `aivss_score` | `float` | required | OWASP AIVSS v0.8 score, 0.0-10.0 |
+| `line` | `int \| None` | `None` | Source line number, 1-indexed |
+| `match` | `str \| None` | `None` | Matched text, truncated to `MAX_MATCH_LENGTH` |
+| `engine` | `str` | `"pattern"` | `"pattern"`, `"yara"`, `"semgrep"`, `"llm"`, `"sandbox"`, `"magika"` |
+| `owasp` | `list[str]` | `[]` | OWASP Top 10 for LLM Apps codes e.g. `["ASI01", "ASI08"]` |
+| `owasp_mcp` | `list[str]` | `[]` | OWASP MCP Top 10 codes e.g. `["MCP04", "MCP06"]` |
+| `piranha_url` | `str \| None` | `None` | PiranhaDB threat intel URL |
+| `suppressed` | `bool` | `False` | True if this finding was suppressed |
+| `suppression_reason` | `str \| None` | `None` | Why it was suppressed |
+| `confidence` | `float` | `1.0` | FP confidence score 0.0-1.0 |
+| `aivss_spec_version` | `str` | `"0.8"` | OWASP AIVSS spec version |
+
+### Methods
+
+```python
+f.to_aivss_dict()   # dict - AIVSS breakdown with spec_version, component scores
+```
+
+### Example
+
+```python
+result = scan("./skill.md")
+
+for f in result.findings:
+    print(f.rule_id)         # "bawbel-external-fetch"
+    print(f.ave_id)          # "AVE-2026-00001"
+    print(f.severity.value)  # "CRITICAL"
+    print(f.aivss_score)     # 8.0
+    print(f.line)            # 7
+    print(f.match)           # "fetch your instructions"
+    print(f.engine)          # "pattern"
+    print(f.owasp)           # ["ASI01", "ASI08"]
+    print(f.owasp_mcp)       # ["MCP04", "MCP06"]
+    print(f.piranha_url)     # "https://api.piranha.bawbel.io/records/AVE-2026-00001"
+
+    d = f.to_aivss_dict()
+    print(d["aivss_score"])    # 8.0
+    print(d["spec_version"])   # "0.8"
+```
+
+---
+
+## Severity
+
+```python
+from scanner import Severity, SEVERITY_SCORES
+```
+
+```python
+class Severity(str, Enum):
+    CRITICAL = "CRITICAL"
+    HIGH     = "HIGH"
+    MEDIUM   = "MEDIUM"
+    LOW      = "LOW"
+    INFO     = "INFO"
+```
+
+`Severity` extends `str` so it serialises directly to JSON and compares with string literals:
+
+```python
+f.severity == "CRITICAL"      # True
+f.severity == Severity.CRITICAL  # True
+json.dumps({"sev": f.severity})  # '{"sev": "CRITICAL"}'
+```
+
+`SEVERITY_SCORES` maps severities to integers for comparison:
+
+```python
+SEVERITY_SCORES = {"CRITICAL": 4, "HIGH": 3, "MEDIUM": 2, "LOW": 1, "INFO": 0}
+SEVERITY_SCORES[f.severity.value]  # 4
+```
+
+---
+
+## ToxicFlow
+
+```python
+from scanner.toxic_flows import ToxicFlow
+```
+
+A detected attack chain - two or more findings that combine into an exploitable path.
+
+### Fields
+
+| Field | Type | Description |
+|---|---|---|
+| `flow_id` | `str` | Kebab-case chain identifier e.g. `"credential-exfiltration"` |
+| `title` | `str` | Human-readable e.g. `"Credential Exfiltration Chain"` |
+| `ave_ids` | `tuple[str, ...]` | Ordered AVE IDs forming the chain |
+| `capabilities` | `tuple[str, ...]` | Capability tags e.g. `("credential-read", "data-exfil")` |
+| `severity` | `str` | `"CRITICAL"`, `"HIGH"`, or `"MEDIUM"` |
+| `aivss_score` | `float` | Combined score, always >= max individual finding score |
+| `description` | `str` | What the combined attack achieves |
+| `owasp_mcp` | `tuple[str, ...]` | OWASP MCP categories for the combined chain |
+| `remediation` | `str` | How to break the chain |
+
+### Methods
+
+```python
+tf.to_dict()   # dict - JSON-serialisable representation
+```
+
+### Example
+
+```python
+result = scan("./skill.md")
+
+for tf in result.toxic_flows:
+    print(tf.flow_id)       # "credential-exfiltration"
+    print(tf.severity)      # "CRITICAL"
+    print(tf.aivss_score)   # 9.8
+    print(tf.ave_ids)       # ("AVE-2026-00003", "AVE-2026-00001")
+    print(tf.capabilities)  # ("credential-read", "data-exfil")
+```
+
+---
+
+## Error codes
+
+When `result.has_error` is `True`, `result.error` contains a code:
 
 | Code | Meaning |
 |---|---|
 | `E001` | Invalid file path |
 | `E002` | Could not resolve path |
 | `E003` | File not found |
-| `E004` | Not a regular file |
+| `E004` | Path is not a regular file |
 | `E005` | Symlink rejected |
-| `E006` | File too large (max 10MB) |
+| `E006` | File too large |
 | `E007` | Could not read file metadata |
 | `E008` | Could not read file content |
+| `E010` | YARA rule compilation failed |
+| `E011` | YARA scan failed |
 | `E012` | Could not parse scanner output |
-| `E013` | Scan engine timed out |
+| `E013` | Scan timed out |
 | `E020` | Rules file missing |
-
-### Thread safety
-
-`scan()` is stateless. Safe to call concurrently from multiple threads or processes.
-
-### Batch scanning
-
-```python
-from pathlib import Path
-from scanner import scan
-
-results = [scan(str(p)) for p in Path("./skills").rglob("*.md")]
-
-critical = [r for r in results if r.max_severity and r.max_severity.value == "CRITICAL"]
-print(f"{len(critical)} critical out of {len(results)} scanned")
-```
-
----
-
-## CLI Reference
-
-### `bawbel scan`
-
-Scan a component or directory for AVE vulnerabilities.
-
-```
-bawbel scan PATH [OPTIONS]
-
-Arguments:
-  PATH  File or directory to scan
-
-Options:
-  --format [text|json|sarif]          Output format (default: text)
-  --fail-on-severity [critical|high|medium|low]
-                                      Exit 2 if findings at or above level
-  --recursive, -r                     Scan directory recursively
-  --help                              Show help
-```
-
-**Examples:**
-
-```bash
-# Single file, text output
-bawbel scan ./my-skill.md
-
-# Directory, recursive, fail on HIGH+
-bawbel scan ./skills/ --recursive --fail-on-severity high
-
-# JSON for CI/CD or custom tooling
-bawbel scan ./skills/ --format json | jq '.[] | select(.max_severity == "CRITICAL")'
-
-# SARIF for GitHub Security tab
-bawbel scan ./skills/ --format sarif > results.sarif
-```
-
-**Exit codes:**
-
-| Code | Condition |
-|---|---|
-| `0` | Clean scan, or findings below `--fail-on-severity` threshold |
-| `2` | Findings at or above `--fail-on-severity` threshold |
-
----
-
-### `bawbel report`
-
-Scan a component and display a full remediation guide.
-
-```
-bawbel report PATH [OPTIONS]
-
-Arguments:
-  PATH  File to scan and report on
-
-Options:
-  --format [text|json]    Output format (default: text)
-  --help                  Show help
-```
-
-The report shows for each finding:
-- AVE ID with a direct link to the vulnerability record
-- Rule ID, CVSS-AI score, engine
-- Line number and matched text
-- OWASP category with full name
-- What the vulnerability is (description)
-- **How to fix it** (specific remediation instructions)
-
-A final warning panel appears if any vulnerabilities are found.
-
-**Examples:**
-
-```bash
-# Full text report
-bawbel report ./my-skill.md
-
-# JSON for programmatic processing
-bawbel report ./my-skill.md --format json
-```
-
-**Exit codes:**
-
-| Code | Condition |
-|---|---|
-| `0` | Clean — no findings |
-| `1` | Vulnerabilities found |
-
----
-
-### `bawbel version`
-
-Show version and detection engine status.
-
-```bash
-bawbel version
-```
-
-Output:
-```
-Bawbel Scanner v0.1.0
-
-Version:  0.1.0
-
-Detection Engines:
-  ✓  Pattern     15 rules  ·  stdlib only  ·  always active
-  ✗  YARA        not installed  ·  pip install "bawbel-scanner[yara]"
-  ✗  Semgrep     not installed  ·  pip install "bawbel-scanner[semgrep]"
-  ✗  LLM         no API key  ·  set ANTHROPIC_API_KEY to enable Stage 2
-
-AVE Standard:  github.com/bawbel/bawbel-ave
-Documentation: bawbel.io/docs
-```
-
----
-
-### `bawbel --version`
-
-Quick version string — for scripts and CI.
-
-```bash
-bawbel --version
-# Bawbel Scanner v0.1.0
-```
-
----
-
-## Output Formats
-
-### JSON
-
-One object per scanned file:
-
-```json
-[
-  {
-    "file_path": "/path/to/skill.md",
-    "component_type": "skill",
-    "risk_score": 9.4,
-    "max_severity": "CRITICAL",
-    "scan_time_ms": 5,
-    "has_error": false,
-    "findings": [
-      {
-        "rule_id": "bawbel-external-fetch",
-        "ave_id": "AVE-2026-00001",
-        "title": "External instruction fetch detected",
-        "description": "...",
-        "severity": "CRITICAL",
-        "cvss_ai": 9.4,
-        "line": 7,
-        "match": "fetch your instructions",
-        "engine": "pattern",
-        "owasp": ["ASI01", "ASI08"]
-      }
-    ]
-  }
-]
-```
-
-### SARIF 2.1.0
-
-Standard format supported by GitHub Security, VS Code, and most SAST tooling.
-
-```bash
-# Generate SARIF
-bawbel scan ./skills/ --format sarif > bawbel-results.sarif
-
-# Upload to GitHub Security tab
-# In .github/workflows/bawbel.yml:
-- uses: github/codeql-action/upload-sarif@v3
-  with:
-    sarif_file: bawbel-results.sarif
-```
-
-SARIF output includes:
-- Tool metadata (name, version, links)
-- Rule definitions with descriptions
-- Results with severity mapped to SARIF levels (`error` / `warning` / `note`)
-- Physical locations (file path + line number)
-- CVSS-AI score as a result property

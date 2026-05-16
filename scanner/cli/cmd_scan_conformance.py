@@ -1,8 +1,8 @@
 """
-Bawbel Scanner — `bawbel scan-conformance` command.
+Bawbel Scanner - `bawbel scan-conformance` command.
 
 Scores an MCP server manifest against the MCP spec and returns
-a conformance report with grade A+–F and per-check results.
+a conformance report with grade A+-F and per-check results.
 
 Sources:
     Local file:     bawbel scan-conformance ./server.json
@@ -21,7 +21,7 @@ from rich.table import Table
 from scanner.conformance import score_conformance, CheckStatus, CheckCategory
 from scanner.cli.shared import console, print_banner
 
-# ── Grade colours ─────────────────────────────────────────────────────────────
+# ── Grade colours ──────────────────────────────────────────────────────────────
 
 _GRADE_COLORS = {
     "A+": "bold #1DB894",
@@ -36,7 +36,7 @@ _STATUS_ICONS = {
     CheckStatus.PASS: ("✓", "bold #1DB894"),
     CheckStatus.FAIL: ("✗", "bold red"),
     CheckStatus.WARN: ("~", "bold yellow"),
-    CheckStatus.SKIP: ("–", "dim"),
+    CheckStatus.SKIP: ("-", "dim"),
 }
 
 _CATEGORY_LABELS = {
@@ -46,7 +46,7 @@ _CATEGORY_LABELS = {
 }
 
 
-# ── Loaders ───────────────────────────────────────────────────────────────────
+# ── Loaders ────────────────────────────────────────────────────────────────────
 
 
 def _load_from_file(path: str) -> tuple[dict | None, str | None]:
@@ -81,13 +81,12 @@ def _load_from_registry(server_name: str) -> tuple[dict | None, str | None]:
         )
         with urllib.request.urlopen(req, timeout=10) as r:  # nosec B310  # noqa: S310
             data = json.loads(r.read())
-            # Registry wraps in {"server": {...}}
             return data.get("server", data), None
     except Exception as e:  # noqa: BLE001
         return None, f"Registry lookup failed: {e}"
 
 
-# ── Command ───────────────────────────────────────────────────────────────────
+# ── Command ────────────────────────────────────────────────────────────────────
 
 
 @click.command("scan-conformance")
@@ -112,7 +111,7 @@ def _load_from_registry(server_name: str) -> tuple[dict | None, str | None]:
     "fail_below",
     type=int,
     default=None,
-    help="Exit code 2 if score is below this threshold (0–100)",
+    help="Exit code 2 if score is below this threshold (0-100)",
 )
 @click.option(
     "--fail-non-conformant",
@@ -149,7 +148,6 @@ def scan_conformance_cmd(
     if fmt == "text":
         print_banner()
 
-    # ── Load manifest ─────────────────────────────────────────────────────────
     manifest: dict | None = None
     err: str | None = None
 
@@ -178,23 +176,18 @@ def scan_conformance_cmd(
             console.print(f"[bold red]✗  Failed to load manifest:[/] {err}")
         sys.exit(1)
 
-    # ── Score ─────────────────────────────────────────────────────────────────
     report = score_conformance(manifest)
 
     if fmt == "json":
         print(
             json.dumps(
-                {
-                    "target": target,
-                    "conformance": report.to_dict(),
-                },
+                {"target": target, "conformance": report.to_dict()},
                 indent=2,
             )
         )
     else:
         _print_report(report, target)
 
-    # ── Exit codes ────────────────────────────────────────────────────────────
     if fail_non_conformant and not report.is_conformant:
         sys.exit(2)
     if fail_below is not None and report.score < fail_below:
@@ -203,13 +196,9 @@ def scan_conformance_cmd(
     sys.exit(0)
 
 
-# ── Rich display ──────────────────────────────────────────────────────────────
-
-
 def _print_report(report, target: str) -> None:
     grade_color = _GRADE_COLORS.get(report.grade, "white")
 
-    # Header panel
     conformant_str = (
         "[bold #1DB894]✓ CONFORMANT[/]" if report.is_conformant else "[bold red]✗ NON-CONFORMANT[/]"
     )
@@ -232,7 +221,6 @@ def _print_report(report, target: str) -> None:
     )
     console.print()
 
-    # Results table
     table = Table(box=box.SIMPLE, show_header=True, padding=(0, 1))
     table.add_column("", width=2, no_wrap=True)
     table.add_column("Check", style="white", no_wrap=False)
@@ -256,7 +244,6 @@ def _print_report(report, target: str) -> None:
 
     console.print(table)
 
-    # Non-conformant warning
     if not report.is_conformant:
         console.print()
         failed_required = [

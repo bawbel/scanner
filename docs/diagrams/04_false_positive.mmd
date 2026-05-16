@@ -1,0 +1,10 @@
+flowchart LR
+    SCAN[Finding produced] --> Q{Legitimate content?}
+    Q -->|No| REPORT[Report finding]
+    Q -->|Yes| SUPP["Add inline suppression\n# bawbel-ignore: rule-id reason"]
+    SUPP --> AUDIT[Stored in suppressed_findings\nfor audit trail]
+    AUDIT --> EXPIRY{Expiry date set?}
+    EXPIRY -->|Yes| EXPIRE[CI fails when expired]
+    EXPIRY -->|No| PERMANENT[Permanent suppression]
+    style REPORT fill:#7a1a1a,color:#fff
+    style EXPIRE fill:#4a2a1a,color:#fff

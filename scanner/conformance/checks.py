@@ -1,18 +1,18 @@
 """
-Bawbel Scanner — MCP spec conformance checks.
+Bawbel Scanner - MCP spec conformance checks.
 
 Each ConformanceCheck defines one rule from the MCP specification.
-Checks are pure data — no logic here. The scorer in scorer.py runs them.
+Checks are pure data - no logic here. The scorer in scorer.py runs them.
 
 Conformance check categories:
-    REQUIRED   — MUST per spec. Failure = non-conformant. Weight: 3
-    RECOMMENDED — SHOULD per spec. Failure = partial. Weight: 2
-    BEST_PRACTICE — good practice, widely adopted. Weight: 1
+    REQUIRED       - MUST per spec. Failure = non-conformant. Weight: 3
+    RECOMMENDED    - SHOULD per spec. Failure = partial. Weight: 2
+    BEST_PRACTICE  - good practice, widely adopted. Weight: 1
 
 Adding a new check:
     1. Define a ConformanceCheck below
     2. Add it to CONFORMANCE_CHECKS
-    That's it — scorer.py picks it up automatically
+    That's it - scorer.py picks it up automatically
 
 References:
     https://spec.modelcontextprotocol.io/specification/
@@ -25,9 +25,9 @@ from enum import Enum
 
 
 class CheckCategory(str, Enum):
-    REQUIRED = "REQUIRED"  # MUST per spec — weight 3
-    RECOMMENDED = "RECOMMENDED"  # SHOULD per spec — weight 2
-    BEST_PRACTICE = "BEST_PRACTICE"  # good practice — weight 1
+    REQUIRED = "REQUIRED"  # MUST per spec - weight 3
+    RECOMMENDED = "RECOMMENDED"  # SHOULD per spec - weight 2
+    BEST_PRACTICE = "BEST_PRACTICE"  # good practice - weight 1
 
 
 class CheckStatus(str, Enum):
@@ -43,10 +43,10 @@ class ConformanceCheck:
     """
     Definition of a single conformance check.
 
-    check_id: unique kebab-case identifier
-    category: REQUIRED | RECOMMENDED | BEST_PRACTICE
-    title:    short human-readable name
-    detail:   what the check verifies
+    check_id:    unique kebab-case identifier
+    category:    REQUIRED | RECOMMENDED | BEST_PRACTICE
+    title:       short human-readable name
+    detail:      what the check verifies
     remediation: how to fix a failure
     """
 
@@ -60,7 +60,7 @@ class ConformanceCheck:
 # ── Registry manifest checks (server-card / .well-known/mcp.json) ─────────────
 
 CONFORMANCE_CHECKS: list[ConformanceCheck] = [
-    # ── Identity ──────────────────────────────────────────────────────────────
+    # ── Identity ───────────────────────────────────────────────────────────────
     ConformanceCheck(
         check_id="has-name",
         category=CheckCategory.REQUIRED,
@@ -92,7 +92,7 @@ CONFORMANCE_CHECKS: list[ConformanceCheck] = [
             "'https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json'"
         ),
     ),
-    # ── Transport ─────────────────────────────────────────────────────────────
+    # ── Transport ──────────────────────────────────────────────────────────────
     ConformanceCheck(
         check_id="has-remotes",
         category=CheckCategory.REQUIRED,
@@ -123,7 +123,7 @@ CONFORMANCE_CHECKS: list[ConformanceCheck] = [
             "HTTP endpoints are not safe for MCP servers handling sensitive data."
         ),
     ),
-    # ── Tools ─────────────────────────────────────────────────────────────────
+    # ── Tools ──────────────────────────────────────────────────────────────────
     ConformanceCheck(
         check_id="tools-have-descriptions",
         category=CheckCategory.REQUIRED,
@@ -139,14 +139,14 @@ CONFORMANCE_CHECKS: list[ConformanceCheck] = [
         category=CheckCategory.REQUIRED,
         title="All tools declare an inputSchema",
         detail="Every tool declares an 'inputSchema' of type 'object'.",
-        remediation=("Add 'inputSchema': {'type': 'object', 'properties': {...}} " "to all tools."),
+        remediation=("Add 'inputSchema': {'type': 'object', 'properties': {...}} to all tools."),
     ),
     ConformanceCheck(
         check_id="tool-names-valid",
         category=CheckCategory.REQUIRED,
         title="All tool names follow the spec naming rules",
         detail=(
-            "Tool names are 1–128 chars, contain only "
+            "Tool names are 1-128 chars, contain only "
             "ASCII letters/digits/underscore/hyphen/dot, no spaces."
         ),
         remediation=(
@@ -159,7 +159,7 @@ CONFORMANCE_CHECKS: list[ConformanceCheck] = [
         category=CheckCategory.REQUIRED,
         title="Tool names are unique within the server",
         detail="No two tools share the same name.",
-        remediation="Rename duplicate tools — tool names must be unique within a server.",
+        remediation="Rename duplicate tools - tool names must be unique within a server.",
     ),
     ConformanceCheck(
         check_id="tools-params-have-descriptions",
@@ -180,7 +180,7 @@ CONFORMANCE_CHECKS: list[ConformanceCheck] = [
             "Add 'required': ['param_name'] to inputSchema for " "parameters that must be provided."
         ),
     ),
-    # ── Security ──────────────────────────────────────────────────────────────
+    # ── Security ───────────────────────────────────────────────────────────────
     ConformanceCheck(
         check_id="no-deprecated-sse-transport",
         category=CheckCategory.RECOMMENDED,

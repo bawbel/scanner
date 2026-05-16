@@ -1,7 +1,7 @@
 """
-Bawbel Scanner — `bawbel init` command.
+Bawbel Scanner - `bawbel init` command.
 
-Initialises Bawbel in a project — discovers skill files, generates
+Initialises Bawbel in a project - discovers skill files, generates
 .bawbelignore and bawbel.yml.
 """
 
@@ -84,19 +84,18 @@ def init_cmd(path: str) -> None:
 
     if not found_skills and not found_mcp:
         console.print(
-            "  [yellow]⚠[/]  No skill files found. Bawbel scans any .md/.yaml — "
+            "  [yellow]⚠[/]  No skill files found. Bawbel scans any .md/.yaml - "
             "run [bold]bawbel scan . --recursive[/bold] to start."
         )
 
     console.print()
 
-    # .bawbelignore
     ignore_path = root / ".bawbelignore"
     if ignore_path.exists():
-        console.print("  [dim]·[/]  .bawbelignore already exists — skipping")
+        console.print("  [dim]·[/]  .bawbelignore already exists - skipping")
     else:
         ignore_lines = [
-            "# .bawbelignore — Bawbel Scanner suppression file",
+            "# .bawbelignore - Bawbel Scanner suppression file",
             "# Files here contain intentional examples of attack patterns.",
             "# Run with --no-ignore to see all findings including suppressed.",
             "",
@@ -123,13 +122,12 @@ def init_cmd(path: str) -> None:
             f"[dim]({len(ignore_lines)} lines)[/]"
         )
 
-    # bawbel.yml
     config_path = root / "bawbel.yml"
     if config_path.exists():
-        console.print("  [dim]·[/]  bawbel.yml already exists — skipping")
+        console.print("  [dim]·[/]  bawbel.yml already exists - skipping")
     else:
         config_lines = [
-            "# bawbel.yml — Bawbel Scanner project configuration",
+            "# bawbel.yml - Bawbel Scanner project configuration",
             'version: "1.0"',
             "",
             "scan:",
@@ -163,7 +161,7 @@ def init_cmd(path: str) -> None:
             "  [bold]bawbel scan . --recursive --format sarif[/bold]  "
             "[dim]CI/CD output[/]\n"
             "  [bold]bawbel scan . --no-ignore[/bold]           "
-            "[dim]audit mode — see all findings[/]",
+            "[dim]audit mode - see all findings[/]",
             border_style="#1DB894",
             padding=(0, 1),
         )

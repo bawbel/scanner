@@ -1,156 +1,154 @@
-# API Reference — Utils
+# API Reference - Utils
 
-All utility classes live in `scanner/utils.py`.
-Import via module-level function aliases — do not instantiate classes directly.
+```python
+from scanner.utils import (
+    get_logger,
+    resolve_path,
+    is_safe_path,
+    read_file_safe,
+    run_subprocess,
+    parse_json_safe,
+    parse_severity,
+    parse_cvss,
+    truncate_match,
+    Timer,
+)
+```
 
 ---
 
-## Logger
-
-Structured logging factory. All loggers are namespaced under `bawbel.`.
+## Logging
 
 ```python
-from scanner.utils import get_logger
+get_logger(name: str) -> logging.Logger
+```
 
+Returns a namespaced logger under `bawbel.<name>`. Log level controlled by
+`BAWBEL_LOG_LEVEL` env var (default: `WARNING`).
+
+```python
 log = get_logger(__name__)
-
-log.debug("detail: value=%s", value)           # DEBUG — full detail, dev only
-log.info("lifecycle: event=%s", event)          # INFO — scan start/complete
-log.warning("degraded: reason=%s", code)        # WARNING — engine missing, skipped
-log.error("failed: type=%s", type(e).__name__)  # ERROR — type only, never message
+log.debug("detail: value=%s", value)
+log.warning("skipped: reason=%s", code)
+log.error("failed: type=%s", type(e).__name__)
 ```
 
-**Log level:** controlled by `BAWBEL_LOG_LEVEL` env var (default: `WARNING`).
-
-**Security rule:** Never use `str(e)` at WARNING or above. Use `type(e).__name__`.
+**Security rule:** never log file content, match strings, or exception messages at
+WARNING or above. Use `type(e).__name__` not `str(e)`.
 
 ---
 
-## PathValidator
-
-Safe path resolution and validation.
+## Path handling
 
 ```python
-from scanner.utils import resolve_path, is_safe_path
+resolve_path(file_path: str) -> tuple[Path | None, str | None]
+```
 
-# Resolve raw string to Path
-path, err = resolve_path("/some/path.md")
+Safely resolve a path string. Checks: valid string, not a symlink (before resolve).
+
+```python
+is_safe_path(path: Path) -> tuple[bool, str | None]
+```
+
+Validate a resolved path. Checks: not a symlink, exists, is a file, within size limit.
+
+```python
+path, err = resolve_path("/path/to/skill.md")
 if err:
-    return error_result(err)
+    return ScanResult(error=err, ...)
 
-# Validate resolved path
-safe, err = is_safe_path(path)
-if not safe:
-    return error_result(err)
+ok, err = is_safe_path(path)
+if not ok:
+    return ScanResult(error=err, ...)
 ```
-
-**Checks performed by `resolve_path()`:**
-- Valid path string
-- Not a symlink (checked BEFORE resolve — prevents symlink attacks)
-- Successfully resolves to absolute path
-
-**Checks performed by `is_safe_path()`:**
-- Not a symlink (double-check on resolved path)
-- Exists on disk
-- Is a regular file (not a directory or device)
-- Within `MAX_FILE_SIZE_BYTES`
 
 ---
 
-## FileReader
-
-Safe text file reading.
+## File reading
 
 ```python
-from scanner.utils import read_file_safe
+read_file_safe(path: Path) -> tuple[str | None, str | None]
+```
 
+Read a text file safely with encoding fallback. Always uses `errors="ignore"` to
+prevent malformed UTF-8 from crashing the scanner.
+
+```python
 content, err = read_file_safe(path)
 if err:
-    return error_result(err)
+    return ScanResult(error=err, ...)
 ```
-
-Always uses `encoding="utf-8", errors="ignore"` — malicious files may contain
-invalid UTF-8 sequences to trigger exceptions.
 
 ---
 
-## SubprocessRunner
-
-Safe external tool execution.
+## Subprocess
 
 ```python
-from scanner.utils import run_subprocess
+run_subprocess(
+    args: list[str],
+    timeout: int,
+    label: str,
+) -> tuple[str | None, str | None]
+```
 
-stdout, err = run_subprocess(
-    args    = ["semgrep", "--config", rules_path, "--json", file_path],
-    timeout = 30,
-    label   = "semgrep",
-)
+Run an external command safely. Always uses a list (never shell=True), always enforces timeout.
 
+Returns `(None, None)` if tool is not installed — callers skip silently.
+
+```python
+stdout, err = run_subprocess(["semgrep", "--version"], timeout=5, label="semgrep")
 if stdout is None and err is None:
-    # Tool not installed — skip silently
-    return []
-
-if err:
-    log.warning("engine failed: %s", err)
+    # semgrep not installed - skip
     return []
 ```
-
-**Security guarantees:**
-- Args always a list — never `shell=True`
-- Timeout always enforced
-- stderr logged at DEBUG only — never returned to caller
-- `FileNotFoundError` → `(None, None)` — caller skips silently
 
 ---
 
-## JsonParser
-
-Safe JSON parsing.
+## JSON parsing
 
 ```python
-from scanner.utils import parse_json_safe
+parse_json_safe(raw: str, label: str = "json") -> tuple[dict | list | None, str | None]
+```
 
-data, err = parse_json_safe(raw_output, label="semgrep")
-if err or not data:
+Parse JSON without raising. Returns `(None, None)` for empty input.
+
+```python
+data, err = parse_json_safe(stdout, label="semgrep")
+if err or data is None:
     return []
 ```
 
-Empty input returns `(None, None)` — not an error.
-
 ---
 
-## TextSanitiser
-
-String validation and truncation.
+## Validation helpers
 
 ```python
-from scanner.utils import parse_severity, parse_cvss, truncate_match
-
-severity = parse_severity("HIGH")        # "HIGH"
-severity = parse_severity("invalid")     # "HIGH" (fallback)
-
-score = parse_cvss(9.4)                  # 9.4
-score = parse_cvss("bad")                # 5.0 (fallback)
-score = parse_cvss(99.9)                 # 10.0 (clamped)
-
-match = truncate_match("long text...", 80)  # max 80 chars, stripped
-match = truncate_match(None, 80)            # None
+parse_severity(severity_str: str, fallback: str = "HIGH") -> str
 ```
+
+Normalise a severity string. Returns `fallback` for unrecognised values.
+
+```python
+parse_cvss(raw: object, fallback: float = 5.0) -> float
+```
+
+Parse and clamp a score to 0.0-10.0. Used for AIVSS scores. Does not compute AIVSS —
+that logic is in `finding.py`.
+
+```python
+truncate_match(text: str | None, max_len: int) -> str | None
+```
+
+Truncate and strip a match string. Apply to all `match` fields before storing in a Finding.
 
 ---
 
 ## Timer
 
-Elapsed-time context manager.
-
 ```python
-from scanner.utils import Timer
-
 with Timer() as t:
     do_work()
-
-print(f"Took {t.elapsed_ms}ms")
+log.debug("took %dms", t.elapsed_ms)
 ```
 
-Used in all engine functions to measure and log scan time.
+Context manager for elapsed time measurement.

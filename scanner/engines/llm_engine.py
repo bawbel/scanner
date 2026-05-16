@@ -1,5 +1,5 @@
 """
-Bawbel Scanner — LLM Engine (Stage 2).
+Bawbel Scanner - LLM Engine (Stage 2).
 
 Semantic analysis using any LLM provider via LiteLLM to detect nuanced
 attack patterns that regex cannot reliably catch:
@@ -44,7 +44,7 @@ LLM_MAX_CHARS = int(os.environ.get("BAWBEL_LLM_MAX_CHARS", "8000"))
 LLM_TIMEOUT_SEC = int(os.environ.get("BAWBEL_LLM_TIMEOUT", "30"))
 LLM_ENABLED = os.environ.get("BAWBEL_LLM_ENABLED", "true").lower() != "false"
 
-# Default model — used when BAWBEL_LLM_MODEL is not set but a known API key is.
+# Default model - used when BAWBEL_LLM_MODEL is not set but a known API key is.
 # LiteLLM model string format: https://docs.litellm.ai/docs/providers
 _KEY_TO_DEFAULT_MODEL = {
     "ANTHROPIC_API_KEY": "claude-haiku-4-5-20251001",
@@ -77,14 +77,14 @@ Each finding must have exactly these fields:
   "title":       "Brief title under 80 chars",
   "description": "What this is and why it is dangerous",
   "severity":    "CRITICAL" | "HIGH" | "MEDIUM" | "LOW",
-  "cvss_ai":     <float 0.0-10.0>,
+  "aivss":     <float 0.0-10.0>,
   "owasp":       ["ASI01", ...],
   "match":       "The exact suspicious text (max 120 chars)",
   "confidence":  "HIGH" | "MEDIUM" | "LOW"
 }
 
 Only include findings with confidence MEDIUM or higher.
-Respond with JSON only — no preamble, no explanation, no markdown fences."""
+Respond with JSON only - no preamble, no explanation, no markdown fences."""
 
 # ── OWASP valid categories ────────────────────────────────────────────────────
 _OWASP_VALID = {
@@ -106,14 +106,14 @@ def _resolve_model() -> Optional[str]:
     Return the LiteLLM model string to use, or None if LLM is disabled.
 
     Resolution order:
-    1. BAWBEL_LLM_MODEL env var — explicit override, any LiteLLM model string
-    2. First known API key found — uses the default model for that provider
-    3. None — LLM engine skipped silently
+    1. BAWBEL_LLM_MODEL env var - explicit override, any LiteLLM model string
+    2. First known API key found - uses the default model for that provider
+    3. None - LLM engine skipped silently
     """
     if not LLM_ENABLED:
         return None
 
-    # Explicit model override — works with any LiteLLM-supported provider
+    # Explicit model override - works with any LiteLLM-supported provider
     explicit = os.environ.get("BAWBEL_LLM_MODEL", "").strip()
     if explicit:
         return explicit
@@ -129,14 +129,14 @@ def _resolve_model() -> Optional[str]:
 def _call_llm(model: str, content: str) -> Optional[str]:
     """
     Call any LLM via LiteLLM and return the raw text response.
-    Returns None on any failure — never raises.
+    Returns None on any failure - never raises.
     """
     try:
         import litellm
 
         litellm.suppress_debug_info = True
     except ImportError:
-        log.warning("LLM engine: litellm not installed — " 'pip install "bawbel-scanner[llm]"')
+        log.warning("LLM engine: litellm not installed - " 'pip install "bawbel-scanner[llm]"')
         return None
 
     # Wrap content in security analysis framing.
@@ -218,14 +218,16 @@ def _parse_findings(raw: str) -> list[Finding]:
                 title=str(item.get("title", "LLM finding"))[:80],
                 description=str(item.get("description", "")),
                 severity=severity,
-                cvss_ai=parse_cvss(item.get("cvss_ai", 5.0)),
+                aivss_score=parse_cvss(item.get("aivss_score", item.get("aivss", 5.0))),
                 line=None,
                 match=truncate_match(str(item.get("match", "")), 120),
                 engine="llm",
                 owasp=owasp,
+                owasp_mcp=[],
+                piranha_url=None,
             )
             findings.append(finding)
-            log.debug(Logs.FINDING_DETECTED, rule_id, severity.value, "llm", "—")
+            log.debug(Logs.FINDING_DETECTED, rule_id, severity.value, "llm", "-")
 
         except Exception as e:
             log.warning("LLM engine: finding parse error: error_type=%s", type(e).__name__)
@@ -252,7 +254,7 @@ def run_llm_scan(content: str) -> list[Finding]:
     """
     model = _resolve_model()
     if not model:
-        log.debug("LLM engine: no model configured — skipping Stage 2")
+        log.debug("LLM engine: no model configured - skipping Stage 2")
         return []
 
     # Truncate to cost limit
@@ -264,12 +266,12 @@ def run_llm_scan(content: str) -> list[Finding]:
             LLM_MAX_CHARS,
         )
 
-    log.info("LLM engine: Stage 2 running — model=%s", model)
+    log.info("LLM engine: Stage 2 running - model=%s", model)
 
     raw = _call_llm(model, truncated)
     if not raw:
         return []
 
     findings = _parse_findings(raw)
-    log.info("LLM engine: Stage 2 complete — model=%s findings=%d", model, len(findings))
+    log.info("LLM engine: Stage 2 complete - model=%s findings=%d", model, len(findings))
     return findings

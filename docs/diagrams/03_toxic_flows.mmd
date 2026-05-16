@@ -1,0 +1,19 @@
+flowchart LR
+    subgraph FINDINGS["Individual findings"]
+        F1["AVE-2026-00003\nCredential read\nHIGH 6.8"]
+        F2["AVE-2026-00026\nOutput encoding exfil\nMEDIUM 6.8"]
+        F3["AVE-2026-00001\nExternal fetch\nHIGH 8.0"]
+        F4["AVE-2026-00013\nPII collection\nMEDIUM 6.5"]
+    end
+    subgraph CHAINS["Toxic flow chains"]
+        C1["CREDENTIAL_EXFIL_CHAIN\nread + exfil\nCRITICAL 9.8"]
+        C2["DATA_HARVEST_CHAIN\ncollect + exfil\nCRITICAL 9.4"]
+    end
+    F1 & F2 --> C1
+    F3 & F4 --> C2
+    style C1 fill:#7a1a1a,color:#fff
+    style C2 fill:#7a1a1a,color:#fff
+    style F1 fill:#4a2a1a,color:#fff
+    style F2 fill:#2a3a1a,color:#fff
+    style F3 fill:#4a2a1a,color:#fff
+    style F4 fill:#2a3a1a,color:#fff

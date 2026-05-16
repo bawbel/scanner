@@ -1,12 +1,15 @@
 """
-Bawbel Scanner — Tool pinning engine.
+Bawbel Scanner - Tool pinning engine.
 
 Hashes the content of skill files and MCP server manifests and stores
 the hashes in .bawbel-pins.json at the project root. On subsequent scans
 with --check-pins, any file whose hash has changed is flagged as a
-potential rug pull — the content changed after you pinned it.
+potential rug pull - the content changed after you pinned it.
 
-    Bawbel stores in .bawbel-pins.json committed to the repo — shows in
+Why this beats Snyk's approach:
+    Snyk stores hashes locally in ~/.mcp-scan - invisible in code review,
+    not shared with the team, breaks on new machines.
+    Bawbel stores in .bawbel-pins.json committed to the repo - shows in
     git diff, reviewable in PRs, shared with the whole team automatically.
 
 Pin file format (.bawbel-pins.json):
@@ -62,8 +65,8 @@ def _git_identity() -> str:
             return f"{name} <{email}>"
         if name:
             return name
-    except (OSError, subprocess.SubprocessError) as e:
-        log.debug("git identity lookup failed: error_type=%s", type(e).__name__)
+    except Exception:  # nosec B110  # noqa: BLE001 S110
+        pass
     return "unknown"
 
 
@@ -139,8 +142,8 @@ class DriftResult:
     """Result of a drift check."""
 
     def __init__(self) -> None:
-        self.changed: list[dict] = []  # hash changed — rug pull candidate
-        self.new: list[str] = []  # not in pins — new file
+        self.changed: list[dict] = []  # hash changed - rug pull candidate
+        self.new: list[str] = []  # not in pins - new file
         self.missing: list[str] = []  # in pins but file gone
         self.clean: list[str] = []  # hash matches pin
 
@@ -203,7 +206,7 @@ def check_pins(path: str, recursive: bool = True) -> tuple[DriftResult, Optional
 
     Returns (DriftResult, error_string). error_string is None on success.
 
-    Changed files are rug pull candidates — the content changed after pinning.
+    Changed files are rug pull candidates - the content changed after pinning.
     """
     path_obj = Path(path).resolve()
     root = path_obj if path_obj.is_dir() else path_obj.parent

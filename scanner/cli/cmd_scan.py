@@ -1,5 +1,5 @@
 """
-Bawbel Scanner — `bawbel scan` command.
+Bawbel Scanner - `bawbel scan` command.
 
 Scans a file or directory for AVE vulnerabilities.
 Supports text, JSON, and SARIF output formats.
@@ -22,7 +22,7 @@ from scanner.cli.shared import (
 )
 from scanner.cli.shared.utils import collect_files
 
-# ── Watch helper ──────────────────────────────────────────────────────────────
+# ── Watch helper ───────────────────────────────────────────────────────────────
 
 
 def _run_watch(path: str, fmt: str, fail_on_severity: str, recursive: bool) -> None:
@@ -51,7 +51,7 @@ def _run_watch(path: str, fmt: str, fail_on_severity: str, recursive: bool) -> N
         from datetime import datetime, timezone
 
         ts = datetime.now(timezone.utc).strftime("%H:%M:%S")
-        console.print(f"\n[dim]{ts}[/]  [bold #1DB894]↺[/]  Re-scanning after change…\n")
+        console.print(f"\n[dim]{ts}[/]  [bold #1DB894]↺[/]  Re-scanning after change...\n")
         results = []
         for f in files:
             result = scan(str(f))
@@ -81,7 +81,7 @@ def _run_watch(path: str, fmt: str, fail_on_severity: str, recursive: bool) -> N
         on_created = on_modified  # type: ignore[assignment]
 
     print_banner()
-    console.print(f"[bold]Watching:[/]  [white]{path_obj}[/]\n" "[dim]Press Ctrl+C to stop[/]\n")
+    console.print(f"[bold]Watching:[/]  [white]{path_obj}[/]\n[dim]Press Ctrl+C to stop[/]\n")
     _do_scan()
 
     observer = Observer()
@@ -98,7 +98,7 @@ def _run_watch(path: str, fmt: str, fail_on_severity: str, recursive: bool) -> N
         observer.join()
 
 
-# ── Command ───────────────────────────────────────────────────────────────────
+# ── Command ────────────────────────────────────────────────────────────────────
 
 
 @click.command("scan")
@@ -124,7 +124,7 @@ def _run_watch(path: str, fmt: str, fail_on_severity: str, recursive: bool) -> N
     "--no-ignore",
     is_flag=True,
     default=False,
-    help="Ignore all bawbel-ignore suppressions — audit mode",
+    help="Ignore all bawbel-ignore suppressions - audit mode",
 )
 def scan_cmd(  # noqa: PLR0913
     path: str,

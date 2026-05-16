@@ -1,7 +1,7 @@
 """
-Bawbel Scanner — Agentic AI component security scanner.
+Bawbel Scanner - Agentic AI component security scanner.
 
-Public API (stable — import from here, not from sub-modules):
+Public API (stable - import from here, not from sub-modules):
 
     from scanner import scan, ScanResult, Finding, Severity
 
@@ -14,7 +14,7 @@ Version follows semantic versioning (semver).
 Breaking changes (removing/renaming public API) require a major version bump.
 """
 
-__version__ = "1.1.1"
+__version__ = "1.2.0"
 __author__ = "Bawbel <bawbel.io@gmail.com>"
 __license__ = "Apache-2.0"
 

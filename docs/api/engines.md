@@ -1,137 +1,201 @@
-# API Reference — Engines
+# API Reference - Engines
 
-Each detection engine lives in `scanner/engines/` as a separate file.
-
----
-
-## Engine Contract
-
-Every engine function MUST follow this contract:
+All engine functions follow the same contract:
 
 ```python
-def run_X_scan(file_path: str) -> list[Finding]:
-    """
-    Run [engine] against the component file.
-
-    Args:
-        file_path: Resolved absolute path to the component file
-
-    Returns:
-        list[Finding] — may be empty, NEVER None
-
-    Guarantees:
-        - Never raises under any circumstance
-        - Returns [] if dependency not installed
-        - Returns [] if rules file missing
-        - Logs errors at ERROR level, never raises them
-        - Uses Timer() for elapsed time
-        - Uses Logs.ENGINE_* for all log messages
-    """
+def run_<engine>_scan(file_path: str, ...) -> list[Finding]:
 ```
+
+- Never raise — return `[]` on error or missing dependency
+- Never access the network directly
+- Log warnings at `WARNING` level, details at `DEBUG`
+- Engine field on every returned Finding is set to the engine name
 
 ---
 
-## Current Engines
-
-### Stage 1a — Pattern Engine (`engines/pattern.py`)
-
-- **Dependency:** None — stdlib only
-- **Always runs:** Yes
-- **Rules:** `PATTERN_RULES` list in `pattern.py`
-- **Add rules:** Add to `PATTERN_RULES` — no other changes
+## Pattern engine
 
 ```python
 from scanner.engines.pattern import run_pattern_scan, PATTERN_RULES
-findings = run_pattern_scan(file_content_string)
 ```
 
-### Stage 1b — YARA Engine (`engines/yara_engine.py`)
+```python
+run_pattern_scan(content: str) -> list[Finding]
+```
 
-- **Dependency:** `yara-python` (optional)
-- **Always runs:** No — skips silently if not installed
-- **Rules:** `scanner/rules/yara/ave_rules.yar`
-- **Add rules:** Edit `ave_rules.yar` — no Python changes
+| Parameter | Type | Description |
+|---|---|---|
+| `content` | `str` | Full file content as a string |
+
+```python
+from scanner.engines.pattern import run_pattern_scan, PATTERN_RULES
+
+print(f"{len(PATTERN_RULES)} rules loaded")
+
+findings = run_pattern_scan(open("skill.md").read())
+for f in findings:
+    print(f.rule_id, f.line, f.aivss_score)
+```
+
+`PATTERN_RULES` is a `list[dict]`. Each dict has:
+
+| Key | Type | Description |
+|---|---|---|
+| `rule_id` | `str` | Kebab-case identifier |
+| `ave_id` | `str \| None` | AVE record ID |
+| `title` | `str` | Human-readable title |
+| `description` | `str` | Full description |
+| `severity` | `Severity` | Severity enum |
+| `aivss_score` | `float` | AIVSS score |
+| `owasp` | `list[str]` | OWASP codes |
+| `owasp_mcp` | `list[str]` | OWASP MCP codes |
+| `patterns` | `list[str]` | Regex patterns |
+
+---
+
+## YARA engine
+
+```python
+from scanner.engines.yara_engine import run_yara_scan, YARA_RULES_PATH
+```
+
+```python
+run_yara_scan(
+    file_path: str,
+    stripped_content: Optional[str] = None,
+) -> list[Finding]
+```
+
+| Parameter | Type | Description |
+|---|---|---|
+| `file_path` | `str` | Path to the file to scan |
+| `stripped_content` | `str \| None` | Pre-processed content with code fences blanked. When provided, YARA scans this instead of the raw file. Line numbers still map to the original. |
 
 ```python
 from scanner.engines.yara_engine import run_yara_scan
-findings = run_yara_scan(resolved_file_path_string)
+
+findings = run_yara_scan("/path/to/skill.md")
+# Returns [] silently if yara-python is not installed
 ```
 
-### Stage 1c — Semgrep Engine (`engines/semgrep_engine.py`)
+---
 
-- **Dependency:** `semgrep` CLI (optional)
-- **Always runs:** No — skips silently if not installed
-- **Rules:** `scanner/rules/semgrep/ave_rules.yaml`
-- **Add rules:** Edit `ave_rules.yaml` — no Python changes
+## Semgrep engine
+
+```python
+from scanner.engines.semgrep_engine import run_semgrep_scan, SEMGREP_RULES_PATH
+```
+
+```python
+run_semgrep_scan(
+    file_path: str,
+    stripped_content: Optional[str] = None,
+) -> list[Finding]
+```
 
 ```python
 from scanner.engines.semgrep_engine import run_semgrep_scan
-findings = run_semgrep_scan(resolved_file_path_string)
+
+findings = run_semgrep_scan("/path/to/skill.md")
+# Returns [] silently if semgrep CLI is not installed
 ```
 
 ---
 
-### Stage 2 — LLM Engine (`engines/llm_engine.py`)
-
-- **Dependency:** `litellm` — `pip install "bawbel-scanner[llm]"`
-- **Always runs:** No — skips silently if litellm not installed or no model configured
-- **Providers:** Any LiteLLM-supported provider (Anthropic, OpenAI, Gemini, Mistral, Ollama, 100+ more)
-- **Activation:** Set `BAWBEL_LLM_MODEL` or a known provider API key
+## LLM engine
 
 ```python
-from scanner.engines.llm_engine import run_llm_scan
-findings = run_llm_scan(file_content_string)
+from scanner.engines.llm_engine import run_llm_scan, _parse_findings, _resolve_model
 ```
-
-```bash
-# Provider examples
-export ANTHROPIC_API_KEY=sk-ant-...           # uses claude-haiku-4-5
-export OPENAI_API_KEY=sk-...                  # uses gpt-4o-mini
-export BAWBEL_LLM_MODEL=ollama/mistral        # local, no key needed
-export BAWBEL_LLM_MODEL=gemini/gemini-1.5-flash && export GEMINI_API_KEY=...
-```
-
----
-
-## Stage 3 — Sandbox Engine (`engines/sandbox_engine.py`)
-
-- **Dependency:** Docker + `BAWBEL_SANDBOX_ENABLED=true`
-- **Always runs:** No — opt-in, skips silently if Docker unavailable
-- **Status:** scaffold — Docker image (`bawbel/sandbox:latest`) ships in v1.0
 
 ```python
-from scanner.engines.sandbox_engine import run_sandbox_scan
-findings = run_sandbox_scan(resolved_file_path_string)
+run_llm_scan(content: str) -> list[Finding]
 ```
-
-```bash
-export BAWBEL_SANDBOX_ENABLED=true
-bawbel scan ./my-skill.md
-```
-
-For full documentation including diagrams, IOC tables, and local testing guide
-see **[Detection Engines Guide](../guides/engines.md)**.
-
----
-
-## Adding a New Engine
-
-See `.claude/skills/add-engine.md` for the complete step-by-step guide.
-
-Summary:
-1. Create `scanner/engines/my_engine.py` following the contract above
-2. Register in `scanner/engines/__init__.py`
-3. Add one line in `scanner/scanner.py` Step 5
-4. Write tests in `tests/unit/engines/test_my_engine.py`
-
----
-
-## Engine Registry
-
-`scanner/engines/__init__.py` exports all active engines:
 
 ```python
-from scanner.engines import run_pattern_scan, run_yara_scan, run_semgrep_scan, run_llm_scan
+from scanner.engines.llm_engine import run_llm_scan, _resolve_model
+
+model = _resolve_model()    # None if no key set
+print(f"Active model: {model}")
+
+findings = run_llm_scan(open("skill.md").read())
+# Returns [] silently if litellm not installed or no API key
 ```
 
-To disable an engine temporarily: comment out its import in `__init__.py`.
+`_parse_findings(raw: str) -> list[Finding]` — parses the LLM JSON response. Accepts both `aivss_score` and `aivss` keys for backwards compatibility.
+
+---
+
+## Magika engine
+
+```python
+from scanner.engines.magika_engine import run_magika_scan
+```
+
+```python
+run_magika_scan(file_path: str) -> list[Finding]
+```
+
+```python
+from scanner.engines.magika_engine import run_magika_scan
+
+findings = run_magika_scan("/path/to/skill.md")
+# Returns [] silently if magika is not installed
+# Returns [] if content type is benign (markdown, yaml, json, text)
+# Returns Finding(AVE-2026-00024) if content type is dangerous (ELF, PE32, pickle, etc.)
+```
+
+---
+
+## Sandbox engine
+
+```python
+from scanner.engines.sandbox_engine import (
+    run_sandbox_scan,
+    is_docker_available,
+    SANDBOX_ENABLED,
+)
+```
+
+```python
+run_sandbox_scan(file_path: str) -> list[Finding]
+```
+
+```python
+from scanner.engines.sandbox_engine import run_sandbox_scan, is_docker_available, SANDBOX_ENABLED
+
+if not SANDBOX_ENABLED:
+    print("Set BAWBEL_SANDBOX_ENABLED=true to enable Stage 3")
+elif not is_docker_available():
+    print("Docker not running")
+else:
+    findings = run_sandbox_scan("/path/to/skill.md")
+```
+
+---
+
+## Meta-analyzer
+
+```python
+from scanner.engines.meta_analyzer import run_meta_analysis
+```
+
+```python
+run_meta_analysis(
+    findings: list[Finding],
+    content: str,
+    file_path: str,
+) -> list[Finding]
+```
+
+Takes the findings from static engines and returns a possibly smaller list after
+LLM-based false-positive classification. Only called when LLM is configured and
+there are medium-confidence findings.
+
+```python
+from scanner.engines.meta_analyzer import run_meta_analysis
+
+# Called internally by scanner.py after all static engines run
+# Rarely needed to call directly - use scan() instead
+filtered = run_meta_analysis(findings, content, file_path)
+```
