@@ -24,6 +24,7 @@ from scanner.cli.shared import (
     sev_icon,
 )
 from scanner.cli.shared.constants import OWASP_DESCRIPTIONS, REMEDIATION_GUIDE
+from scanner.cli.shared.utils import collect_files
 
 
 @click.command("report")
@@ -43,19 +44,54 @@ from scanner.cli.shared.constants import OWASP_DESCRIPTIONS, REMEDIATION_GUIDE
     default=False,
     help="Disable all suppressions - audit mode.",
 )
-def report_cmd(path: str, fmt: str, no_ignore: bool) -> None:
+@click.option(
+    "--recursive",
+    "-r",
+    is_flag=True,
+    default=False,
+    help="Scan directory recursively.",
+)
+def report_cmd(path: str, fmt: str, no_ignore: bool, recursive: bool) -> None:
     """Scan a component and show a full remediation guide.
 
     Includes finding details, OWASP mapping, AIVSS v0.8 scores,
     and specific remediation steps for each finding.
+
+    Examples:
+
+        bawbel report ./skill.md
+
+        bawbel report ./skills/ --recursive
     """
-    result = scan(path, no_ignore=no_ignore)
+    path_obj = Path(path).resolve()
+    files = collect_files(path_obj, recursive)
+
+    if not files:
+        console.print("[yellow]No scannable files found.[/]")
+        sys.exit(0)
+
+    results = []
+    any_findings = False
+
+    if fmt == "text":
+        print_banner()
+
+    for f in files:
+        result = scan(str(f), no_ignore=no_ignore)
+        results.append(result)
+        if result.findings:
+            any_findings = True
+        if fmt == "text":
+            _render_report(result)
 
     if fmt == "json":
-        print_json([result])
-        sys.exit(0 if result.is_clean else 1)
+        print_json(results)
 
-    print_banner()
+    sys.exit(1 if any_findings else 0)
+
+
+def _render_report(result) -> None:
+    """Render a full remediation report for one ScanResult."""
     name = Path(result.file_path).name
     console.print(f"[dim]Report for:[/]  [bold white]{name}[/]")
     console.print(f"[dim]Type:[/]        [bold white]{result.component_type}[/]")
@@ -67,13 +103,14 @@ def report_cmd(path: str, fmt: str, no_ignore: bool) -> None:
     console.print()
 
     if result.has_error:
-        console.print(f"[bold red]✗  Scan error:[/] {result.error}")
-        sys.exit(1)
+        console.print(f"[bold red]\u2717  Scan error:[/] {result.error}")
+        console.print()
+        return
 
     if result.is_clean:
         console.print(
             Panel(
-                "[bold #1DB894]✓  No vulnerabilities found[/]\n\n"
+                "[bold #1DB894]\u2713  No vulnerabilities found[/]\n\n"
                 "[dim]This component passed all AVE checks.\n"
                 "It is safe to install and use.[/]",
                 title="[bold #1DB894]Security Report[/]",
@@ -82,7 +119,8 @@ def report_cmd(path: str, fmt: str, no_ignore: bool) -> None:
             )
         )
         print_summary(result)
-        sys.exit(0)
+        console.print()
+        return
 
     console.print("[bold white]VULNERABILITIES FOUND[/]")
     console.print("[dim]" + "-" * 58 + "[/]")
@@ -152,7 +190,7 @@ def report_cmd(path: str, fmt: str, no_ignore: bool) -> None:
 
     console.print(
         Panel(
-            "[bold red]⚠  Do not install this component[/]\n\n"
+            "[bold red]\u26a0  Do not install this component[/]\n\n"
             "[dim]This component contains patterns associated with known attack "
             "classes.\nReview each finding above and remediate before use.[/]",
             border_style="red",
@@ -160,4 +198,3 @@ def report_cmd(path: str, fmt: str, no_ignore: bool) -> None:
         )
     )
     console.print()
-    sys.exit(1)
