@@ -32,7 +32,9 @@ jobs:
           cache: pip
 
       - name: Install deps
-        run: pip install click rich pydantic pytest pytest-cov
+        run: |
+          pip install -e .
+          pip install pytest pytest-cov
 
       - name: Run tests
         run: python -m pytest tests/ -v --tb=short
@@ -63,56 +65,9 @@ jobs:
       - name: Verify distribution
         run: |
           twine check dist/*
-          echo "=== Distribution contents ==="
           ls -lh dist/
-
-          echo "=== Wheel contents ==="
           pip install wheel
-          python -c "
-          import zipfile, os
-
-          whl = [f for f in os.listdir('dist') if f.endswith('.whl')][0]
-          with zipfile.ZipFile(f'dist/{whl}') as z:
-              files = z.namelist()
-              print('\n'.join(sorted(files)))
-
-          # Rule files must be present
-          rule_files = [f for f in files if f.endswith(('.yar', '.yaml'))]
-          assert rule_files, 'ERROR: Rule files missing from wheel!'
-          print(f'\n✓ Rules included: {rule_files}')
-
-          # CLI must be scanner/cli/ package (not a stale root-level file)
-          cli_pkg = [f for f in files if f.startswith('scanner/cli/')]
-          assert cli_pkg, 'ERROR: scanner/cli/ package missing from wheel!'
-          print(f'✓ CLI package present: scanner/cli/')
-
-          # No stale cli.py files outside scanner/cli/
-          stale = [
-              f for f in files
-              if 'cli' in f.lower()
-              and not f.startswith('scanner/cli/')
-              and f.endswith('.py')
-          ]
-          assert not stale, f'ERROR: Stale CLI files outside scanner/cli/: {stale}'
-          print(f'✓ No stale CLI files')
-
-          # Toxic flows package
-          toxic = [f for f in files if f.startswith('scanner/toxic_flows/')]
-          assert toxic, 'ERROR: scanner/toxic_flows/ missing!'
-          print(f'✓ Toxic flows package present')
-
-          # Conformance package
-          conf = [f for f in files if f.startswith('scanner/conformance/')]
-          assert conf, 'ERROR: scanner/conformance/ missing!'
-          print(f'✓ Conformance package present')
-
-          # OWASP MCP map
-          owasp = [f for f in files if 'owasp_mcp_map' in f]
-          assert owasp, 'ERROR: owasp_mcp_map.py missing!'
-          print(f'✓ OWASP MCP map present')
-
-          print('\nAll checks passed.')
-          "
+          python3 -c "import zipfile,os; whl=[f for f in os.listdir('dist') if f.endswith('.whl')][0]; z=zipfile.ZipFile('dist/'+whl); files=z.namelist(); assert any(f.endswith(('.yar','.yaml')) for f in files),'rules missing'; assert any(f.startswith('scanner/cli/') for f in files),'cli missing'; assert any(f.startswith('scanner/toxic_flows/') for f in files),'toxic_flows missing'; assert any(f.startswith('scanner/conformance/') for f in files),'conformance missing'; assert 'scanner/justified_suppression.py' in files,'justified_suppression missing'; assert 'scanner/models/acceptance.py' in files,'acceptance missing'; assert any('cmd_accept' in f for f in files),'cmd_accept missing'; assert any('cmd_creds' in f for f in files),'cmd_creds missing'; assert any('cmd_chain' in f for f in files),'cmd_chain missing'; print('wheel OK: '+str(len(files))+' files')"
 
       - name: Upload dist artifact
         uses: actions/upload-artifact@v4

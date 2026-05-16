@@ -46,6 +46,10 @@ from scanner.toxic_flows import detect_toxic_flows
 # Infrastructure
 from scanner.messages import Logs
 from scanner.suppression import apply_suppressions, NO_IGNORE
+from scanner.justified_suppression import (
+    apply_justified_suppressions,
+    parse_accepted_findings,
+)
 from scanner.utils import (
     Timer,
     get_logger,
@@ -650,13 +654,29 @@ def scan(file_path: str, no_ignore: bool = False) -> ScanResult:
             no_ignore=no_ignore or NO_IGNORE,
         )
 
+        # ── Step 10: Apply justified suppressions (bawbel-accept / extended bawbel-ignore)
+        # J1: parse reason/reviewer/reviewed/expires metadata from file
+        # J5: expired accepted risks are NOT suppressed - they resurface as active
+        if no_ignore or NO_IGNORE:
+            just_active = sup.active
+            just_suppressed = []
+            accepted_list = []
+        else:
+            accepted_list = parse_accepted_findings(content, str(path))
+            just_active, just_suppressed, accepted_list = apply_justified_suppressions(
+                findings=sup.active,
+                accepted_list=accepted_list,
+                file_path=str(path),
+            )
+
     result = ScanResult(
         file_path=str(path),
         component_type=component_type,
-        findings=sup.active,
-        suppressed_findings=sup.suppressed + low_confidence,
+        findings=just_active,
+        suppressed_findings=sup.suppressed + just_suppressed + low_confidence,
         scan_time_ms=t.elapsed_ms,
         toxic_flows=toxic_flows,
+        accepted_findings=accepted_list,
     )
 
     log.info(
