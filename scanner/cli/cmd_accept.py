@@ -53,7 +53,6 @@ from scanner.models.acceptance import (
     parse_expiry,
 )
 
-
 # ── Comment templates ──────────────────────────────────────────────────────────
 
 _FP_TEMPLATE = """\

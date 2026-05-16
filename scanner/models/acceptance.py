@@ -17,7 +17,6 @@ from dataclasses import dataclass, field
 from datetime import date, timedelta
 from typing import Optional
 
-
 SUPPRESSION_TYPE_FALSE_POSITIVE = "false_positive"
 SUPPRESSION_TYPE_ACCEPTED_RISK = "accepted_risk"
 
