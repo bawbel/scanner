@@ -13,7 +13,7 @@
 [![AVE Records](https://img.shields.io/badge/AVE_Records-48-green.svg)](https://github.com/bawbel/ave)
 [![MCP Registry](https://img.shields.io/badge/MCP_Registry-listed-purple.svg)](https://registry.modelcontextprotocol.io)
 
-[![Star History Chart](https://api.star-history.com/svg?repos=bawbel/scanner&type=Date)](https://star-history.com/#bawbel/scanner&Date)
+<!-- [![Star History Chart](https://api.star-history.com/svg?repos=bawbel/scanner&type=Date)](https://star-history.com/#bawbel/scanner&Date) -->
 
 </div>
 
@@ -21,8 +21,6 @@
 
 > **Bawbel never executes your MCP servers.**
 > Snyk's agent-scan does.
-
-<!-- [Read why this matters.](https://bawbel.io/blog/snyk-executes) -->
 
 ```bash
 pip install "bawbel-scanner[all]"
@@ -47,27 +45,117 @@ bawbel ssc https://server    # scan MCP server without starting it
 
 ---
 
-## System overview
+## How it works
 
-How a scan flows from your file to an AIVSS-scored finding.
+### System overview
 
-<img src="docs/diagrams/01_system_overview.png" width="100%" alt="System overview">
+How a scan flows from your file to an AIVSS-scored finding:
 
----
+```
+  your file
+      |
+      v
+  [ Pre-processing ]
+    code fence stripping
+    negation context detection
+      |
+      v
+  [ Detection engines ]  (run in parallel)
+    1a  Pattern    40 regex rules, stdlib only, always on
+    1b  YARA       39 binary/behavioral rules
+    1c  Semgrep    41 structural rules
+    2   LLM        semantic analysis via LiteLLM
+    3   Sandbox    Docker behavioral sandbox
+      |
+      v
+  [ Deduplication ]
+    merge by (ave_id, line)
+    pattern > yara > semgrep > llm > sandbox priority
+      |
+      v
+  [ Toxic flow analysis ]
+    map findings to capability tags
+    check all pairs against 12 chain definitions
+      |
+      v
+  [ ScanResult ]
+    findings[]          active findings, sorted by severity
+    suppressed_findings[]
+    accepted_findings[] new in v1.2.0
+    toxic_flows[]
+    risk_score          max(findings, toxic_flows)
+    aivss_score         OWASP AIVSS v0.8
+```
 
-## Detection stages
+### Detection stages
 
-Six engines run in parallel. Results merge before toxic flow analysis.
+Six engines run in parallel. Results merge before toxic flow analysis:
 
-<img src="docs/diagrams/02_detection_stages.png" width="100%" alt="Detection stages">
+```
+  Stage 1a   Pattern engine
+             40 regex rules, no deps, < 5ms
+             always active
+
+  Stage 1b   YARA engine
+             39 rules, multi-condition matching
+             pip install "bawbel-scanner[yara]"
+
+  Stage 1c   Semgrep engine
+             41 structural rules, multi-line context
+             pip install "bawbel-scanner[semgrep]"
+
+  Stage 2    LLM engine
+             semantic analysis, catches synonym attacks
+             pip install "bawbel-scanner[llm]" + API key
+
+  Stage 3    Sandbox engine
+             dynamic behavioral analysis in Docker
+             BAWBEL_SANDBOX_ENABLED=true
+
+             +-----------+
+  All  ----> | dedup     | ----> findings[]
+  results    | sort      |       sorted by severity
+             +-----------+
+                  |
+                  v
+             toxic flow
+             analysis
+```
 
 ---
 
 ## False positive reduction
 
-Eight layers run automatically before a finding is reported.
+Eight layers run automatically before a finding is reported:
 
-<img src="docs/diagrams/04_false_positive.png" width="100%" alt="False positive flow">
+```
+  file content
+      |
+      v  FP-1  code fence stripping       ~60% reduction
+      |         content inside ``` blanked before scan
+      |
+      v  FP-2  negation context           ~15% reduction
+      |         "Bad example:", "Never do this:" suppresses
+      |
+      v  FP-3  confidence scoring         ~10% reduction
+      |         docs/ examples/ paths reduce confidence
+      |
+      v  FP-4  LLM meta-analyzer          ~7% reduction
+      |         medium-confidence findings reviewed by LLM
+      |
+      v  FP-5a inline bawbel-ignore       per line
+      |         <!-- bawbel-ignore -->
+      |
+      v  FP-5b block suppression          per section
+      |         <!-- bawbel-ignore-start/end -->
+      |
+      v  FP-5c .bawbelignore patterns     per file
+      |         gitignore-style glob rules
+      |
+      v  FP-6  justified suppression      per finding
+               requires reason + reviewer + optional expiry
+               audit trail in accepted_findings[]
+```
 
 | Layer | Mechanism | FP reduction |
 |---|---|---|
@@ -271,7 +359,7 @@ Pre-commit:
 # .pre-commit-config.yaml
 repos:
   - repo: https://github.com/bawbel/scanner
-    rev: v1.2.0
+    rev: v1.2.1
     hooks:
       - id: bawbel-scan
         args: [--fail-on-severity, high]
