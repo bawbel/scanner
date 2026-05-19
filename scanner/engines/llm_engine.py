@@ -135,6 +135,9 @@ def _call_llm(model: str, content: str) -> Optional[str]:
         import litellm
 
         litellm.suppress_debug_info = True
+        import logging
+
+        logging.getLogger("LiteLLM").setLevel(logging.ERROR)
     except ImportError:
         log.warning("LLM engine: litellm not installed - " 'pip install "bawbel-scanner[llm]"')
         return None
