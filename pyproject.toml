@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 # ── Project metadata ──────────────────────────────────────────────────────────
 [project]
 name            = "bawbel-scanner"
-version         = "1.2.1"
+version         = "1.2.2"
 description     = "Agentic AI component security scanner. Detects AVE vulnerabilities. Produces OWASP AIVSS v0.8 scores."
 readme          = "README.md"
 license         = { text = "Apache-2.0" }

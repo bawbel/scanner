@@ -4,6 +4,7 @@
 
 **The only open-source scanner that produces OWASP AIVSS scores for MCP servers and skill files. Never executes code.**
 
+
 [![PyPI version](https://badge.fury.io/py/bawbel-scanner.svg)](https://pypi.org/project/bawbel-scanner/)
 [![PyPI downloads](https://img.shields.io/pypi/dm/bawbel-scanner?label=downloads%2Fmonth&color=blue)](https://pepy.tech/project/bawbel-scanner)
 [![Pepy total downloads](https://img.shields.io/pepy/dt/bawbel-scanner?label=total%20downloads&color=blue)](https://pepy.tech/project/bawbel-scanner)
@@ -27,6 +28,8 @@ pip install "bawbel-scanner[all]"
 bawbel scan ./skills/        # scan skill files
 bawbel ssc https://server    # scan MCP server without starting it
 ```
+
+<img src="https://raw.githubusercontent.com/bawbel/scanner/main/docs/demo.svg" width="100%" alt="Bawbel Scanner demo">
 
 ---
 

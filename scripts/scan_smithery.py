@@ -9,19 +9,30 @@ Usage:
     export SMITHERY_API_KEY=your_key
     python3 scan_smithery.py --limit 500 --output smithery_scan_results.json
 
+Options:
+    --limit     Number of servers to scan (default: 500)
+    --output    Output JSON file (default: smithery_scan_results.json)
+    --workers   Parallel scan workers (default: 4)
+    --delay     Seconds between API calls per worker (default: 0.1)
+    --resume    Resume from last checkpoint
+
 Requirements:
     - SMITHERY_API_KEY environment variable
     - bawbel-scanner installed
+    - Optional: PIRANHA_INGEST_TOKEN for PiranhaDB upload
     - Optional: ANTHROPIC_API_KEY for LLM stage
 """
 
 import argparse
 import json
 import os
+import signal
 import subprocess  # nosec B404  # noqa: S404
 import sys
 import tempfile
+import threading
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -35,6 +46,10 @@ SMITHERY_API = "https://registry.smithery.ai"
 PIRANHA_API = "https://api.piranha.bawbel.io"
 RESULTS_FILE = "smithery_scan_results.json"
 PROGRESS_FILE = "smithery_scan_progress.json"
+
+# Thread-safe state
+_lock = threading.Lock()
+_shutdown = threading.Event()
 
 
 def post_to_piranha(output: dict, ingest_token: str) -> bool:
@@ -65,7 +80,7 @@ def get_headers(api_key: str) -> dict:
     return {
         "Authorization": f"Bearer {api_key}",
         "Accept": "application/json",
-        "User-Agent": "bawbel-scanner/1.1.1 (https://bawbel.io)",
+        "User-Agent": "bawbel-scanner/1.2.1 (https://bawbel.io)",
     }
 
 
@@ -99,7 +114,8 @@ def fetch_server_list(api_key: str, limit: int = 500) -> list:
         total_pages = pagination.get("totalPages", 1)
         total_count = pagination.get("totalCount", 0)
         print(
-            f"  Fetched {len(servers)} servers... (page {page}/{total_pages}, total: {total_count})"
+            f"  Fetched {len(servers)} servers..."
+            f" (page {page}/{total_pages}, total: {total_count})"
         )
 
         if len(servers) >= limit:
@@ -163,7 +179,11 @@ def extract_scannable_content(server: dict) -> str:
 
 def run_bawbel_scan(content: str) -> dict:
     with tempfile.NamedTemporaryFile(
-        mode="w", suffix=".md", prefix="smithery_scan_", delete=False, encoding="utf-8"
+        mode="w",
+        suffix=".md",
+        prefix="smithery_scan_",
+        delete=False,
+        encoding="utf-8",
     ) as f:
         f.write(content)
         tmp = f.name
@@ -199,10 +219,130 @@ def run_bawbel_scan(content: str) -> dict:
         Path(tmp).unlink(missing_ok=True)
 
 
+def scan_one(rank: int, server: dict, api_key: str, delay: float) -> dict:
+    """Fetch details and scan one server. Designed for ThreadPoolExecutor."""
+    if _shutdown.is_set():
+        return None
+
+    qname = server.get("qualifiedName", server.get("name", f"server_{rank}"))
+    details = fetch_server_details(api_key, qname) or server
+    content = extract_scannable_content(details)
+
+    if not content.strip() or len(content) < 50:
+        return {
+            "rank": rank,
+            "qualified_name": qname,
+            "display_name": details.get("displayName", qname),
+            "tools_count": len(details.get("tools", [])),
+            "skipped": True,
+        }
+
+    scan = run_bawbel_scan(content)
+    findings = scan.get("findings", [])
+    toxic_flows = scan.get("toxic_flows", [])
+    risk_score = scan.get("risk_score", 0)
+
+    if delay:
+        time.sleep(delay)
+
+    return {
+        "rank": rank,
+        "qualified_name": qname,
+        "display_name": details.get("displayName", qname),
+        "tools_count": len(details.get("tools", [])),
+        "risk_score": risk_score,
+        "findings_count": len(findings),
+        "toxic_flows_count": len(toxic_flows),
+        "findings": findings,
+        "toxic_flows": toxic_flows,
+        "skipped": False,
+        "error": scan.get("error"),
+        "scanned_at": datetime.now(timezone.utc).isoformat(),
+    }
+
+
+def accumulate(stats: dict, entry: dict) -> None:
+    """Merge one scan entry into running stats. Called under lock."""
+    if entry.get("skipped"):
+        return
+
+    findings = entry.get("findings", [])
+    toxic_flows = entry.get("toxic_flows", [])
+
+    stats["scanned"] += 1
+    stats["total_findings"] += len(findings)
+    stats["total_toxic_flows"] += len(toxic_flows)
+
+    if findings:
+        stats["with_findings"] += 1
+    else:
+        stats["clean"] += 1
+
+    if toxic_flows:
+        stats["with_toxic_flows"] += 1
+
+    if entry.get("error"):
+        stats["errors"] += 1
+
+    for f in findings:
+        sev = f.get("severity", "UNKNOWN")
+        ave_id = f.get("ave_id", "")
+        aivss = f.get("aivss_score", 0.0)
+
+        stats["by_severity"][sev] = stats["by_severity"].get(sev, 0) + 1
+        stats["aivss_scores"].append(aivss)
+
+        if aivss > stats["max_aivss"]:
+            stats["max_aivss"] = aivss
+
+        if ave_id:
+            stats["by_ave_id"][ave_id] = stats["by_ave_id"].get(ave_id, 0) + 1
+
+        for owasp in f.get("owasp_mcp", []):
+            stats["by_owasp_mcp"][owasp] = stats["by_owasp_mcp"].get(owasp, 0) + 1
+
+
+def fmt_entry(entry: dict, total: int) -> str:
+    """Single-line progress output for one scanned server."""
+    rank = entry["rank"]
+    qname = entry["qualified_name"][:45]
+    if entry.get("skipped"):
+        return f"[{rank:03d}/{total}] {qname:<45} skip"
+
+    findings = entry.get("findings", [])
+    toxic = entry.get("toxic_flows_count", 0)
+    risk = entry.get("risk_score", 0)
+
+    if findings:
+        sev = (
+            "CRIT"
+            if any(f.get("severity") == "CRITICAL" for f in findings)
+            else "HIGH" if any(f.get("severity") == "HIGH" for f in findings) else "MED"
+        )
+        status = f"[{sev}] {len(findings)} finding(s)  risk {risk:.1f}"
+    else:
+        status = "[ok]  clean"
+
+    if toxic:
+        status += f"  chain: {toxic}"
+    if entry.get("error"):
+        status += f"  err: {entry['error'][:30]}"
+
+    return f"[{rank:03d}/{total}] {qname:<45} {status}"
+
+
+def save_progress(completed: set, results: list) -> None:
+    Path(PROGRESS_FILE).write_text(
+        json.dumps({"completed": list(completed), "results": results}, ensure_ascii=False)
+    )
+
+
 def main():
     parser = argparse.ArgumentParser(description="Scan Smithery MCP servers with Bawbel")
     parser.add_argument("--limit", type=int, default=500, help="Number of servers to scan")
     parser.add_argument("--output", default=RESULTS_FILE, help="Output JSON file")
+    parser.add_argument("--workers", type=int, default=4, help="Parallel scan workers")
+    parser.add_argument("--delay", type=float, default=0.1, help="Delay per worker between calls")
     parser.add_argument("--resume", action="store_true", help="Resume from last checkpoint")
     args = parser.parse_args()
 
@@ -211,13 +351,14 @@ def main():
         print("Error: set SMITHERY_API_KEY environment variable")
         sys.exit(1)
 
-    check = subprocess.run(  # nosec B603 B607  # noqa: S603 S607
+    version_check = subprocess.run(  # nosec B603 B607  # noqa: S603 S607
         ["bawbel", "version"], capture_output=True, text=True
     )
-    if check.returncode != 0:
+    if version_check.returncode != 0:
         print("Error: bawbel CLI not found. pip install bawbel-scanner")
         sys.exit(1)
-    print(f"Using: {check.stdout.strip().splitlines()[0]}")
+    print(f"Using: {version_check.stdout.strip().splitlines()[0]}")
+    print(f"Workers: {args.workers}")
 
     completed: set = set()
     results: list = []
@@ -229,7 +370,9 @@ def main():
         print(f"Resuming: {len(completed)} already scanned")
 
     servers = fetch_server_list(api_key, args.limit)
-    print(f"\nScanning {len(servers)} servers...\n")
+    pending = [s for s in servers if s.get("qualifiedName", s.get("name")) not in completed]
+    total = len(servers)
+    print(f"\nScanning {len(pending)} servers ({total - len(pending)} already done)...\n")
     print("-" * 60)
 
     stats = {
@@ -240,104 +383,77 @@ def main():
         "errors": 0,
         "total_findings": 0,
         "total_toxic_flows": 0,
-        "by_severity": {"CRITICAL": 0, "HIGH": 0, "MEDIUM": 0, "LOW": 0},
+        "by_severity": {},
         "by_ave_id": {},
         "by_owasp_mcp": {},
+        "aivss_scores": [],
+        "max_aivss": 0.0,
     }
 
-    for i, server in enumerate(servers, 1):
-        qname = server.get("qualifiedName", server.get("name", f"server_{i}"))
+    # Checkpoint on Ctrl+C
+    def _handle_signal(sig, frame):
+        _shutdown.set()
+        print("\n\nInterrupted - saving checkpoint...")
+        with _lock:
+            save_progress(completed, results)
+        print(f"Checkpoint saved to {PROGRESS_FILE}. Resume with --resume.")
+        sys.exit(0)
 
-        if qname in completed:
-            continue
+    signal.signal(signal.SIGINT, _handle_signal)
+    signal.signal(signal.SIGTERM, _handle_signal)
 
-        details = fetch_server_details(api_key, qname) or server
-        content = extract_scannable_content(details)
+    rank_map = {s.get("qualifiedName", s.get("name")): i + 1 for i, s in enumerate(servers)}
 
-        if not content.strip() or len(content) < 50:
-            print(f"[{i:03d}/{len(servers)}] {qname[:45]:<45} skip")
-            continue
+    with ThreadPoolExecutor(max_workers=args.workers) as pool:
+        futures = {
+            pool.submit(
+                scan_one,
+                rank_map.get(s.get("qualifiedName", s.get("name")), i + 1),
+                s,
+                api_key,
+                args.delay,
+            ): s
+            for i, s in enumerate(pending)
+        }
 
-        scan = run_bawbel_scan(content)
-        findings = scan.get("findings", [])
-        toxic_flows = scan.get("toxic_flows", [])
-        risk_score = scan.get("risk_score", 0)
+        done_count = 0
+        for future in as_completed(futures):
+            if _shutdown.is_set():
+                break
 
-        stats["scanned"] += 1
-        stats["total_findings"] += len(findings)
-        stats["total_toxic_flows"] += len(toxic_flows)
+            entry = future.result()
+            if entry is None:
+                continue
 
-        if findings:
-            stats["with_findings"] += 1
-        else:
-            stats["clean"] += 1
+            qname = entry["qualified_name"]
+            done_count += 1
 
-        if toxic_flows:
-            stats["with_toxic_flows"] += 1
+            with _lock:
+                accumulate(stats, entry)
+                results.append(entry)
+                completed.add(qname)
+                print(fmt_entry(entry, total))
 
-        if scan.get("error"):
-            stats["errors"] += 1
-
-        for f in findings:
-            sev = f.get("severity", "UNKNOWN")
-            ave_id = f.get("ave_id", "")
-            stats["by_severity"][sev] = stats["by_severity"].get(sev, 0) + 1
-            if ave_id:
-                stats["by_ave_id"][ave_id] = stats["by_ave_id"].get(ave_id, 0) + 1
-            for owasp in f.get("owasp_mcp", []):
-                stats["by_owasp_mcp"][owasp] = stats["by_owasp_mcp"].get(owasp, 0) + 1
-
-        results.append(
-            {
-                "rank": i,
-                "qualified_name": qname,
-                "display_name": details.get("displayName", qname),
-                "tools_count": len(details.get("tools", [])),
-                "risk_score": risk_score,
-                "findings_count": len(findings),
-                "toxic_flows_count": len(toxic_flows),
-                "findings": findings,
-                "toxic_flows": toxic_flows,
-                "scanned_at": datetime.now(timezone.utc).isoformat(),
-            }
-        )
-        completed.add(qname)
-
-        flag = (
-            "CRIT"
-            if any(f.get("severity") == "CRITICAL" for f in findings)
-            else "HIGH" if any(f.get("severity") == "HIGH" for f in findings) else "ok"
-        )
-        status = (
-            f"[{flag}] {len(findings)} finding(s)  risk {risk_score:.1f}"
-            if findings
-            else "[ok]  clean"
-        )
-        if toxic_flows:
-            status += f"  chain: {len(toxic_flows)}"
-
-        print(f"[{i:03d}/{len(servers)}] {qname[:45]:<45} {status}")
-
-        if i % 50 == 0:
-            Path(PROGRESS_FILE).write_text(
-                json.dumps({"completed": list(completed), "results": results})
-            )
-            flaw_rate = stats["with_findings"] / max(stats["scanned"], 1) * 100
-            print(
-                f"\n  Checkpoint: {stats['scanned']} scanned, "
-                f"{stats['with_findings']} with findings ({flaw_rate:.1f}%)\n"
-            )
-
-        time.sleep(0.1)
+                if done_count % 50 == 0:
+                    save_progress(completed, results)
+                    flaw_rate = stats["with_findings"] / max(stats["scanned"], 1) * 100
+                    print(
+                        f"\n  Checkpoint: {stats['scanned']} scanned, "
+                        f"{stats['with_findings']} with findings ({flaw_rate:.1f}%)\n"
+                    )
 
     flaw_rate = stats["with_findings"] / max(stats["scanned"], 1) * 100
+    avg_aivss = (
+        sum(stats["aivss_scores"]) / len(stats["aivss_scores"]) if stats["aivss_scores"] else 0.0
+    )
     top_ave = sorted(stats["by_ave_id"].items(), key=lambda x: x[1], reverse=True)[:10]
     top_owasp = sorted(stats["by_owasp_mcp"].items(), key=lambda x: x[1], reverse=True)[:5]
 
     output = {
+        "schema_version": "1.0.0",
         "scan_date": datetime.now(timezone.utc).isoformat(),
         "source": "smithery",
-        "scanner_version": check.stdout.strip().splitlines()[0],
+        "scanner_version": version_check.stdout.strip().splitlines()[0],
         "servers_scanned": stats["scanned"],
         "servers_with_findings": stats["with_findings"],
         "servers_clean": stats["clean"],
@@ -345,13 +461,15 @@ def main():
         "total_findings": stats["total_findings"],
         "total_toxic_flows": stats["total_toxic_flows"],
         "flaw_rate_pct": round(flaw_rate, 1),
+        "aivss_avg": round(avg_aivss, 2),
+        "aivss_max": round(stats["max_aivss"], 2),
         "by_severity": stats["by_severity"],
         "top_ave_ids": top_ave,
         "top_owasp_mcp": top_owasp,
-        "results": results,
+        "results": sorted(results, key=lambda r: r["rank"]),
     }
 
-    Path(args.output).write_text(json.dumps(output, indent=2))
+    Path(args.output).write_text(json.dumps(output, indent=2, ensure_ascii=False))
 
     print("\n" + "-" * 60)
     print("SCAN COMPLETE")
@@ -361,8 +479,10 @@ def main():
     print(f"Servers clean:         {stats['clean']}")
     print(f"Toxic flows detected:  {stats['with_toxic_flows']} servers")
     print(f"Total findings:        {stats['total_findings']}")
+    print(f"AIVSS avg / max:       {avg_aivss:.2f} / {stats['max_aivss']:.1f}")
     print("")
-    for sev, count in stats["by_severity"].items():
+    for sev in ("CRITICAL", "HIGH", "MEDIUM", "LOW"):
+        count = stats["by_severity"].get(sev, 0)
         if count:
             print(f"  {sev}: {count}")
     print("\nTop AVE IDs:")
@@ -372,7 +492,6 @@ def main():
 
     Path(PROGRESS_FILE).unlink(missing_ok=True)
 
-    # Upload to PiranhaDB
     ingest_token = os.environ.get("PIRANHA_INGEST_TOKEN", "")
     print("\nUploading to PiranhaDB...")
     post_to_piranha(output, ingest_token)

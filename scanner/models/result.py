@@ -54,15 +54,15 @@ class ScanResult:
 
     @property
     def risk_score(self) -> float:
-        """Highest AIVSS score across all findings, or 0.0 if none."""
-        if not self.findings:
-            return 0.0
-        return max(f.aivss_score for f in self.findings)
+        """Highest AIVSS score across all active findings and toxic flows."""
+        scores = [f.aivss_score for f in self.findings]
+        scores += [tf.aivss_score for tf in self.toxic_flows]
+        return max(scores) if scores else 0.0
 
     @property
     def is_clean(self) -> bool:
-        """True only if no findings AND no error."""
-        return len(self.findings) == 0 and self.error is None
+        """True only if no findings, no toxic flows, and no error."""
+        return len(self.findings) == 0 and len(self.toxic_flows) == 0 and self.error is None
 
     @property
     def has_error(self) -> bool:
