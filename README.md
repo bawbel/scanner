@@ -29,7 +29,7 @@ bawbel scan ./skills/        # scan skill files
 bawbel ssc https://server    # scan MCP server without starting it
 ```
 
-<img src="https://raw.githubusercontent.com/bawbel/scanner/main/docs/demo.svg" width="100%" alt="Bawbel Scanner demo">
+<img src="https://raw.githubusercontent.com/bawbel/scanner/HEAD/docs/demo.svg" width="100%" alt="Bawbel Scanner demo">
 
 ---
 
