@@ -14,7 +14,7 @@ Version follows semantic versioning (semver).
 Breaking changes (removing/renaming public API) require a major version bump.
 """
 
-__version__ = "1.2.0"
+__version__ = "1.2.2"
 __author__ = "Bawbel <bawbel.io@gmail.com>"
 __license__ = "Apache-2.0"
 

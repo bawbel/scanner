@@ -4,9 +4,112 @@ All notable changes to bawbel-scanner are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
 ---
 
-## [Unreleased]
+## [1.2.2] - 2026-05-20
+
+### Fixed
+
+- **B1: `unknown` file profile over-suppression** - `_PROFILE_THRESHOLDS["unknown"]`
+  was `0.80`, causing findings in files outside recognized paths (`docs/`, `examples/`,
+  etc.) to be suppressed when confidence scored above the `skill` threshold (0.60) but
+  below `unknown` (0.80). Changed to `0.60`. Files with unrecognized paths are now
+  treated the same as skill files rather than penalized.
+
+- **B1: `threshold` logic inconsistency** - FP-3 confidence scoring used a hardcoded
+  branch `_CONFIDENCE_THRESHOLD if file_profile == "skill" else profile_threshold`,
+  making `_PROFILE_THRESHOLDS["skill"]` unreachable. Simplified to always use
+  `profile_threshold` which is already looked up from `_PROFILE_THRESHOLDS`.
+
+- **B2: `--no-ignore` did not bypass FP-2 or FP-3** - The flag correctly bypassed
+  inline suppression (Step 9) and justified suppression (Step 10) but had no effect
+  on negation-context suppression (FP-2) or confidence scoring (FP-3). Added an
+  early-continue at the top of the per-finding loop that sets `f.confidence = 1.0`
+  and moves the finding directly to `active_findings` when `no_ignore` is set.
+
+- **B3: `risk_score` ignored toxic flows** - `ScanResult.risk_score` only aggregated
+  `aivss_score` across `findings`. A file with 0 active findings but 2 CRITICAL toxic
+  flows reported `risk_score: 0.0` and label `CLEAN`. Fixed to include
+  `tf.aivss_score` for all entries in `toxic_flows`. `is_clean` updated to also
+  require `len(toxic_flows) == 0`.
+
+- **LiteLLM botocore startup warnings** - `litellm` emitted two `WARNING` lines on
+  every invocation attempting to pre-load AWS Bedrock and SageMaker response shapes
+  when `botocore` is not installed. Suppressed by setting
+  `logging.getLogger("LiteLLM").setLevel(logging.ERROR)` immediately after import in
+  `llm_engine.py`.
+
+
+---
+
+## [1.2.0] - 2026-05-16
+
+### Added
+
+**Justified suppression and false positive feedback (Part 14)**
+
+Two new suppression keywords on top of the existing `bawbel-ignore` system:
+
+- `bawbel-ignore` with metadata fields (`reason`, `reviewer`, `reviewed`) declares a
+  false positive permanently. The reason is recorded in the audit trail.
+- `bawbel-accept` with an `expires` field declares an accepted risk. When the expiry
+  date passes, the finding resurfaces automatically as an active finding on the next scan.
+
+`bawbel accept` CLI command inserts justified suppression comments directly into source
+files. `bawbel accept --list` shows all accepted findings. `bawbel accept --expiring-soon`
+shows findings expiring within a configurable window and exits 1 for CI use.
+
+Anonymous FP signals can be sent to PiranhaDB via `--report`. Only AVE ID, engine,
+confidence score, and a hash of the match context are sent. No file content.
+
+`ScanResult.accepted_findings` is a new field in JSON output containing full metadata
+for each justified suppression.
+
+**New detection rules**
+
+Three new AVE records and pattern rules:
+
+- `bawbel-hook-hijack` (AVE-2026-00046): MCP tool hook hijacking. CRITICAL, AIVSS 9.1.
+  Detects skill files that register hooks to intercept or redirect tool execution calls.
+- `bawbel-hardcoded-credential` (AVE-2026-00047): Hardcoded credentials. HIGH, AIVSS 7.8.
+  Detects API keys, tokens, passwords, private keys, and URL-embedded credentials.
+- `bawbel-unsafe-delegation` (AVE-2026-00048): Unsafe agent delegation chain. HIGH, AIVSS 8.2.
+  Detects sub-agent spawning with inherited permissions and no trust boundary.
+
+Pattern engine: 37 rules -> 40 rules.
+
+**New commands**
+
+- `bawbel creds <path>`: credential-focused scan, filters to AVE-2026-00047 and related
+  rules. Same output format as `bawbel scan`. Supports `--recursive`, `--no-ignore`,
+  `--fail-on-any`, `--format json`.
+- `bawbel chain <path>`: delegation chain scanner, filters to AVE-2026-00048 and related
+  rules. Same flags as `bawbel creds`.
+
+**`bawbel report` improvements**
+
+- Added `--recursive` / `-r` flag. `bawbel report ./skills/ --recursive` generates
+  a full remediation report for every file in the directory.
+- Added `--no-ignore` flag matching `bawbel scan`.
+
+### Changed
+
+- `scanner.py` Step 10 added: justified suppression runs after Step 9 (inline suppression).
+  Expired accepted risks are re-surfaced as active findings at this stage.
+- Pattern engine rule count: 37 -> 40.
+
+### Fixed
+
+- `pr-review.yml` regression-check job: missing `pip install -e .` caused scan import
+  failures on clean repos.
+- `ci.yml` test job: missing `pip install -e .` caused import failures.
+- `ci.yml` Docker verify step: `python3 -c "..."` with f-strings caused shell brace
+  expansion to mangle the script before Python saw it. Replaced with single-line
+  assertion using no f-strings.
+- `ci.yml` Docker verify step: wrong `aivss` field name (should be `aivss_score`),
+  wrong threshold (9.0 should be 7.0 to match actual fixture score).
 
 ---
 
@@ -406,7 +509,10 @@ First public release.
 
 ---
 
-[Unreleased]: https://github.com/bawbel/scanner/compare/v1.1.1...HEAD
+[Unreleased]: https://github.com/bawbel/scanner/compare/v1.2.2...HEAD
+[1.2.2]: https://github.com/bawbel/scanner/releases/tag/v1.2.2
+[1.2.1]: https://github.com/bawbel/scanner/releases/tag/v1.2.1
+[1.2.0]: https://github.com/bawbel/scanner/releases/tag/v1.2.0
 [1.1.1]: https://github.com/bawbel/scanner/releases/tag/v1.1.1
 [1.1.0]: https://github.com/bawbel/scanner/releases/tag/v1.1.0
 [1.0.1]: https://github.com/bawbel/scanner/releases/tag/v1.0.1

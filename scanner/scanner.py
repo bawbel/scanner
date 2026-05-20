@@ -204,7 +204,6 @@ _DOC_PATH_SEGMENTS: frozenset[str] = frozenset(
         "guide",
         "samples",
         "sample",
-        "demo",
     }
 )
 
@@ -280,7 +279,7 @@ _PROFILE_THRESHOLDS: dict[str, float] = {
     "skill": 0.60,
     "mcp_manifest": 0.55,
     "documentation": 0.85,
-    "unknown": 0.80,
+    "unknown": 0.60,
 }
 
 
@@ -325,7 +324,6 @@ def _classify_file(path: Path) -> str:
         "guide",
         "samples",
         "sample",
-        "demo",
     }
     if parts & doc_segments:
         return "documentation"
@@ -594,6 +592,11 @@ def scan(file_path: str, no_ignore: bool = False) -> ScanResult:
         profile_threshold = _PROFILE_THRESHOLDS.get(file_profile, _CONFIDENCE_THRESHOLD)
 
         for f in findings:
+            if no_ignore or NO_IGNORE:
+                if not hasattr(f, "confidence") or f.confidence is None:
+                    f.confidence = 1.0
+                active_findings.append(f)
+                continue
             # FP-2: preceding-line negation context
             if f.line is not None and _has_negation_context(lines, f.line):
                 f.suppressed = True
@@ -610,7 +613,7 @@ def scan(file_path: str, no_ignore: bool = False) -> ScanResult:
 
             # FP-3: confidence scoring
             f.confidence = _score_confidence(f, lines, path, findings)
-            threshold = _CONFIDENCE_THRESHOLD if file_profile == "skill" else profile_threshold
+            threshold = profile_threshold
             if f.confidence < threshold:
                 f.suppressed = True
                 f.suppression_reason = (
