@@ -113,6 +113,75 @@ Pattern engine: 37 rules -> 40 rules.
 
 ---
 
+## [1.2.0] - 2026-05-16
+
+### Added
+
+**Justified suppression and false positive feedback (Part 14)**
+
+Two new suppression keywords on top of the existing `bawbel-ignore` system:
+
+- `bawbel-ignore` with metadata fields (`reason`, `reviewer`, `reviewed`) declares a
+  false positive permanently. The reason is recorded in the audit trail.
+- `bawbel-accept` with an `expires` field declares an accepted risk. When the expiry
+  date passes, the finding resurfaces automatically as an active finding on the next scan.
+
+`bawbel accept` CLI command inserts justified suppression comments directly into source
+files. `bawbel accept --list` shows all accepted findings. `bawbel accept --expiring-soon`
+shows findings expiring within a configurable window and exits 1 for CI use.
+
+Anonymous FP signals can be sent to PiranhaDB via `--report`. Only AVE ID, engine,
+confidence score, and a hash of the match context are sent. No file content.
+
+`ScanResult.accepted_findings` is a new field in JSON output containing full metadata
+for each justified suppression.
+
+**New detection rules**
+
+Three new AVE records and pattern rules:
+
+- `bawbel-hook-hijack` (AVE-2026-00046): MCP tool hook hijacking. CRITICAL, AIVSS 9.1.
+  Detects skill files that register hooks to intercept or redirect tool execution calls.
+- `bawbel-hardcoded-credential` (AVE-2026-00047): Hardcoded credentials. HIGH, AIVSS 7.8.
+  Detects API keys, tokens, passwords, private keys, and URL-embedded credentials.
+- `bawbel-unsafe-delegation` (AVE-2026-00048): Unsafe agent delegation chain. HIGH, AIVSS 8.2.
+  Detects sub-agent spawning with inherited permissions and no trust boundary.
+
+Pattern engine: 37 rules -> 40 rules.
+
+**New commands**
+
+- `bawbel creds <path>`: credential-focused scan, filters to AVE-2026-00047 and related
+  rules. Same output format as `bawbel scan`. Supports `--recursive`, `--no-ignore`,
+  `--fail-on-any`, `--format json`.
+- `bawbel chain <path>`: delegation chain scanner, filters to AVE-2026-00048 and related
+  rules. Same flags as `bawbel creds`.
+
+**`bawbel report` improvements**
+
+- Added `--recursive` / `-r` flag. `bawbel report ./skills/ --recursive` generates
+  a full remediation report for every file in the directory.
+- Added `--no-ignore` flag matching `bawbel scan`.
+
+### Changed
+
+- `scanner.py` Step 10 added: justified suppression runs after Step 9 (inline suppression).
+  Expired accepted risks are re-surfaced as active findings at this stage.
+- Pattern engine rule count: 37 -> 40.
+
+### Fixed
+
+- `pr-review.yml` regression-check job: missing `pip install -e .` caused scan import
+  failures on clean repos.
+- `ci.yml` test job: missing `pip install -e .` caused import failures.
+- `ci.yml` Docker verify step: `python3 -c "..."` with f-strings caused shell brace
+  expansion to mangle the script before Python saw it. Replaced with single-line
+  assertion using no f-strings.
+- `ci.yml` Docker verify step: wrong `aivss` field name (should be `aivss_score`),
+  wrong threshold (9.0 should be 7.0 to match actual fixture score).
+
+---
+
 ## [1.1.1] - 2026-05-07
 
 ### Fixed
