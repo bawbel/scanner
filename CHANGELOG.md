@@ -4,9 +4,43 @@ All notable changes to bawbel-scanner are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
 ---
 
-## [Unreleased]
+## [1.2.2] - 2026-05-20
+
+### Fixed
+
+- **B1: `unknown` file profile over-suppression** - `_PROFILE_THRESHOLDS["unknown"]`
+  was `0.80`, causing findings in files outside recognized paths (`docs/`, `examples/`,
+  etc.) to be suppressed when confidence scored above the `skill` threshold (0.60) but
+  below `unknown` (0.80). Changed to `0.60`. Files with unrecognized paths are now
+  treated the same as skill files rather than penalized.
+
+- **B1: `threshold` logic inconsistency** - FP-3 confidence scoring used a hardcoded
+  branch `_CONFIDENCE_THRESHOLD if file_profile == "skill" else profile_threshold`,
+  making `_PROFILE_THRESHOLDS["skill"]` unreachable. Simplified to always use
+  `profile_threshold` which is already looked up from `_PROFILE_THRESHOLDS`.
+
+- **B2: `--no-ignore` did not bypass FP-2 or FP-3** - The flag correctly bypassed
+  inline suppression (Step 9) and justified suppression (Step 10) but had no effect
+  on negation-context suppression (FP-2) or confidence scoring (FP-3). Added an
+  early-continue at the top of the per-finding loop that sets `f.confidence = 1.0`
+  and moves the finding directly to `active_findings` when `no_ignore` is set.
+
+- **B3: `risk_score` ignored toxic flows** - `ScanResult.risk_score` only aggregated
+  `aivss_score` across `findings`. A file with 0 active findings but 2 CRITICAL toxic
+  flows reported `risk_score: 0.0` and label `CLEAN`. Fixed to include
+  `tf.aivss_score` for all entries in `toxic_flows`. `is_clean` updated to also
+  require `len(toxic_flows) == 0`.
+
+- **LiteLLM botocore startup warnings** - `litellm` emitted two `WARNING` lines on
+  every invocation attempting to pre-load AWS Bedrock and SageMaker response shapes
+  when `botocore` is not installed. Suppressed by setting
+  `logging.getLogger("LiteLLM").setLevel(logging.ERROR)` immediately after import in
+  `llm_engine.py`.
+
 
 ---
 
@@ -406,7 +440,10 @@ First public release.
 
 ---
 
-[Unreleased]: https://github.com/bawbel/scanner/compare/v1.1.1...HEAD
+[Unreleased]: https://github.com/bawbel/scanner/compare/v1.2.2...HEAD
+[1.2.2]: https://github.com/bawbel/scanner/releases/tag/v1.2.2
+[1.2.1]: https://github.com/bawbel/scanner/releases/tag/v1.2.1
+[1.2.0]: https://github.com/bawbel/scanner/releases/tag/v1.2.0
 [1.1.1]: https://github.com/bawbel/scanner/releases/tag/v1.1.1
 [1.1.0]: https://github.com/bawbel/scanner/releases/tag/v1.1.0
 [1.0.1]: https://github.com/bawbel/scanner/releases/tag/v1.0.1
