@@ -3,7 +3,7 @@
   "name": "io.github.bawbel/scanner",
   "title": "Bawbel Scanner",
   "description": "Security scanner for MCP servers and skill files. Detects AVE vulnerabilities before production.",
-  "version": "1.1.1",
+  "version": "1.2.3",
   "repository": {
     "url": "https://github.com/bawbel/scanner",
     "source": "github"
@@ -13,7 +13,7 @@
       "registryType": "pypi",
       "registryBaseUrl": "https://pypi.org",
       "identifier": "bawbel-scanner",
-      "version": "1.1.1",
+      "version": "1.2.3",
       "runtimeHint": "uvx",
       "transport": {
         "type": "stdio"
