@@ -2,6 +2,8 @@
 
 # Bawbel Scanner
 
+<!-- mcp-name: io.github.bawbel/scanner -->
+
 **The only open-source scanner that produces OWASP AIVSS scores for MCP servers and skill files. Never executes code.**
 
 
