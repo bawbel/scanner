@@ -41,7 +41,7 @@ from rich.panel import Panel
 from rich.table import Table
 
 from scanner.cli.shared import console, print_banner
-from scanner.justified_suppression import (
+from scanner.suppression.justified import (
     check_expiring_soon,
     parse_accepted_findings,
     send_fp_signal,

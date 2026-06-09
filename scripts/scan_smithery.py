@@ -80,7 +80,7 @@ def get_headers(api_key: str) -> dict:
     return {
         "Authorization": f"Bearer {api_key}",
         "Accept": "application/json",
-        "User-Agent": "bawbel-scanner/1.2.1 (https://bawbel.io)",
+        "User-Agent": "bawbel-scanner/1.2.3 (https://bawbel.io)",
     }
 
 

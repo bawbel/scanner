@@ -21,7 +21,7 @@ def version_cmd() -> None:
     console.print("[bold]Detection Engines:[/]")
 
     # Pattern (always available)
-    from scanner.engines.pattern import PATTERN_RULES
+    from scanner.engines.pattern_engine import PATTERN_RULES
 
     console.print(
         f"  [bold #1DB894]✓[/]  Pattern     "

@@ -34,12 +34,12 @@ from scanner import __version__
 
 # ── Command imports ───────────────────────────────────────────────────────────
 from scanner.cli.cmd_scan import scan_cmd
-from scanner.cli.cmd_scan_card import scan_server_card_cmd
+from scanner.cli.cmd_ssc import scan_server_card_cmd
 from scanner.cli.cmd_report import report_cmd
 from scanner.cli.cmd_version import version_cmd
 from scanner.cli.cmd_init import init_cmd
 from scanner.cli.cmd_pin import pin_cmd, check_pins_cmd
-from scanner.cli.cmd_scan_conformance import scan_conformance_cmd
+from scanner.cli.cmd_conform import scan_conformance_cmd
 from scanner.cli.cmd_accept import accept_cmd
 from scanner.cli.cmd_creds import creds_cmd
 from scanner.cli.cmd_chain import chain_cmd

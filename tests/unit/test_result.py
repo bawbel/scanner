@@ -2,7 +2,7 @@
 Unit tests for scanner.models.result.ScanResult
 """
 
-from scanner.models.finding import Finding, Severity
+from scanner.models import Finding, Severity
 from scanner.models.result import ScanResult
 
 

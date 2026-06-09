@@ -11,7 +11,7 @@ from scanner.cli.cmd_chain import (
     _is_delegation_finding,
 )
 from scanner.cli.cmd_creds import CREDENTIAL_RULE_IDS
-from scanner.models.finding import Finding, Severity
+from scanner.models import Finding, Severity
 
 
 def make_finding(rule_id="bawbel-unsafe-delegation", ave_id="AVE-2026-00048"):

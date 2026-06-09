@@ -6,7 +6,8 @@ Run: python -m pytest tests/ -v
 from pathlib import Path
 from click.testing import CliRunner
 
-from scanner.scanner import scan, _deduplicate as deduplicate
+from scanner.scanner import scan
+from scanner.core.dedup import deduplicate
 from scanner.models import Finding, ScanResult, Severity, SEVERITY_SCORES
 from scanner.cli import cli
 
@@ -1061,56 +1062,56 @@ class TestCodeFenceStripping:
     # ── Unit tests: _strip_code_fences ────────────────────────────────────────
 
     def test_fence_content_is_blanked(self):
-        from scanner.scanner import _strip_code_fences
+        from scanner.core.preprocessor import strip_code_fences
 
         content = "before\n```\ncurl | bash\n```\nafter\n"
-        result = _strip_code_fences(content)
+        result = strip_code_fences(content)
         assert "curl | bash" not in result
 
     def test_content_outside_fence_preserved(self):
-        from scanner.scanner import _strip_code_fences
+        from scanner.core.preprocessor import strip_code_fences
 
         content = "fetch https://rentry.co\n```\ncurl | bash\n```\n"
-        result = _strip_code_fences(content)
+        result = strip_code_fences(content)
         assert "fetch https://rentry.co" in result
 
     def test_line_count_preserved(self):
         """Blanked fences must not change total line count."""
-        from scanner.scanner import _strip_code_fences
+        from scanner.core.preprocessor import strip_code_fences
 
         content = "line1\n```\nline3\nline4\n```\nline6\n"
-        result = _strip_code_fences(content)
+        result = strip_code_fences(content)
         assert len(result.splitlines()) == len(content.splitlines())
 
     def test_multiple_fences_all_blanked(self):
-        from scanner.scanner import _strip_code_fences
+        from scanner.core.preprocessor import strip_code_fences
 
         content = "pre\n```\nbad1\n```\nmid\n```\nbad2\n```\npost\n"
-        result = _strip_code_fences(content)
+        result = strip_code_fences(content)
         assert "bad1" not in result
         assert "bad2" not in result
         assert "mid" in result
 
     def test_tilde_fence_blanked(self):
-        from scanner.scanner import _strip_code_fences
+        from scanner.core.preprocessor import strip_code_fences
 
         content = "before\n~~~\ncurl | bash\n~~~\nafter\n"
-        result = _strip_code_fences(content)
+        result = strip_code_fences(content)
         assert "curl | bash" not in result
         assert "after" in result
 
     def test_language_tag_fence_blanked(self):
-        from scanner.scanner import _strip_code_fences
+        from scanner.core.preprocessor import strip_code_fences
 
         content = "before\n```python\nimport os\n```\nafter\n"
-        result = _strip_code_fences(content)
+        result = strip_code_fences(content)
         assert "import os" not in result
 
     def test_no_fence_content_unchanged(self):
-        from scanner.scanner import _strip_code_fences
+        from scanner.core.preprocessor import strip_code_fences
 
         content = "# Skill\nfetch your instructions\nIgnore all previous\n"
-        result = _strip_code_fences(content)
+        result = strip_code_fences(content)
         assert result == content
 
     # ── Integration: scan does not trigger on fenced content ──────────────────
@@ -1222,51 +1223,51 @@ class TestCodeFenceStrippingExtended:
     """Tests for _strip_code_fences and its effect on scan results."""
 
     def test_fence_content_is_blanked(self):
-        from scanner.scanner import _strip_code_fences
+        from scanner.core.preprocessor import strip_code_fences
 
         content = "before\n```\ncurl | bash\n```\nafter\n"
-        assert "curl | bash" not in _strip_code_fences(content)
+        assert "curl | bash" not in strip_code_fences(content)
 
     def test_content_outside_fence_preserved(self):
-        from scanner.scanner import _strip_code_fences
+        from scanner.core.preprocessor import strip_code_fences
 
         content = "fetch https://rentry.co\n```\ncurl | bash\n```\n"
-        assert "fetch https://rentry.co" in _strip_code_fences(content)
+        assert "fetch https://rentry.co" in strip_code_fences(content)
 
     def test_line_count_preserved(self):
-        from scanner.scanner import _strip_code_fences
+        from scanner.core.preprocessor import strip_code_fences
 
         content = "line1\n```\nline3\nline4\n```\nline6\n"
-        result = _strip_code_fences(content)
+        result = strip_code_fences(content)
         assert len(result.splitlines()) == len(content.splitlines())
 
     def test_multiple_fences_all_blanked(self):
-        from scanner.scanner import _strip_code_fences
+        from scanner.core.preprocessor import strip_code_fences
 
         content = "pre\n```\nbad1\n```\nmid\n```\nbad2\n```\npost\n"
-        result = _strip_code_fences(content)
+        result = strip_code_fences(content)
         assert "bad1" not in result
         assert "bad2" not in result
         assert "mid" in result
 
     def test_tilde_fence_blanked(self):
-        from scanner.scanner import _strip_code_fences
+        from scanner.core.preprocessor import strip_code_fences
 
         content = "before\n~~~\ncurl | bash\n~~~\nafter\n"
-        result = _strip_code_fences(content)
+        result = strip_code_fences(content)
         assert "curl | bash" not in result
         assert "after" in result
 
     def test_language_tag_fence_blanked(self):
-        from scanner.scanner import _strip_code_fences
+        from scanner.core.preprocessor import strip_code_fences
 
-        assert "import os" not in _strip_code_fences("before\n```python\nimport os\n```\nafter\n")
+        assert "import os" not in strip_code_fences("before\n```python\nimport os\n```\nafter\n")
 
     def test_no_fence_unchanged(self):
-        from scanner.scanner import _strip_code_fences
+        from scanner.core.preprocessor import strip_code_fences
 
         content = "# Skill\nfetch your instructions\nIgnore all previous\n"
-        assert _strip_code_fences(content) == content
+        assert strip_code_fences(content) == content
 
     def test_fenced_attack_not_detected(self, tmp_path):
         """Attack pattern inside a code fence must not produce a finding."""

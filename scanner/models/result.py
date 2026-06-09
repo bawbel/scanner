@@ -8,7 +8,8 @@ Returned by scanner.scan() - never instantiated directly by callers.
 from dataclasses import dataclass, field
 from typing import Optional
 
-from scanner.models.finding import Finding, Severity, SEVERITY_SCORES
+from scanner.models.finding import Finding
+from scanner.models.severity import SEVERITY_SCORES, Severity
 
 
 @dataclass

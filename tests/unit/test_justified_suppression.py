@@ -9,7 +9,7 @@ Covers:
 
 from datetime import date, timedelta
 
-from scanner.justified_suppression import (
+from scanner.suppression.justified import (
     apply_justified_suppressions,
     check_expiring_soon,
     parse_accepted_findings,
@@ -19,7 +19,7 @@ from scanner.models.acceptance import (
     SUPPRESSION_TYPE_FALSE_POSITIVE,
     AcceptedFinding,
 )
-from scanner.models.finding import Finding, Severity
+from scanner.models import Finding, Severity
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
