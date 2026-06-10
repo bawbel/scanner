@@ -96,14 +96,19 @@ docs/_build/
 docs/site/
 site/
 
+# ── Docs research artifacts — scan outputs, not source docs ──────────────────
+docs/research/
+
+# ── Agent working notes — handoffs are ephemeral; PRDs and README are committed
+docs/agents/handoffs/
+
 # ── Config overrides — local developer overrides ──────────────────────────────
-config/local.py
-config/local_*.py
 bawbel.local.yml
 
 # ── Local scan results — never commit scan outputs ────────────────────────────
 bawbel-results.*
 scan-results/
+smithery_scan_result.json
 
 # ── IDE and editor artifacts ──────────────────────────────────────────────────
 .cursor/

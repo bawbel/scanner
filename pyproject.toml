@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name            = "bawbel-scanner"
 version         = "1.2.3"
-description     = "Agentic AI component security scanner. Detects AVE vulnerabilities. Produces OWASP AIVSS v0.8 scores."
+description     = "Security linter and scanner for MCP servers and AI skill files. Detects toxic flows, prompt injection, tool poisoning, and supply chain attacks."
 readme          = "README.md"
 license         = { text = "Apache-2.0" }
 requires-python = ">=3.10"
@@ -15,14 +15,43 @@ authors         = [
     { name = "Bawbel", email = "bawbel.io@gmail.com" }
 ]
 keywords = [
-    "security", "ai", "scanner", "ave", "agentic",
-    "mcp", "llm", "skill", "prompt-injection",
-    "aivss", "owasp",
+    "ai-skill-linter",
+    "skill-linter",
+    "mcp-scanner",
+    "mcp-server-scanner",
+    "ai-skill-scanner",
+    "skill-scanner",
+    "model-context-protocol",
+    "agentic-ai",
+    "ai-security",
+    "llm-security",
+    "prompt-injection",
+    "toxic-flow",
+    "toxic-flow-detection",
+    "tool-poisoning",
+    "supply-chain-security",
+    "vulnerability-scanner",
+    "security-scanner",
+    "devsecops",
+    "sast",
+    "static-analysis",
+    "pre-commit",
+    "github-actions",
+    "ai-agent",
+    "ave",
+    "aivss",
+    "owasp",
+    "sarif",
+    "mcp",
+    "llm",
+    "claude",
+    "openai",
 ]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "Intended Audience :: Information Technology",
+    "Intended Audience :: System Administrators",
     "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
@@ -32,6 +61,7 @@ classifiers = [
     "Topic :: Security",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Software Development :: Quality Assurance",
+    "Environment :: Console",
 ]
 
 # Core dependencies - installed on every pip install bawbel-scanner
@@ -89,10 +119,10 @@ Changelog     = "https://github.com/bawbel/scanner/releases"
 bawbel = "scanner.cli:main"
 
 # ── Package discovery ─────────────────────────────────────────────────────────
-# Explicitly include scanner/ and config/ - exclude tests and scripts
+# Include scanner/ only - config lives at scanner/config/ and is covered by scanner*
 [tool.setuptools.packages.find]
 where   = ["."]
-include = ["scanner*", "config*"]
+include = ["scanner*"]
 exclude = ["tests*", "scripts*", "docs*"]
 
 # Include non-Python files (YARA and Semgrep rules) in the distribution
@@ -124,8 +154,8 @@ markers = [
 
 # ── Tool: coverage ────────────────────────────────────────────────────────────
 [tool.coverage.run]
-source = ["scanner", "config"]
-omit   = ["tests/*", ".venv/*", "config/__init__.py", "scanner/cli.py"]
+source = ["scanner"]
+omit   = ["tests/*", ".venv/*", "scanner/cli.py"]
 
 [tool.coverage.report]
 fail_under    = 80

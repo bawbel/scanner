@@ -14,7 +14,7 @@ from pathlib import Path
 
 # ── Paths ──────────────────────────────────────────────────────────────────────
 
-PACKAGE_ROOT = Path(__file__).parent.parent
+PACKAGE_ROOT = Path(__file__).parent.parent.parent
 RULES_DIR = PACKAGE_ROOT / "scanner" / "rules"
 YARA_RULES = RULES_DIR / "yara" / "ave_rules.yar"
 SEMGREP_RULES = RULES_DIR / "semgrep" / "ave_rules.yaml"
@@ -42,17 +42,6 @@ COMPONENT_EXTENSIONS: dict[str, str] = {
 # ── Logging ────────────────────────────────────────────────────────────────────
 
 LOG_LEVEL = os.environ.get("BAWBEL_LOG_LEVEL", "WARNING").upper()
-
-
-# ── Severity scoring ───────────────────────────────────────────────────────────
-
-SEVERITY_SCORES: dict[str, int] = {
-    "CRITICAL": 4,
-    "HIGH": 3,
-    "MEDIUM": 2,
-    "LOW": 1,
-    "INFO": 0,
-}
 
 
 # ── Stage 2: LLM semantic analysis ────────────────────────────────────────────

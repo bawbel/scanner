@@ -21,13 +21,13 @@ jobs:
           cache: pip
 
       - name: Install lint deps
-        run: pip install black flake8 flake8-bugbear bandit
+        run: pip install black flake8 flake8-bugbear flake8-simplify flake8-bandit flake8-pyproject bandit
 
       - name: Check formatting (black)
         run: black --check --line-length 100 scanner/
 
       - name: Lint (flake8)
-        run: flake8 scanner/ --max-line-length 100 --extend-ignore=E203,W503,E501
+        run: flake8 scanner/ --max-line-length 100
 
       - name: Security lint (bandit)
         run: bandit -r scanner/ -c pyproject.toml
@@ -57,7 +57,7 @@ jobs:
           pip install pytest pytest-cov
 
       - name: Run tests (Stage 1 only - no optional deps)
-        run: python -m pytest tests/ -v --tb=short -m "not integration and not slow"
+        run: python -m pytest tests/ -v --tb=short -m "not integration and not slow" --cov=scanner --cov-report=html
 
       - name: Upload coverage
         if: matrix.python-version == '3.12'

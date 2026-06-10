@@ -7,7 +7,7 @@ It orchestrates the scan pipeline - validation, engine dispatch, deduplication.
 It does NOT contain engine logic or rules.
 Each engine lives in scanner/engines/<name>.py.
 Each model lives in scanner/models/<name>.py.
-All config lives in config/default.py.
+All config lives in scanner/config/default.py.
 All strings live in scanner/messages.py.
 All helpers live in scanner/utils.py.
 
@@ -20,11 +20,11 @@ from pathlib import Path
 from typing import Optional
 
 # Config
-from config.default import (
+from scanner.config.default import (
     COMPONENT_EXTENSIONS,
     MAX_FILE_SIZE_BYTES,
-    SEVERITY_SCORES,
 )
+from scanner.models.severity import SEVERITY_SCORES
 
 # Models
 from scanner.models import Finding, ScanResult, Severity

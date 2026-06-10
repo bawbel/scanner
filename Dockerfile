@@ -22,6 +22,7 @@
 # ─────────────────────────────────────────────────────────────────────────────
 
 ARG PYTHON_VERSION=3.12
+ARG VERSION=1.2.3
 
 
 # ── Base: shared system dependencies ──────────────────────────────────────────
@@ -63,6 +64,9 @@ RUN pip install --no-cache-dir \
         black \
         flake8 \
         flake8-bugbear \
+        flake8-simplify \
+        flake8-bandit \
+        flake8-pyproject \
         bandit \
         pre-commit \
         pip-audit \
@@ -95,6 +99,7 @@ CMD ["python", "-m", "pytest", "tests/", "-v", "--tb=short"]
 # ── Production: minimal runtime image ─────────────────────────────────────────
 FROM python:${PYTHON_VERSION}-slim AS production
 
+ARG VERSION=1.2.3
 ARG WITH_LLM=false
 ARG WITH_SANDBOX=false
 ARG WITH_ALL=false
@@ -103,7 +108,7 @@ LABEL org.opencontainers.image.title="Bawbel Scanner" \
       org.opencontainers.image.description="Agentic AI security scanner. Detects AVE vulnerabilities. Produces OWASP AIVSS v0.8 scores." \
       org.opencontainers.image.url="https://bawbel.io" \
       org.opencontainers.image.source="https://github.com/bawbel/scanner" \
-      org.opencontainers.image.version="1.2.0" \
+      org.opencontainers.image.version="${VERSION}" \
       org.opencontainers.image.licenses="Apache-2.0" \
       org.opencontainers.image.vendor="Bawbel" \
       org.opencontainers.image.documentation="https://bawbel.io/docs" \
@@ -115,7 +120,6 @@ WORKDIR /app
 COPY --from=builder /install /usr/local
 
 COPY scanner/   ./scanner/
-COPY config/    ./config/
 
 RUN pip install --no-cache-dir click rich pydantic --quiet
 

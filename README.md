@@ -35,6 +35,27 @@ bawbel ssc https://server    # scan MCP server without starting it
 
 ---
 
+## Commands
+
+| Command | Description |
+|---|---|
+| `bawbel scan <path>` | Scan a skill file or directory for AVE vulnerabilities. Supports `--recursive`, `--format text\|json\|sarif`, `--fail-on-severity`, `--no-ignore`, `--watch` |
+| `bawbel report <path>` | Scan a component and show a full remediation guide with fix guidance per finding |
+| `bawbel creds <path>` | Focused scan — hardcoded credentials and secret exposure only |
+| `bawbel chain <path>` | Focused scan — unsafe agent delegation chains only |
+| `bawbel ssc <url>` | Fetch and scan an MCP server-card for AVE vulnerabilities without starting the server |
+| `bawbel scan-server-card <url>` | Alias for `ssc` |
+| `bawbel conform <target>` | Score an MCP server manifest against the MCP specification (A+ to F grade) |
+| `bawbel scan-conformance <target>` | Alias for `conform` |
+| `bawbel accept <id> <file>` | Mark a finding as a false positive or accepted risk — inserts a justified suppression comment with reviewer and optional expiry |
+| `bawbel pin <path>` | Hash skill files and save to `.bawbel-pins.json` for rug pull detection |
+| `bawbel check-pins <path>` | Check skill files for drift against `.bawbel-pins.json` |
+| `bawbel cp <path>` | Alias for `check-pins` |
+| `bawbel init` | Initialise Bawbel Scanner in a project — generates `.bawbelignore` and `bawbel.yml` |
+| `bawbel version` | Show version and detection engine status |
+
+---
+
 ## Why Bawbel
 
 | | Bawbel | Snyk agent-scan | ClawGuard | Cisco DefenseClaw |
@@ -337,6 +358,63 @@ AARS is the sum of 10 Agentic Risk Amplification Factors scored per the
 | Semgrep | 41 structural Semgrep rules | `[semgrep]` |
 | LLM | Semantic analysis of intent and context | `[llm]` |
 | Magika | ML-based content type verification | `[all]` |
+| Sandbox | Dynamic behavioral analysis in Docker | See below |
+
+---
+
+## Stage 3: Behavioral sandbox
+
+The sandbox runs your skill file inside an isolated Docker container and watches for malicious behavior at runtime — outbound connections, credential reads, shell injections, and filesystem writes that static rules cannot catch.
+
+**Requirements:** Docker Desktop or Docker Engine must be running.
+
+### Enable the sandbox
+
+```bash
+BAWBEL_SANDBOX_ENABLED=true bawbel scan ./skill.md
+```
+
+Or add to your `.env` / `bawbel.yml`:
+
+```yaml
+# bawbel.yml
+sandbox:
+  enabled: true
+```
+
+### Image setup (three modes)
+
+| `BAWBEL_SANDBOX_IMAGE` | What happens |
+|---|---|
+| `default` *(recommended)* | Checks local Docker cache first. If not found, pulls `bawbel/sandbox:latest` from Docker Hub once and caches it. Subsequent scans use the cache — no network needed. |
+| `local` | Skips Docker Hub entirely. Builds the sandbox image from the bundled Dockerfile inside the package. Use this for air-gapped or offline environments. |
+| `<custom-image>` | Uses your own image. Point to any registry: `registry.company.com/bawbel/sandbox@sha256:abc123` |
+
+**First run with `default`:** Bawbel pulls `bawbel/sandbox:latest` from Docker Hub automatically (~200MB, one time only). Every scan after that uses the local cache — instant, no network call.
+
+**First run with `local`:** Bawbel builds the image from the bundled Dockerfile. Takes ~60 seconds on first run, cached afterwards.
+
+```bash
+# Recommended: default (auto-pull, cached)
+BAWBEL_SANDBOX_ENABLED=true bawbel scan ./skill.md
+
+# Offline / air-gapped: build locally
+BAWBEL_SANDBOX_ENABLED=true BAWBEL_SANDBOX_IMAGE=local bawbel scan ./skill.md
+
+# Custom enterprise image
+BAWBEL_SANDBOX_ENABLED=true \
+  BAWBEL_SANDBOX_IMAGE=registry.company.com/bawbel/sandbox:v1 \
+  bawbel scan ./skill.md
+```
+
+### What the sandbox detects
+
+| Category | Examples |
+|---|---|
+| Network egress | Connections to pastebin.com, rentry.co, ngrok tunnels, webhook capture sites |
+| Credential access | Reads of `~/.ssh/`, `.env`, private key files |
+| Filesystem writes | Writes to `~/.bashrc`, `~/.zshrc`, cron directories |
+| Process injection | `curl\|bash`, `wget\|bash`, `eval()`, `exec()`, unexpected `pip install` |
 
 ---
 

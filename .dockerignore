@@ -31,10 +31,28 @@ docker-compose.yml
 *.env
 .vscode/
 .idea/
+.pre-commit-config.yaml
+.gitleaks.toml
+
+# AI / agent context — not needed inside container
+.claude/
+CLAUDE.md
+LANGUAGE.md
+ARCHITECTURE.md
+PROJECT_CONTEXT.md
+PROJECT_CONTEXT.example.md
+PROJECT_STRUCTURE.md
+HOW-TO-USE.md
 
 # Docs
+docs/
 *.md
 !README.md
+
+# Scan result artifacts — never in image
+smithery_scan_result.json
+*.sarif
+bawbel-results.*
 
 # OS
 .DS_Store

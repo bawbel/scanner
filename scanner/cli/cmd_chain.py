@@ -126,7 +126,7 @@ def chain_cmd(
             print_scan_result(
                 result,
                 show_report_hint=(len(files) == 1),
-                scan_root=path_obj if path_obj.is_dir() else path_obj.parent,
+                scan_root=Path.cwd(),
             )
 
     if fmt == "json":

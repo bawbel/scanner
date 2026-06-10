@@ -94,10 +94,10 @@ Full documentation lives in `docs/`. Read it — do not duplicate it here.
 | Configuration reference | `docs/guides/configuration.md` |
 | `scan()` API | `docs/api/scan.md` |
 | Utils classes | `docs/api/utils.md` |
-| Why engines are separate files | `docs/decisions/adr-001-engine-separation.md` |
-| Why utils uses classes | `docs/decisions/adr-002-oop-utils.md` |
-| Why errors use E-codes | `docs/decisions/adr-003-error-codes.md` |
-| Why scan() never raises | `docs/decisions/adr-004-no-exceptions.md` |
+| Why engines are separate files | `docs/adr/0003-engine-separation.md` |
+| Why utils uses classes | `docs/adr/0004-oop-utils.md` |
+| Why errors use E-codes | `docs/adr/0005-error-codes.md` |
+| Why scan() never raises | `docs/adr/0006-no-exceptions.md` |
 
 ---
 

@@ -141,7 +141,7 @@ def scan_cmd(  # noqa: PLR0913
 
     path_obj = Path(path).resolve()
     files = collect_files(path_obj, recursive)
-    scan_root = path_obj if path_obj.is_dir() else path_obj.parent
+    scan_root = Path.cwd()
 
     if not files:
         console.print("[yellow]No scannable files found.[/]")

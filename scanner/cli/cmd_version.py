@@ -60,7 +60,14 @@ def version_cmd() -> None:
 
     # LLM
     try:
+        import logging as _logging
+
+        _litellm_log = _logging.getLogger("LiteLLM")
+        _prior_level = _litellm_log.level
+        _litellm_log.setLevel(_logging.ERROR)
         import litellm  # noqa: F401
+
+        _litellm_log.setLevel(_prior_level)
 
         llm_installed = True
     except ImportError:

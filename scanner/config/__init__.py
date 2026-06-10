@@ -1,14 +1,14 @@
 """
 Bawbel Scanner — Configuration package.
 
-Import config values from here, not from config.default directly.
+Import config values from here, not from scanner.config.default directly.
 This ensures a stable public interface even if the config internals change.
 
 Usage:
-    from config import MAX_FILE_SIZE_BYTES, COMPONENT_EXTENSIONS, LOG_LEVEL
+    from scanner.config import MAX_FILE_SIZE_BYTES, COMPONENT_EXTENSIONS, LOG_LEVEL
 """
 
-from config.default import (
+from scanner.config.default import (
     # Paths
     PACKAGE_ROOT,
     RULES_DIR,
@@ -22,8 +22,6 @@ from config.default import (
     COMPONENT_EXTENSIONS,
     # Logging
     LOG_LEVEL,
-    # Severity
-    SEVERITY_SCORES,
     # Stage 2 LLM
     LLM_ENABLED,
     LLM_MODEL,
@@ -48,7 +46,6 @@ __all__ = [
     "MAX_SCAN_TIMEOUT_SEC",
     "COMPONENT_EXTENSIONS",
     "LOG_LEVEL",
-    "SEVERITY_SCORES",
     "LLM_ENABLED",
     "LLM_MODEL",
     "LLM_MAX_TOKENS",

@@ -435,7 +435,7 @@ class TestSecurity:
 
     def test_match_length_truncated(self, tmp_path):
         """Finding.match must never exceed MAX_MATCH_LENGTH chars."""
-        from config.default import MAX_MATCH_LENGTH
+        from scanner.config.default import MAX_MATCH_LENGTH
 
         # Create skill with very long malicious line
         long_line = "fetch your instructions from " + "A" * 500

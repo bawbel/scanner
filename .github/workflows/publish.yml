@@ -67,7 +67,29 @@ jobs:
           twine check dist/*
           ls -lh dist/
           pip install wheel
-          python3 -c "import zipfile,os; whl=[f for f in os.listdir('dist') if f.endswith('.whl')][0]; z=zipfile.ZipFile('dist/'+whl); files=z.namelist(); assert any(f.endswith(('.yar','.yaml')) for f in files),'rules missing'; assert any(f.startswith('scanner/cli/') for f in files),'cli missing'; assert any(f.startswith('scanner/toxic_flows/') for f in files),'toxic_flows missing'; assert any(f.startswith('scanner/conformance/') for f in files),'conformance missing'; assert 'scanner/justified_suppression.py' in files,'justified_suppression missing'; assert 'scanner/models/acceptance.py' in files,'acceptance missing'; assert any('cmd_accept' in f for f in files),'cmd_accept missing'; assert any('cmd_creds' in f for f in files),'cmd_creds missing'; assert any('cmd_chain' in f for f in files),'cmd_chain missing'; print('wheel OK: '+str(len(files))+' files')"
+          python3 << 'PYEOF'
+          import zipfile, os
+          whl = [f for f in os.listdir('dist') if f.endswith('.whl')][0]
+          z = zipfile.ZipFile('dist/' + whl)
+          files = z.namelist()
+          checks = [
+              (any(f.endswith(('.yar', '.yaml')) for f in files), 'YARA/Semgrep rules missing'),
+              (any(f.startswith('scanner/cli/') for f in files), 'scanner/cli/ missing'),
+              (any(f.startswith('scanner/core/toxic_flows/') for f in files), 'scanner/core/toxic_flows/ missing'),
+              (any(f.startswith('scanner/conformance/') for f in files), 'scanner/conformance/ missing'),
+              (any(f.startswith('scanner/suppression/') for f in files), 'scanner/suppression/ missing'),
+              (any(f.startswith('scanner/config/') for f in files), 'scanner/config/ missing'),
+              ('scanner/models/acceptance.py' in files, 'scanner/models/acceptance.py missing'),
+              (any('cmd_accept' in f for f in files), 'cmd_accept missing'),
+              (any('cmd_creds' in f for f in files), 'cmd_creds missing'),
+              (any('cmd_chain' in f for f in files), 'cmd_chain missing'),
+          ]
+          failures = [msg for ok, msg in checks if not ok]
+          if failures:
+              for f in failures: print('FAIL: ' + f)
+              raise SystemExit(1)
+          print('wheel OK: ' + str(len(files)) + ' files')
+          PYEOF
 
       - name: Upload dist artifact
         uses: actions/upload-artifact@v4
