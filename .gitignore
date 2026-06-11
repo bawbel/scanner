@@ -88,8 +88,8 @@ scan/
 # These contain business strategy, roadmap, and founder context.
 # Keep them local only. Share via secure channel if needed.
 PROJECT_CONTEXT.md
+HOW-TO-USE.md
 .claude/
-skills/
 
 # ── Docs build output — never commit generated docs ───────────────────────────
 docs/_build/
