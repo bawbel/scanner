@@ -23,7 +23,6 @@
 ---
 
 > **Bawbel never executes your MCP servers.**
-> Snyk's agent-scan does.
 
 ```bash
 pip install "bawbel-scanner[all]"
@@ -200,6 +199,8 @@ See [Suppression Guide](docs/guides/suppression.md) for full details.
 
 ## Install
 
+**pip**
+
 ```bash
 pip install bawbel-scanner            # core - pattern engine only
 pip install "bawbel-scanner[yara]"    # + YARA rules
@@ -209,6 +210,26 @@ pip install "bawbel-scanner[all]"     # everything
 ```
 
 Requires Python 3.10+. No other system dependencies for core install.
+
+**Docker**
+
+| Image | Engines | Best for |
+|---|---|---|
+| [`bawbel/scanner:latest`](https://hub.docker.com/r/bawbel/scanner) · `1.2.3` | Pattern | Lightweight CI pipelines |
+| [`bawbel/scanner:full`](https://hub.docker.com/r/bawbel/scanner) · `1.2.3-full` | Pattern + YARA | Recommended for most users |
+
+```bash
+# Scan a local directory (recommended image)
+docker run --rm -v $(pwd):/scan:ro bawbel/scanner:full scan /scan --recursive
+
+# Lightweight CI scan
+docker run --rm -v $(pwd):/scan:ro bawbel/scanner:latest scan /scan --recursive
+
+# Build with all engines
+docker build --build-arg WITH_ALL=true -t bawbel/scanner:custom .
+```
+
+Available build args: `WITH_YARA=true`, `WITH_SEMGREP=true`, `WITH_LLM=true`, `WITH_SANDBOX=true`, `WITH_ALL=true`
 
 ---
 
@@ -366,6 +387,8 @@ AARS is the sum of 10 Agentic Risk Amplification Factors scored per the
 
 The sandbox runs your skill file inside an isolated Docker container and watches for malicious behavior at runtime — outbound connections, credential reads, shell injections, and filesystem writes that static rules cannot catch.
 
+**Image:** [hub.docker.com/r/bawbel/sandbox](https://hub.docker.com/r/bawbel/sandbox) · `bawbel/sandbox:latest` · `bawbel/sandbox:1.2.3`
+
 **Requirements:** Docker Desktop or Docker Engine must be running.
 
 ### Enable the sandbox
@@ -386,7 +409,7 @@ sandbox:
 
 | `BAWBEL_SANDBOX_IMAGE` | What happens |
 |---|---|
-| `default` *(recommended)* | Checks local Docker cache first. If not found, pulls `bawbel/sandbox:latest` from Docker Hub once and caches it. Subsequent scans use the cache — no network needed. |
+| `default` *(recommended)* | Checks local Docker cache first. If not found, pulls [`bawbel/sandbox:latest`](https://hub.docker.com/r/bawbel/sandbox) from Docker Hub once and caches it. Subsequent scans use the cache — no network needed. |
 | `local` | Skips Docker Hub entirely. Builds the sandbox image from the bundled Dockerfile inside the package. Use this for air-gapped or offline environments. |
 | `<custom-image>` | Uses your own image. Point to any registry: `registry.company.com/bawbel/sandbox@sha256:abc123` |
 
