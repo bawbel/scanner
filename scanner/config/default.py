@@ -11,7 +11,6 @@ To change defaults for a deployment: edit this file only.
 import os
 from pathlib import Path
 
-
 # ── Paths ──────────────────────────────────────────────────────────────────────
 
 PACKAGE_ROOT = Path(__file__).parent.parent.parent
