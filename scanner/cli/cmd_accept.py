@@ -41,6 +41,7 @@ from rich.panel import Panel
 from rich.table import Table
 
 from scanner.cli.shared import console, print_banner
+from scanner.utils import resolve_path, is_safe_path
 from scanner.suppression.justified import (
     check_expiring_soon,
     parse_accepted_findings,
@@ -282,12 +283,13 @@ def accept_cmd(
         console.print("[dim]Provide a justification for why this finding is suppressed.[/]")
         sys.exit(1)
 
-    target = Path(file_path).resolve()
-    if not target.exists():
-        console.print(f"[bold red]Error:[/] File not found: {file_path}")
+    target, path_err = resolve_path(file_path)
+    if path_err:
+        console.print(f"[bold red]Error:[/] {path_err}")
         sys.exit(1)
-    if not target.is_file():
-        console.print(f"[bold red]Error:[/] Not a file: {file_path}")
+    safe, safe_err = is_safe_path(target)
+    if not safe:
+        console.print(f"[bold red]Error:[/] {safe_err}")
         sys.exit(1)
 
     # Resolve reviewer

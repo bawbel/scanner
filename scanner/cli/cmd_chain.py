@@ -25,6 +25,7 @@ from scanner.cli.shared import (
 )
 from scanner.cli.shared.utils import collect_files
 from scanner.scanner import scan
+from scanner.utils import resolve_path
 
 DELEGATION_RULE_IDS = frozenset(
     {
@@ -100,7 +101,10 @@ def chain_cmd(
 
         bawbel chain ./skills/ --fail-on-any
     """
-    path_obj = Path(path).resolve()
+    path_obj, path_err = resolve_path(path)
+    if path_err:
+        console.print(f"[bold red]Error:[/] {path_err}")
+        sys.exit(1)
     files = collect_files(path_obj, recursive)
 
     if not files:

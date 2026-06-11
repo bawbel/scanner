@@ -11,6 +11,7 @@ import click
 from rich.panel import Panel
 
 from scanner.cli.shared import console, print_banner
+from scanner.utils import resolve_path
 
 
 @click.command("init")
@@ -26,10 +27,12 @@ def init_cmd(path: str) -> None:
     Generates .bawbelignore and bawbel.yml.
     """
     print_banner()
-    root = Path(path).resolve()
-
-    if not root.exists() or not root.is_dir():
-        console.print(f"[bold red]✗[/]  Path does not exist: {root}")
+    root, path_err = resolve_path(path)
+    if path_err:
+        console.print(f"[bold red]✗[/]  {path_err}")
+        raise SystemExit(1)
+    if not root.is_dir():
+        console.print(f"[bold red]✗[/]  Path is not a directory: {root.name}")
         raise SystemExit(1)
 
     console.print(f"[dim]Initialising Bawbel in[/] [bold white]{root}[/]")
