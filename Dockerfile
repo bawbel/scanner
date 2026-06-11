@@ -15,7 +15,9 @@
 #
 # Build args:
 #
-#   WITH_LLM=true       include litellm for LLM semantic engine (default: false)
+#   WITH_YARA=true      include YARA rules engine (default: false)
+#   WITH_SEMGREP=true   include Semgrep rules engine (~300MB, default: false)
+#   WITH_LLM=true       include LiteLLM semantic engine (default: false)
 #   WITH_SANDBOX=true   include sandbox execution engine (default: false)
 #   WITH_ALL=true       include all optional engines (default: false)
 #
@@ -100,6 +102,8 @@ CMD ["python", "-m", "pytest", "tests/", "-v", "--tb=short"]
 FROM python:${PYTHON_VERSION}-slim AS production
 
 ARG VERSION=1.2.3
+ARG WITH_YARA=false
+ARG WITH_SEMGREP=false
 ARG WITH_LLM=false
 ARG WITH_SANDBOX=false
 ARG WITH_ALL=false
@@ -117,6 +121,11 @@ LABEL org.opencontainers.image.title="Bawbel Scanner" \
 
 WORKDIR /app
 
+# Apply all available security patches from Debian security repo
+RUN apt-get update \
+    && apt-get upgrade -y --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY --from=builder /install /usr/local
 
 COPY scanner/   ./scanner/
@@ -124,6 +133,14 @@ COPY scanner/   ./scanner/
 RUN pip install --no-cache-dir click rich pydantic --quiet
 
 # Optional engines - install only what is requested
+RUN if [ "$WITH_ALL" = "true" ] || [ "$WITH_YARA" = "true" ]; then \
+        pip install --no-cache-dir yara-python --quiet; \
+    fi
+
+RUN if [ "$WITH_ALL" = "true" ] || [ "$WITH_SEMGREP" = "true" ]; then \
+        pip install --no-cache-dir semgrep --quiet; \
+    fi
+
 RUN if [ "$WITH_ALL" = "true" ] || [ "$WITH_LLM" = "true" ]; then \
         pip install --no-cache-dir litellm --quiet; \
     fi
