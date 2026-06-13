@@ -14,7 +14,6 @@ include CHANGELOG.md
 exclude PROJECT_CONTEXT.md
 exclude .env
 exclude .env.*
-exclude config/local.py
 recursive-exclude tests *
 recursive-exclude scripts *
 recursive-exclude docs *

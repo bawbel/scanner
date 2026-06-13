@@ -253,12 +253,14 @@ def _call_llm(
         return verdicts
 
     except json.JSONDecodeError as e:
-        log.warning("Meta-analyzer: could not parse LLM response as JSON - %s", e)
-        return None
-    except Exception as e:  # nosec B110  # noqa: S110
         log.warning(
-            "Meta-analyzer: LLM call failed - %s: %s",
-            type(e).__name__,
-            str(e)[:100],
+            "Meta-analyzer: could not parse LLM response as JSON: error_type=%s", type(e).__name__
         )
+        log.debug("Meta-analyzer: JSON parse detail: %s", e)
+        return None
+    except (
+        Exception
+    ) as e:  # nosec B110 — broad catch intentional; error_type logged, detail at DEBUG
+        log.warning("Meta-analyzer: LLM call failed: error_type=%s", type(e).__name__)
+        log.debug("Meta-analyzer: LLM call detail: %s", str(e)[:100])
         return None

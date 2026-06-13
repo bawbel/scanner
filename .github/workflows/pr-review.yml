@@ -107,8 +107,8 @@ jobs:
           missing_tests=0
           for rule_file in $changed_rules; do
             rule_name=$(basename "$rule_file" | sed 's/\.[^.]*$//')
-            if ! grep -r "$rule_name\|ave_rule\|test_detect" tests/ > /dev/null 2>&1; then
-              echo "Warning: No obvious test found for $rule_file"
+            if ! grep -r "$rule_name" tests/ > /dev/null 2>&1; then
+              echo "Warning: No test found for $rule_file (searched for '$rule_name' in tests/)"
               echo "   Please add a test in tests/test_scanner.py"
               missing_tests=$((missing_tests + 1))
             else

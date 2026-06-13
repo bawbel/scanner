@@ -94,10 +94,10 @@ Full documentation lives in `docs/`. Read it — do not duplicate it here.
 | Configuration reference | `docs/guides/configuration.md` |
 | `scan()` API | `docs/api/scan.md` |
 | Utils classes | `docs/api/utils.md` |
-| Why engines are separate files | `docs/decisions/adr-001-engine-separation.md` |
-| Why utils uses classes | `docs/decisions/adr-002-oop-utils.md` |
-| Why errors use E-codes | `docs/decisions/adr-003-error-codes.md` |
-| Why scan() never raises | `docs/decisions/adr-004-no-exceptions.md` |
+| Why engines are separate files | `docs/adr/0003-engine-separation.md` |
+| Why utils uses classes | `docs/adr/0004-oop-utils.md` |
+| Why errors use E-codes | `docs/adr/0005-error-codes.md` |
+| Why scan() never raises | `docs/adr/0006-no-exceptions.md` |
 
 ---
 
@@ -355,3 +355,200 @@ docker build -t bawbel/scanner . && docker run --rm -v $(pwd)/tests:/scan:ro baw
 | `.claude/skills/add-detection-rule.md` | Adding YARA or Semgrep rule |
 | `.claude/skills/add-engine.md` | Adding a new detection engine |
 | `.claude/skills/write-test.md` | Writing a new test |
+
+---
+
+## Security — think before you write
+
+Every function that handles external input, runs a subprocess, reads a file,
+or calls a network endpoint must answer four security questions before the
+body is written. Add the answers as a `Sec:` block alongside What/Why/How.
+
+```python
+# What: fetches server card JSON from a remote MCP server URL
+# Why:  scan_server_card needs the raw manifest to run pattern detection
+# How:  urllib.request with 10s timeout, reads up to MAX_CONTENT_BYTES
+#
+# Sec:  INPUT  — URL validated to start with http:// or https:// only
+#       OUTPUT — content capped at MAX_CONTENT_BYTES before returning
+#       TRUST  — response treated as untrusted text, never eval'd or exec'd
+#       ERROR  — HTTPError and URLError caught, returns (None, error_str)
+def fetch_server_card(url: str) -> tuple[str | None, str | None]:
+    ...
+```
+
+Not every function needs a Sec: block. A pure calculation function with no
+external input does not need one. A function that reads a file, calls a
+subprocess, or accepts a URL always does.
+
+---
+
+### The four security questions
+
+**INPUT** — Is every caller-controlled value validated before use?
+
+Reject before processing:
+- Path traversal: `../`, absolute paths when relative is expected
+- Shell metacharacters in anything passed to subprocess
+- Oversized input: check against `MAX_FILE_SIZE_BYTES` before reading
+- Non-UTF-8 bytes: use `errors="replace"` not `errors="strict"`
+- URLs that are not `http://` or `https://`
+
+**OUTPUT** — Is the output safe for every consumer?
+
+- Truncate all match strings to `MAX_MATCH_LENGTH` (80 chars)
+- Never return raw binary content
+- Never return content that a downstream tool could execute
+- Sanitize anything that will be rendered in HTML or markdown
+
+**TRUST** — What trust level does this data have?
+
+Everything from outside the process is untrusted:
+- Remote content: server cards, URLs, tool descriptions, PiranhaDB responses
+- User-supplied file content: skill files, MCP manifests, system prompts
+- Environment variables: validate format, do not assume they are safe
+- GitHub API responses: treat as untrusted text
+
+Never `eval()`, `exec()`, `subprocess.run(shell=True)`,
+or `pickle.loads()` on untrusted input. Ever.
+
+**ERROR** — What happens when this fails?
+
+- `scan()` never raises — always returns `ScanResult` with `error` field set
+- Engines return `[]` on failure, never propagate exceptions to the caller
+- Log the error at WARNING level, do not swallow it silently
+- Return a typed error (tuple, Result, dataclass) not raise for expected failures
+- Only raise for programming errors (wrong argument type, broken invariant)
+
+---
+
+### Hard rules — never violate
+
+```
+subprocess.run(shell=True, ...)          BANNED
+eval() on any external input             BANNED
+exec() on any external input             BANNED
+pickle.loads() on any external input     BANNED
+open(path) without size check first      BANNED
+Path(user_input) without traversal check BANNED
+requests.get(url, verify=False)          BANNED
+logging.info(api_key) or print(secret)   BANNED
+hardcoded credentials of any kind        BANNED
+```
+
+If you are about to write any of the above, stop. Redesign.
+
+---
+
+### Subprocess — always list form
+
+```python
+# WRONG — shell=True allows injection
+subprocess.run(f"bawbel scan {path}", shell=True)
+
+# RIGHT — list form, shell never invoked
+subprocess.run(  # nosec B603
+    ["bawbel", "scan", str(path)],
+    capture_output=True,
+    text=True,
+    timeout=60,
+)
+```
+
+nosec B603 is valid here because: (1) list form is used, not shell=True,
+(2) `path` is a validated Path object, not raw user input.
+
+---
+
+### File reads — always size-check first
+
+```python
+# WRONG — no size limit, can OOM on large files
+content = Path(path).read_text()
+
+# RIGHT
+if not path.exists():
+    return ScanResult(error=f"file not found: {path}")
+if path.stat().st_size > MAX_FILE_SIZE_BYTES:
+    return ScanResult(error=f"file too large: {path.stat().st_size} bytes")
+content = path.read_text(encoding="utf-8", errors="replace")
+```
+
+---
+
+### URLs — always validate scheme
+
+```python
+# WRONG — accepts file://, data://, ftp://, anything
+content, err = fetch_url(url)
+
+# RIGHT
+if not url.startswith(("http://", "https://")):
+    return None, "URL must start with http:// or https://"
+content, err = fetch_url(url)
+```
+
+---
+
+### Path traversal — validate before use
+
+```python
+# WRONG — user can pass ../../etc/passwd
+target = Path(base_dir) / user_supplied_name
+
+# RIGHT
+resolved = (Path(base_dir) / user_supplied_name).resolve()
+if not str(resolved).startswith(str(Path(base_dir).resolve())):
+    return None, "path traversal detected"
+```
+
+---
+
+### Secrets — always from environment, never literals
+
+```python
+# WRONG
+ANTHROPIC_API_KEY = "sk-abc123..."
+
+# RIGHT
+ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
+if not ANTHROPIC_API_KEY:
+    logger.warning("ANTHROPIC_API_KEY not set — LLM engine disabled")
+    return []
+```
+
+---
+
+### nosec and noqa — only with explanation
+
+```python
+# WRONG — suppresses warning with no explanation
+subprocess.run(cmd)  # nosec
+
+# RIGHT — explains why the suppression is valid
+subprocess.run(cmd_list, ...)  # nosec B603 — list form used, shell=True absent,
+                                # cmd_list validated as [str, Path] before this call
+```
+
+nosec without an explanation is treated as a lint error during review.
+
+---
+
+### Bandit suppressions used in this repo
+
+These are the approved suppressions. Any new nosec must be reviewed.
+
+| Code | Meaning | When approved |
+|---|---|---|
+| B404/S404 | subprocess import | Always — we use subprocess intentionally |
+| B603/S603 | subprocess.run | Only when list form is used, never shell=True |
+| B108/S108 | /tmp path | Only in sandbox engine, documented |
+| B110/S110 | try/except pass | Only with a log statement inside the except |
+
+---
+
+### Self-scan
+
+The scanner scans itself on every PR via `.github/workflows/bawbel-scan.yml`.
+If bawbel finds a security finding in its own code, that is a real finding.
+Fix it before merging.

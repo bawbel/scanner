@@ -55,7 +55,7 @@ echo ""
 
 echo "--- Check pattern engine rule dict keys ---"
 python3 -c "
-from scanner.engines.pattern import PATTERN_RULES
+from scanner.engines.pattern_engine import PATTERN_RULES
 r = PATTERN_RULES[0]
 print('Rule dict keys:', sorted(r.keys()))
 print('Has aivss_score:', 'aivss_score' in r)

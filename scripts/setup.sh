@@ -50,7 +50,7 @@ done
 
 # ── Header ────────────────────────────────────────────────────────────────────
 echo ""
-echo -e "${GREEN}Bawbel Scanner${NC} v1.2.0 - Local Development Setup"
+echo -e "${GREEN}Bawbel Scanner${NC} v1.2.3 - Local Development Setup"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 
@@ -204,8 +204,8 @@ tick "$VERSION"
 # Public API import
 python3 -c "
 from scanner import scan, ScanResult, Finding, Severity, __version__
-assert __version__ == '1.2.0', f'unexpected version: {__version__}'
-" && tick "Public API imports OK (scanner v1.2.0)"
+assert __version__ == '1.2.3', f'unexpected version: {__version__}'
+" && tick "Public API imports OK (scanner v1.2.3)"
 
 # Golden fixture - verify scanner detects findings and produces AIVSS scores
 FIXTURE="tests/fixtures/skills/malicious/malicious_skill.md"

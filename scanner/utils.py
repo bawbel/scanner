@@ -143,7 +143,7 @@ class PathValidator:
             (True, None) if valid
             (False, error code string) if invalid
         """
-        from config.default import MAX_FILE_SIZE_BYTES
+        from scanner.config.default import MAX_FILE_SIZE_BYTES
 
         if path.is_symlink():
             return False, Errors.SYMLINK_REJECTED

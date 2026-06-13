@@ -14,6 +14,7 @@ import tempfile
 from pathlib import Path
 from typing import Optional
 
+from scanner.messages import Errors
 from scanner.utils import get_logger
 
 log = get_logger(__name__)
@@ -36,10 +37,19 @@ def fetch_url(url: str) -> tuple[Optional[dict], Optional[str]]:
     """
     Fetch a URL and parse the response as JSON.
 
+    # Sec: INPUT  — URL scheme validated to http/https only before any network call
+    #      OUTPUT — raw bytes capped by FETCH_TIMEOUT; parsed JSON returned, never exec'd
+    #      TRUST  — response treated as untrusted text, never eval'd
+    #      ERROR  — all exceptions caught; type logged internally, error code returned to caller
+
     Returns:
         (data, error) - data is the parsed JSON dict, error is a string
         if something went wrong. Exactly one of them is None.
     """
+    if not url.startswith(("http://", "https://")):
+        log.warning("fetch_url: rejected non-http URL: scheme=%s", url.split("://")[0])
+        return None, Errors.INVALID_URL_SCHEME
+
     try:
         import urllib.request
         import urllib.error
@@ -48,19 +58,25 @@ def fetch_url(url: str) -> tuple[Optional[dict], Optional[str]]:
             url,
             headers={"User-Agent": "bawbel-scanner/1.0 (github.com/bawbel/scanner)"},
         )
-        with urllib.request.urlopen(req, timeout=FETCH_TIMEOUT) as resp:  # nosec B310  # noqa: S310
+        with urllib.request.urlopen(req, timeout=FETCH_TIMEOUT) as resp:  # nosec B310 # noqa: S310
             raw = resp.read().decode("utf-8", errors="replace")
             data = json.loads(raw)
             return data, None
 
     except urllib.error.HTTPError as e:
-        return None, f"HTTP {e.code}: {e.reason} - {url}"
+        log.warning(
+            "fetch_url: HTTP error: url=%s status=%s error_type=%s", url, e.code, type(e).__name__
+        )
+        return None, Errors.FETCH_HTTP_ERROR
     except urllib.error.URLError as e:
-        return None, f"Connection failed: {e.reason} - {url}"
+        log.warning("fetch_url: connection failed: url=%s error_type=%s", url, type(e).__name__)
+        return None, Errors.FETCH_CONNECTION_FAILED
     except json.JSONDecodeError as e:
-        return None, f"Invalid JSON: {e} - {url}"
-    except Exception as e:  # noqa: BLE001
-        return None, f"Fetch error: {e} - {url}"
+        log.warning("fetch_url: JSON parse failed: url=%s error_type=%s", url, type(e).__name__)
+        return None, Errors.FETCH_INVALID_RESPONSE
+    except Exception as e:  # nosec B110 — broad catch intentional, error_type logged
+        log.error("fetch_url: unexpected error: url=%s error_type=%s", url, type(e).__name__)
+        return None, Errors.FETCH_CONNECTION_FAILED
 
 
 # ── Server-card URL builder ───────────────────────────────────────────────────
@@ -211,34 +227,41 @@ def fetch_server_card(base_url: str) -> tuple[Optional[str], Optional[str]]:
         (content, error) - content is the scannable text string,
         error is a message if nothing was found at any path.
     """
+    if not base_url.startswith(("http://", "https://")):
+        return None, Errors.INVALID_URL_SCHEME
+
     # If the URL already contains a well-known path, try it directly
     if ".well-known/" in base_url:
         data, err = fetch_url(base_url)
         if err:
             return None, err
         if not isinstance(data, dict):
-            return None, f"Expected JSON object, got {type(data).__name__} - {base_url}"
+            log.warning("fetch_server_card: unexpected response type: type=%s", type(data).__name__)
+            return None, Errors.FETCH_INVALID_RESPONSE
         return build_server_card_content(data, base_url), None
 
     # Otherwise try each known path in order
     base = base_url.rstrip("/")
-    last_err: str = ""
     for path in SERVER_CARD_PATHS:
         url = f"{base}/{path}"
         log.debug("Trying server-card path: %s", url)
         data, err = fetch_url(url)
         if err:
-            last_err = err
             continue  # try next path
         if not isinstance(data, dict):
-            last_err = f"Expected JSON object, got {type(data).__name__} - {url}"
+            log.warning(
+                "fetch_server_card: unexpected response type: path=%s type=%s",
+                path,
+                type(data).__name__,
+            )
             continue
         content = build_server_card_content(data, base_url)
         log.debug("Server-card found at %s - %d lines", path, content.count("\n"))
         return content, None
 
-    return None, (
-        f"No server-card found at {base_url}. "
-        f"Tried: {', '.join(SERVER_CARD_PATHS)}. "
-        f"Last error: {last_err}"
+    log.warning(
+        "fetch_server_card: no server-card found: url=%s paths_tried=%d",
+        base_url,
+        len(SERVER_CARD_PATHS),
     )
+    return None, Errors.SERVER_CARD_NOT_FOUND

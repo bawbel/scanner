@@ -25,6 +25,7 @@ from scanner.cli.shared import (
 )
 from scanner.cli.shared.constants import OWASP_DESCRIPTIONS, REMEDIATION_GUIDE
 from scanner.cli.shared.utils import collect_files
+from scanner.utils import resolve_path
 
 
 @click.command("report")
@@ -63,7 +64,10 @@ def report_cmd(path: str, fmt: str, no_ignore: bool, recursive: bool) -> None:
 
         bawbel report ./skills/ --recursive
     """
-    path_obj = Path(path).resolve()
+    path_obj, path_err = resolve_path(path)
+    if path_err:
+        console.print(f"[bold red]Error:[/] {path_err}")
+        sys.exit(1)
     files = collect_files(path_obj, recursive)
 
     if not files:

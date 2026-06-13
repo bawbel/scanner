@@ -22,9 +22,9 @@ Design:
 from itertools import combinations
 
 from scanner.models.finding import Finding
-from scanner.toxic_flows.capabilities import get_capabilities
-from scanner.toxic_flows.flows import get_flow
-from scanner.toxic_flows.models import ToxicFlow
+from scanner.core.toxic_flows.capabilities import get_capabilities
+from scanner.core.toxic_flows.flows import get_flow
+from scanner.core.toxic_flows.models import ToxicFlow
 
 
 def detect_toxic_flows(findings: list[Finding]) -> list[ToxicFlow]:
