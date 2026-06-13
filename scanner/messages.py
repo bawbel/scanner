@@ -49,6 +49,13 @@ class Errors:
     # Rules
     RULES_FILE_MISSING = "E020: Required rules file is missing. Re-install the scanner."
 
+    # Network / fetch
+    INVALID_URL_SCHEME = "E030: URL must start with http:// or https://"
+    FETCH_HTTP_ERROR = "E031: Remote server returned an error. Check the URL and try again."
+    FETCH_CONNECTION_FAILED = "E032: Could not connect to the remote server."
+    FETCH_INVALID_RESPONSE = "E033: Remote server returned an unexpected response."
+    SERVER_CARD_NOT_FOUND = "E034: No MCP server-card found at that URL."
+
 
 class Logs:
     """Structured log messages - used with the logger."""

@@ -24,6 +24,7 @@ from scanner.cli.shared import (
 )
 from scanner.cli.shared.utils import collect_files
 from scanner.scanner import scan
+from scanner.utils import resolve_path
 
 CREDENTIAL_RULE_IDS = frozenset(
     {
@@ -93,7 +94,10 @@ def creds_cmd(
 
         bawbel creds ./skills/ --fail-on-any
     """
-    path_obj = Path(path).resolve()
+    path_obj, path_err = resolve_path(path)
+    if path_err:
+        console.print(f"[bold red]Error:[/] {path_err}")
+        sys.exit(1)
     files = collect_files(path_obj, recursive)
 
     if not files:
@@ -119,7 +123,7 @@ def creds_cmd(
             print_scan_result(
                 result,
                 show_report_hint=(len(files) == 1),
-                scan_root=path_obj if path_obj.is_dir() else path_obj.parent,
+                scan_root=Path.cwd(),
             )
 
     if fmt == "json":

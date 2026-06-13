@@ -2,7 +2,8 @@
 Unit tests for scanner.models.finding.Finding
 """
 
-from scanner.models.finding import Finding, Severity, SEVERITY_SCORES
+from scanner.models import SEVERITY_SCORES, Severity
+from scanner.models.finding import Finding
 
 
 def make_finding(**kwargs) -> Finding:

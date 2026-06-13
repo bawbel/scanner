@@ -21,6 +21,7 @@ from scanner.cli.shared import (
     worst_severity_score,
 )
 from scanner.cli.shared.utils import collect_files
+from scanner.utils import resolve_path
 
 # ── Watch helper ───────────────────────────────────────────────────────────────
 
@@ -38,7 +39,10 @@ def _run_watch(path: str, fmt: str, fail_on_severity: str, recursive: bool) -> N
 
     import time
 
-    path_obj = Path(path).resolve()
+    path_obj, path_err = resolve_path(path)
+    if path_err:
+        console.print(f"[bold red]Error:[/] {path_err}")
+        sys.exit(1)
     watch_dir = path_obj if path_obj.is_dir() else path_obj.parent
 
     WATCHED_EXTS = {".md", ".yaml", ".yml", ".json", ".txt"}
@@ -139,9 +143,12 @@ def scan_cmd(  # noqa: PLR0913
         _run_watch(path, fmt, fail_on_severity, recursive)
         return
 
-    path_obj = Path(path).resolve()
+    path_obj, path_err = resolve_path(path)
+    if path_err:
+        console.print(f"[bold red]Error:[/] {path_err}")
+        sys.exit(1)
     files = collect_files(path_obj, recursive)
-    scan_root = path_obj if path_obj.is_dir() else path_obj.parent
+    scan_root = Path.cwd()
 
     if not files:
         console.print("[yellow]No scannable files found.[/]")

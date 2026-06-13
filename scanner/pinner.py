@@ -34,7 +34,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
-from scanner.utils import get_logger
+from scanner.utils import get_logger, resolve_path
 
 log = get_logger(__name__)
 
@@ -160,7 +160,10 @@ def pin(path: str, recursive: bool = True, update: bool = False) -> PinResult:
     Returns:
         PinResult with lists of pinned/unchanged files
     """
-    path_obj = Path(path).resolve()
+    path_obj, path_err = resolve_path(path)
+    if path_err:
+        log.warning("pin: invalid path: error=%s", path_err)
+        return PinResult()
     root = path_obj if path_obj.is_dir() else path_obj.parent
     files = collect_pinnable_files(path_obj, recursive)
     result = PinResult()
@@ -208,13 +211,16 @@ def check_pins(path: str, recursive: bool = True) -> tuple[DriftResult, Optional
 
     Changed files are rug pull candidates - the content changed after pinning.
     """
-    path_obj = Path(path).resolve()
+    path_obj, path_err = resolve_path(path)
+    if path_err:
+        log.warning("check_pins: invalid path: error=%s", path_err)
+        return DriftResult(), path_err
     root = path_obj if path_obj.is_dir() else path_obj.parent
     result = DriftResult()
 
     existing = load_pins(root)
     if not existing:
-        return result, (f"No {PINS_FILE} found at {root}. " f"Run 'bawbel pin {path}' first.")
+        return result, (f"No {PINS_FILE} found. Run 'bawbel pin' first.")
 
     pins = existing.get("pins", {})
     files = collect_pinnable_files(path_obj, recursive)

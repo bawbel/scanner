@@ -10,18 +10,21 @@
 #                docker run --rm bawbel/scanner:test
 #
 #   production - minimal runtime image, non-root user, read-only fs
-#                docker build --target production -t bawbel/scanner:1.2.0 .
-#                docker run --rm -v $(pwd)/skills:/scan:ro bawbel/scanner:1.2.0 scan /scan
+#                docker build --target production -t bawbel/scanner:1.2.3 .
+#                docker run --rm -v $(pwd)/skills:/scan:ro bawbel/scanner:1.2.3 scan /scan
 #
 # Build args:
 #
-#   WITH_LLM=true       include litellm for LLM semantic engine (default: false)
+#   WITH_YARA=true      include YARA rules engine (default: false)
+#   WITH_SEMGREP=true   include Semgrep rules engine (~300MB, default: false)
+#   WITH_LLM=true       include LiteLLM semantic engine (default: false)
 #   WITH_SANDBOX=true   include sandbox execution engine (default: false)
 #   WITH_ALL=true       include all optional engines (default: false)
 #
 # ─────────────────────────────────────────────────────────────────────────────
 
 ARG PYTHON_VERSION=3.12
+ARG VERSION=1.2.3
 
 
 # ── Base: shared system dependencies ──────────────────────────────────────────
@@ -63,6 +66,9 @@ RUN pip install --no-cache-dir \
         black \
         flake8 \
         flake8-bugbear \
+        flake8-simplify \
+        flake8-bandit \
+        flake8-pyproject \
         bandit \
         pre-commit \
         pip-audit \
@@ -95,6 +101,9 @@ CMD ["python", "-m", "pytest", "tests/", "-v", "--tb=short"]
 # ── Production: minimal runtime image ─────────────────────────────────────────
 FROM python:${PYTHON_VERSION}-slim AS production
 
+ARG VERSION=1.2.3
+ARG WITH_YARA=false
+ARG WITH_SEMGREP=false
 ARG WITH_LLM=false
 ARG WITH_SANDBOX=false
 ARG WITH_ALL=false
@@ -103,7 +112,7 @@ LABEL org.opencontainers.image.title="Bawbel Scanner" \
       org.opencontainers.image.description="Agentic AI security scanner. Detects AVE vulnerabilities. Produces OWASP AIVSS v0.8 scores." \
       org.opencontainers.image.url="https://bawbel.io" \
       org.opencontainers.image.source="https://github.com/bawbel/scanner" \
-      org.opencontainers.image.version="1.2.0" \
+      org.opencontainers.image.version="${VERSION}" \
       org.opencontainers.image.licenses="Apache-2.0" \
       org.opencontainers.image.vendor="Bawbel" \
       org.opencontainers.image.documentation="https://bawbel.io/docs" \
@@ -112,14 +121,26 @@ LABEL org.opencontainers.image.title="Bawbel Scanner" \
 
 WORKDIR /app
 
+# Apply all available security patches from Debian security repo
+RUN apt-get update \
+    && apt-get upgrade -y --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY --from=builder /install /usr/local
 
 COPY scanner/   ./scanner/
-COPY config/    ./config/
 
 RUN pip install --no-cache-dir click rich pydantic --quiet
 
 # Optional engines - install only what is requested
+RUN if [ "$WITH_ALL" = "true" ] || [ "$WITH_YARA" = "true" ]; then \
+        pip install --no-cache-dir yara-python --quiet; \
+    fi
+
+RUN if [ "$WITH_ALL" = "true" ] || [ "$WITH_SEMGREP" = "true" ]; then \
+        pip install --no-cache-dir semgrep --quiet; \
+    fi
+
 RUN if [ "$WITH_ALL" = "true" ] || [ "$WITH_LLM" = "true" ]; then \
         pip install --no-cache-dir litellm --quiet; \
     fi

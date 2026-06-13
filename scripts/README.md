@@ -7,10 +7,17 @@ scripts/
   README.md               this file
   setup.sh                local dev setup (venv, deps, pre-commit)
   test_all.sh             automated full test suite
-  manual_testing.md       copy-paste commands for manual testing
-  scan_smithery.sh        sweep Smithery registry for AVE vulnerabilities
-  scan_mcp_registry.sh    sweep official MCP registry for AVE vulnerabilities
+  diagnose.sh             crash diagnostics — paste output when filing a bug
+  scan_smithery.py        sweep Smithery registry for AVE vulnerabilities
+  scan_mcp_registry.py    sweep official MCP registry for AVE vulnerabilities
+  sync_records.py         sync AVE records from github.com/bawbel/ave → PiranhaDB
+  update_log.py           update CHANGELOG.md from git log
 ```
+
+Manual testing guides have moved to `docs/guides/`:
+- `docs/guides/manual-testing.md`
+- `docs/guides/manual-testing-creds-chain.md`
+- `docs/guides/manual-testing-suppress.md`
 
 ---
 
@@ -142,22 +149,22 @@ docker run --rm bawbel/scanner:test \
 
 ```bash
 # Standard production build
-docker build --target production -t bawbel/scanner:1.2.0 .
+docker build --target production -t bawbel/scanner:1.2.3 .
 
 # With LLM engine
 docker build --target production \
   --build-arg WITH_LLM=true \
-  -t bawbel/scanner:1.2.0-llm .
+  -t bawbel/scanner:1.2.3-llm .
 
 # With sandbox engine
 docker build --target production \
   --build-arg WITH_SANDBOX=true \
-  -t bawbel/scanner:1.2.0-sandbox .
+  -t bawbel/scanner:1.2.3-sandbox .
 
 # With everything
 docker build --target production \
   --build-arg WITH_ALL=true \
-  -t bawbel/scanner:1.2.0-full .
+  -t bawbel/scanner:1.2.3-full .
 ```
 
 #### Scan a local directory
@@ -166,24 +173,24 @@ docker build --target production \
 # Text output (default)
 docker run --rm \
   -v /path/to/skills:/scan:ro \
-  bawbel/scanner:1.2.0 scan /scan --recursive
+  bawbel/scanner:1.2.3 scan /scan --recursive
 
 # JSON output
 docker run --rm \
   -v /path/to/skills:/scan:ro \
-  bawbel/scanner:1.2.0 scan /scan --recursive --format json
+  bawbel/scanner:1.2.3 scan /scan --recursive --format json
 
 # SARIF output
 docker run --rm \
   -v /path/to/skills:/scan:ro \
   -v /path/to/reports:/reports \
-  bawbel/scanner:1.2.0 scan /scan --recursive \
+  bawbel/scanner:1.2.3 scan /scan --recursive \
     --format sarif --output /reports/bawbel.sarif
 
 # Fail on high severity (for CI)
 docker run --rm \
   -v /path/to/skills:/scan:ro \
-  bawbel/scanner:1.2.0 scan /scan --recursive \
+  bawbel/scanner:1.2.3 scan /scan --recursive \
     --fail-on-severity high
 echo "Exit: $?"   # 0 = clean, 2 = findings at threshold
 ```
@@ -192,20 +199,20 @@ echo "Exit: $?"   # 0 = clean, 2 = findings at threshold
 
 ```bash
 # Version and engine status
-docker run --rm bawbel/scanner:1.2.0 version
+docker run --rm bawbel/scanner:1.2.3 version
 
 # Conformance check of a live server
-docker run --rm bawbel/scanner:1.2.0 \
+docker run --rm bawbel/scanner:1.2.3 \
   conform https://api.example.com
 
 # Scan a server card
-docker run --rm bawbel/scanner:1.2.0 \
+docker run --rm bawbel/scanner:1.2.3 \
   ssc https://api.example.com
 
 # Report
 docker run --rm \
   -v /path/to/skills:/scan:ro \
-  bawbel/scanner:1.2.0 report /scan/my_skill.md
+  bawbel/scanner:1.2.3 report /scan/my_skill.md
 ```
 
 #### Dev shell inside Docker
@@ -348,22 +355,22 @@ pip install requests
 export SMITHERY_API_KEY=your_key
 
 # Scan top 500 servers
-bash scripts/scan_smithery.sh
+python3 scripts/scan_smithery.py
 
 # Custom limit and output file
-bash scripts/scan_smithery.sh --limit 100 --output sweep.json
+python3 scripts/scan_smithery.py --limit 100 --output sweep.json
 
 # Resume after interruption
-bash scripts/scan_smithery.sh --limit 1000 --resume
+python3 scripts/scan_smithery.py --limit 1000 --resume
 
 # With LLM engine for deeper analysis
 ANTHROPIC_API_KEY=your_key \
-  bash scripts/scan_smithery.sh --limit 500
+  python3 scripts/scan_smithery.py --limit 500
 
 # Upload results to PiranhaDB
 SMITHERY_API_KEY=your_key \
   PIRANHA_INGEST_TOKEN=your_token \
-  bash scripts/scan_smithery.sh
+  python3 scripts/scan_smithery.py
 ```
 
 ### Official MCP registry
@@ -372,16 +379,16 @@ No API key required. The official registry is public.
 
 ```bash
 # Scan latest 50 servers
-bash scripts/scan_mcp_registry.sh
+python3 scripts/scan_mcp_registry.py
 
 # Scan 200 servers, save to file
-bash scripts/scan_mcp_registry.sh --limit 200 --output results.json
+python3 scripts/scan_mcp_registry.py --limit 200 --output results.json
 
 # Scan all versions (not just latest)
-bash scripts/scan_mcp_registry.sh --limit 100 --all-versions
+python3 scripts/scan_mcp_registry.py --limit 100 --all-versions
 
 # Verbose - prints scan content for each server
-bash scripts/scan_mcp_registry.sh --limit 20 --verbose
+python3 scripts/scan_mcp_registry.py --limit 20 --verbose
 ```
 
 ---
@@ -422,7 +429,7 @@ jobs:
         run: |
           docker run --rm \
             -v ${{ github.workspace }}/skills:/scan:ro \
-            bawbel/scanner:1.2.0 scan /scan --recursive \
+            bawbel/scanner:1.2.3 scan /scan --recursive \
               --format sarif > bawbel.sarif
           echo "exit=$?" >> $GITHUB_OUTPUT
 ```
@@ -433,7 +440,7 @@ jobs:
 # .pre-commit-config.yaml
 repos:
   - repo: https://github.com/bawbel/scanner
-    rev: v1.2.0
+    rev: v1.2.3
     hooks:
       - id: bawbel-scan
 ```
@@ -482,7 +489,7 @@ pip install semgrep
 docker info
 
 # Clean rebuild
-docker build --no-cache --target production -t bawbel/scanner:1.2.0 .
+docker build --no-cache --target production -t bawbel/scanner:1.2.3 .
 ```
 
 **Watch mode not working**

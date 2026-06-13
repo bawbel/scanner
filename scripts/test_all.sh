@@ -153,7 +153,7 @@ section "1  Installation and entry points"
 run "bawbel CLI on PATH"            which bawbel
 run "python -m scanner entry point" python3 -m scanner --help
 run "public API imports"            python3 -c "from scanner import scan, ScanResult, Finding, Severity, __version__; print(__version__)"
-run "__version__ is 1.2.0"          python3 -c "from scanner import __version__; assert __version__ == '1.2.0', __version__"
+run "__version__ is 1.2.3"          python3 -c "from scanner import __version__; assert __version__ == '1.2.3', __version__"
 
 # =============================================================================
 # 2. bawbel version
@@ -358,7 +358,7 @@ print(f'Suppressed: {suppressed_ids}')
 
 run_py "--no-ignore reveals suppressed findings" "
 from scanner.scanner import scan
-from scanner.suppression import NO_IGNORE
+from scanner.suppression.inline import NO_IGNORE
 r = scan('$FX/suppressed.md', no_ignore=True)
 print(f'Findings with no_ignore=True: {len(r.findings)}')
 "

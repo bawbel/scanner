@@ -14,6 +14,7 @@ Design principles:
 import re
 from dataclasses import dataclass, field
 
+from scanner.utils import get_logger
 from scanner.conformance.checks import (
     CATEGORY_WEIGHTS,
     CONFORMANCE_CHECKS,
@@ -129,8 +130,13 @@ def _run_check(check_id: str, manifest: dict) -> CheckResult:
     """
     try:
         return _RUN_MAP[check_id](manifest)
-    except Exception as e:  # noqa: BLE001
-        return _check(check_id, CheckStatus.WARN, f"Check error: {e}")
+    except Exception as e:  # nosec B110 — broad catch intentional; error_type logged, not surfaced
+        get_logger(__name__).warning(
+            "_run_check: check raised unexpectedly: check_id=%s error_type=%s",
+            check_id,
+            type(e).__name__,
+        )
+        return _check(check_id, CheckStatus.WARN, "Check could not be evaluated")
 
 
 # ── Check implementations ──────────────────────────────────────────────────────

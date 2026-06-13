@@ -1,0 +1,17 @@
+{
+  "version": "1",
+  "pinned_at": "2026-06-09T15:27:17.868186+00:00",
+  "pinned_by": "chaksaray <chaksaray@gmail.com>",
+  "pins": {
+    "malicious/malicious_skill.md": {
+      "sha256": "c08bc042d3216da4832fe9fa8c167c2dbc17066c80b2e241b50fb72448556761",
+      "size_bytes": 757,
+      "pinned_at": "2026-06-09T15:27:17.868186+00:00"
+    },
+    "malicious/test_owasp_mcp_skill.md": {
+      "sha256": "655c5c7deb533cffcf4b56f186cda6b76dd18d89dc6fc140d494fc1af938b5f3",
+      "size_bytes": 852,
+      "pinned_at": "2026-06-09T15:27:17.868186+00:00"
+    }
+  }
+}

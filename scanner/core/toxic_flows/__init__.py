@@ -2,7 +2,7 @@
 Bawbel Scanner - Toxic flow detection.
 
 Public API:
-    from scanner.toxic_flows import detect_toxic_flows
+    from scanner.core.toxic_flows import detect_toxic_flows
     flows = detect_toxic_flows(findings)  # list[ToxicFlow]
 
 Toxic flows are attack chains - two or more findings whose capabilities
@@ -16,7 +16,7 @@ Adding a new flow definition:
     3. Add a FlowDef to flows.py - that's it, no other files change
 """
 
-from scanner.toxic_flows.detector import detect_toxic_flows
-from scanner.toxic_flows.models import ToxicFlow
+from scanner.core.toxic_flows.detector import detect_toxic_flows
+from scanner.core.toxic_flows.models import ToxicFlow
 
 __all__ = ["detect_toxic_flows", "ToxicFlow"]

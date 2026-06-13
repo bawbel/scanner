@@ -43,10 +43,12 @@ vulnerabilities mapped to the [AVE standard](https://github.com/bawbel/ave).
 
 | Document | Description |
 |---|---|
-| [ADR-001: Engine separation](decisions/adr-001-engine-separation.md) | Why each engine is a separate file |
-| [ADR-002: OOP utils](decisions/adr-002-oop-utils.md) | Why utils uses classes with function aliases |
-| [ADR-003: Error codes](decisions/adr-003-error-codes.md) | Why errors use E-codes not raw messages |
-| [ADR-004: No exceptions from scan()](decisions/adr-004-no-exceptions.md) | Why scan() never raises |
+| [ADR-0001: Three-layer architecture](adr/0001-three-layer-architecture.md) | Pure core / impure engines / boundary CLI |
+| [ADR-0002: Evidence fields first-class](adr/0002-evidence-fields-first-class-output.md) | Confidence and severity are separate fields |
+| [ADR-0003: Engine separation](adr/0003-engine-separation.md) | Why each engine is a separate file |
+| [ADR-0004: OOP utils](adr/0004-oop-utils.md) | Why utils uses classes with function aliases |
+| [ADR-0005: Error codes](adr/0005-error-codes.md) | Why errors use E-codes not raw messages |
+| [ADR-0006: No exceptions from scan()](adr/0006-no-exceptions.md) | Why scan() never raises |
 
 ---
 

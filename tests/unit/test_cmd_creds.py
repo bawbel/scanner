@@ -10,7 +10,7 @@ from scanner.cli.cmd_creds import (
     CREDENTIAL_RULE_IDS,
     _is_cred_finding,
 )
-from scanner.models.finding import Finding, Severity
+from scanner.models import Finding, Severity
 
 
 def make_finding(rule_id="bawbel-hardcoded-credential", ave_id="AVE-2026-00047"):

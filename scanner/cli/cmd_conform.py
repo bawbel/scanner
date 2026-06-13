@@ -12,6 +12,7 @@ Sources:
 
 import json
 import sys
+from pathlib import Path
 
 import click
 from rich import box
@@ -20,6 +21,10 @@ from rich.table import Table
 
 from scanner.conformance import score_conformance, CheckStatus, CheckCategory
 from scanner.cli.shared import console, print_banner
+from scanner.messages import Errors
+from scanner.utils import get_logger
+
+log = get_logger(__name__)
 
 # ── Grade colours ──────────────────────────────────────────────────────────────
 
@@ -55,9 +60,12 @@ def _load_from_file(path: str) -> tuple[dict | None, str | None]:
         with open(path, encoding="utf-8") as f:
             return json.load(f), None
     except FileNotFoundError:
-        return None, f"File not found: {path}"
+        return None, Errors.FILE_NOT_FOUND.format(name=Path(path).name)
     except json.JSONDecodeError as e:
-        return None, f"Invalid JSON: {e}"
+        log.warning(
+            "_load_from_file: JSON parse failed: path=%s error_type=%s", path, type(e).__name__
+        )
+        return None, Errors.FETCH_INVALID_RESPONSE
 
 
 def _load_from_url(url: str) -> tuple[dict | None, str | None]:
@@ -82,8 +90,13 @@ def _load_from_registry(server_name: str) -> tuple[dict | None, str | None]:
         with urllib.request.urlopen(req, timeout=10) as r:  # nosec B310  # noqa: S310
             data = json.loads(r.read())
             return data.get("server", data), None
-    except Exception as e:  # noqa: BLE001
-        return None, f"Registry lookup failed: {e}"
+    except Exception as e:  # nosec B110 — broad catch intentional, error_type logged
+        log.warning(
+            "_load_from_registry: lookup failed: server=%s error_type=%s",
+            server_name,
+            type(e).__name__,
+        )
+        return None, Errors.FETCH_CONNECTION_FAILED
 
 
 # ── Command ────────────────────────────────────────────────────────────────────

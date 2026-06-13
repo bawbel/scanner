@@ -166,12 +166,8 @@ def _call_llm(model: str, content: str) -> Optional[str]:
         )
         return response.choices[0].message.content or None
     except Exception as e:
-        log.warning(
-            "LLM engine: call failed: model=%s error_type=%s detail=%s",
-            model,
-            type(e).__name__,
-            str(e)[:200],
-        )
+        log.warning("LLM engine: call failed: model=%s error_type=%s", model, type(e).__name__)
+        log.debug("LLM engine: call failed detail: model=%s detail=%s", model, str(e)[:200])
         return None
 
 
