@@ -48,6 +48,9 @@ from scanner.core.fp_pipeline import run_fp_pipeline
 # Toxic flow analysis
 from scanner.core.toxic_flows import detect_toxic_flows
 
+# AVE evidence metadata
+from scanner.ave_meta import get_ave_meta
+
 # Infrastructure
 from scanner.messages import Logs
 from scanner.suppression.inline import apply_suppressions, NO_IGNORE
@@ -124,6 +127,8 @@ def _make_finding(
     else:
         score = parse_cvss(aivss_score)
 
+    meta = get_ave_meta(ave_id, engine)
+
     return Finding(
         rule_id=rule_id,
         ave_id=ave_id,
@@ -141,6 +146,10 @@ def _make_finding(
         engine=engine,
         owasp=owasp or [],
         owasp_mcp=owasp_mcp or [],
+        confidence=meta.confidence_baseline,
+        evidence_kind=meta.evidence_kind,
+        detection_stage=meta.detection_stage,
+        detection_layer=meta.detection_layer,
     )
 
 

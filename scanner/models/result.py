@@ -107,6 +107,10 @@ class ScanResult:
                     "owasp": f.owasp,
                     "owasp_mcp": f.owasp_mcp,
                     "piranha_url": f.piranha_url,
+                    "confidence": round(f.confidence, 2),
+                    "evidence_kind": f.evidence_kind,
+                    "detection_stage": f.detection_stage,
+                    "detection_layer": f.detection_layer,
                     "suppressed": f.suppressed,
                 }
                 for f in self.findings

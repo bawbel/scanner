@@ -30,6 +30,7 @@ Output: findings reclassified as real | false_positive | needs_review
 from __future__ import annotations
 
 import json
+import logging as _logging
 import os
 from pathlib import Path
 
@@ -37,6 +38,11 @@ from scanner.models import Finding
 from scanner.utils import Timer, get_logger
 
 log = get_logger(__name__)
+
+# Suppress LiteLLM's optional-dependency pre-load warnings (Bedrock, SageMaker).
+# Runs at module import time, before any lazy `import litellm` inside functions,
+# so the level is in place when litellm first loads its module-level init code.
+_logging.getLogger("LiteLLM").setLevel(_logging.ERROR)
 
 # ── Config ────────────────────────────────────────────────────────────────────
 META_ANALYZER_ENABLED = os.environ.get("BAWBEL_META_ANALYZER_ENABLED", "true").lower() != "false"

@@ -8,6 +8,73 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.3.0] - 2026-06-28
+
+### Added
+
+**Confidence and evidence metadata on every finding (Issue #69)**
+
+Every `Finding` now carries four evidence fields populated at detection time:
+
+- `confidence` — AVE-baseline confidence (0.0–1.0). Seeds from
+  `AVE_META[ave_id].confidence_baseline` when the engine fires, then adjusted by
+  FP-3 (score_confidence) and FP-4 (meta-analyzer). Always present in JSON output.
+- `evidence_kind` — how evidence was gathered: `multi_engine`,
+  `tool_description_pattern`, `behavioral_pattern`, `semantic_inference`,
+  `file_type_mismatch`, or `config_schema`.
+- `detection_stage` — `static_detection` or `runtime_observed`.
+- `detection_layer` — `content`, `server_card`, `runtime`, or `registry_metadata`.
+
+`ToxicFlow` gains a `confidence` field: `min(confidence_baseline)` across all
+contributing findings, computed before the FP pipeline runs. Reflects raw detection
+strength of the weakest link in the chain.
+
+`scanner/ave_meta.py` is a new module with 51 `EveMeta` records (one per AVE ID
+plus engine-specific overrides) providing `confidence_baseline`, `evidence_kind`,
+`detection_stage`, and `detection_layer` for every known attack class. Engines that
+produce no AVE match fall back to engine-type defaults.
+
+**Golden JSON fixture for output contract stability (Issue #70)**
+
+`tests/fixtures/golden/malicious_scan.json` is a committed snapshot of
+`ScanResult.to_dict()` for the malicious fixture file. `TestGoldenSnapshot` in
+`tests/unit/test_output_contracts.py` compares each live scan against the snapshot
+to catch unintended schema changes. Regenerate the snapshot after intentional changes
+with the command in the test module docstring.
+
+25 schema contract tests lock: top-level field names, all 18 finding fields (including
+the four new evidence fields), all 10 toxic flow fields, evidence kinds, detection
+stages, confidence values, and risk score. YARA-dependent tests skip gracefully when
+YARA is not installed.
+
+**`confidence_band()` utility and evidence lifecycle documentation (Issue #71)**
+
+`confidence_band(score)` in `scanner.core.fp_pipeline` maps a confidence score to
+`"high"` (≥0.80), `"medium"` (0.55–0.79), or `"low"` (<0.55). Bands align with the
+meta-analyzer window and profile thresholds.
+
+`docs/guides/evidence-lifecycle.md` documents the full confidence pipeline: AVE
+baseline → FP-2 negation → FP-3 scoring → threshold → FP-4 meta-analyzer →
+`Finding.confidence`. Includes the ASCII flow diagram, FP-3 adjustment table,
+`confidence_band()` tier table, pipeline ordering note, and lifecycle state reference.
+
+34 evidence lifecycle tests cover: `confidence_band()` boundaries, all FP-3 context
+adjustments (negation, table, heading, docs path, line number, cross-engine agreement,
+skill name, AIVSS boost), threshold suppression per profile, all four meta-analyzer
+verdict paths (`real`, `false_positive`, `needs_review`, no-provider skip), and
+ToxicFlow confidence derivation.
+
+### Fixed
+
+- **LiteLLM Bedrock/SageMaker pre-load warnings** — two `WARNING` lines appeared on
+  every invocation (`could not pre-load bedrock-runtime response stream shape`) because
+  `logging.getLogger("LiteLLM").setLevel(logging.ERROR)` was called in `llm_engine.py`
+  *after* `import litellm`, giving litellm's module-level init code a window to log.
+  Fixed by setting the level at `meta_analyzer.py` module scope (runs at scanner import
+  time, before any lazy litellm import) and reordering the calls in `llm_engine.py`.
+
+---
+
 ## [1.2.2] - 2026-05-20
 
 ### Fixed
@@ -41,75 +108,6 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   `logging.getLogger("LiteLLM").setLevel(logging.ERROR)` immediately after import in
   `llm_engine.py`.
 
-
----
-
-## [1.2.0] - 2026-05-16
-
-### Added
-
-**Justified suppression and false positive feedback (Part 14)**
-
-Two new suppression keywords on top of the existing `bawbel-ignore` system:
-
-- `bawbel-ignore` with metadata fields (`reason`, `reviewer`, `reviewed`) declares a
-  false positive permanently. The reason is recorded in the audit trail.
-- `bawbel-accept` with an `expires` field declares an accepted risk. When the expiry
-  date passes, the finding resurfaces automatically as an active finding on the next scan.
-
-`bawbel accept` CLI command inserts justified suppression comments directly into source
-files. `bawbel accept --list` shows all accepted findings. `bawbel accept --expiring-soon`
-shows findings expiring within a configurable window and exits 1 for CI use.
-
-Anonymous FP signals can be sent to PiranhaDB via `--report`. Only AVE ID, engine,
-confidence score, and a hash of the match context are sent. No file content.
-
-`ScanResult.accepted_findings` is a new field in JSON output containing full metadata
-for each justified suppression.
-
-**New detection rules**
-
-Three new AVE records and pattern rules:
-
-- `bawbel-hook-hijack` (AVE-2026-00046): MCP tool hook hijacking. CRITICAL, AIVSS 9.1.
-  Detects skill files that register hooks to intercept or redirect tool execution calls.
-- `bawbel-hardcoded-credential` (AVE-2026-00047): Hardcoded credentials. HIGH, AIVSS 7.8.
-  Detects API keys, tokens, passwords, private keys, and URL-embedded credentials.
-- `bawbel-unsafe-delegation` (AVE-2026-00048): Unsafe agent delegation chain. HIGH, AIVSS 8.2.
-  Detects sub-agent spawning with inherited permissions and no trust boundary.
-
-Pattern engine: 37 rules -> 40 rules.
-
-**New commands**
-
-- `bawbel creds <path>`: credential-focused scan, filters to AVE-2026-00047 and related
-  rules. Same output format as `bawbel scan`. Supports `--recursive`, `--no-ignore`,
-  `--fail-on-any`, `--format json`.
-- `bawbel chain <path>`: delegation chain scanner, filters to AVE-2026-00048 and related
-  rules. Same flags as `bawbel creds`.
-
-**`bawbel report` improvements**
-
-- Added `--recursive` / `-r` flag. `bawbel report ./skills/ --recursive` generates
-  a full remediation report for every file in the directory.
-- Added `--no-ignore` flag matching `bawbel scan`.
-
-### Changed
-
-- `scanner.py` Step 10 added: justified suppression runs after Step 9 (inline suppression).
-  Expired accepted risks are re-surfaced as active findings at this stage.
-- Pattern engine rule count: 37 -> 40.
-
-### Fixed
-
-- `pr-review.yml` regression-check job: missing `pip install -e .` caused scan import
-  failures on clean repos.
-- `ci.yml` test job: missing `pip install -e .` caused import failures.
-- `ci.yml` Docker verify step: `python3 -c "..."` with f-strings caused shell brace
-  expansion to mangle the script before Python saw it. Replaced with single-line
-  assertion using no f-strings.
-- `ci.yml` Docker verify step: wrong `aivss` field name (should be `aivss_score`),
-  wrong threshold (9.0 should be 7.0 to match actual fixture score).
 
 ---
 
@@ -509,7 +507,8 @@ First public release.
 
 ---
 
-[Unreleased]: https://github.com/bawbel/scanner/compare/v1.2.2...HEAD
+[Unreleased]: https://github.com/bawbel/scanner/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/bawbel/scanner/releases/tag/v1.3.0
 [1.2.2]: https://github.com/bawbel/scanner/releases/tag/v1.2.2
 [1.2.1]: https://github.com/bawbel/scanner/releases/tag/v1.2.1
 [1.2.0]: https://github.com/bawbel/scanner/releases/tag/v1.2.0

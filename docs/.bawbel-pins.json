@@ -83,6 +83,11 @@
       "size_bytes": 32842,
       "pinned_at": "2026-05-03T04:36:58.504424+00:00"
     },
+    "guides/evidence-lifecycle.md": {
+      "sha256": "a572d9f21470bd111c3908af72bf45dfd257e4957fd147a9cda92d8d5cb1afde",
+      "size_bytes": 4875,
+      "pinned_at": "2026-06-27T17:54:31.346573+00:00"
+    },
     "guides/false-positive-reduction.md": {
       "sha256": "751ad9df582380160e3a17f85fe6635147e70c5943f432e08e69b635dd53859a",
       "size_bytes": 15326,

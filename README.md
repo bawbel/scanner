@@ -13,7 +13,7 @@
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://pypi.org/project/bawbel-scanner/)
 [![AIVSS aligned](https://img.shields.io/badge/AIVSS-v0.8-teal.svg)](https://aivss.owasp.org)
-[![AVE Records](https://img.shields.io/badge/AVE_Records-48-green.svg)](https://github.com/bawbel/ave)
+[![AVE Records](https://img.shields.io/badge/AVE_Records-51-green.svg)](https://ave.bawbel.io)
 [![MCP Registry](https://img.shields.io/badge/MCP_Registry-listed-purple.svg)](https://registry.modelcontextprotocol.io)
 
 <!-- [![Star History Chart](https://api.star-history.com/svg?repos=bawbel/scanner&type=Date)](https://star-history.com/#bawbel/scanner&Date) -->
@@ -193,7 +193,80 @@ Eight layers run automatically before a finding is reported:
 | FP-5c | `.bawbelignore` patterns | per-file |
 | FP-6 | Justified suppression with audit trail | per-finding |
 
+Every active finding carries a `confidence` field (0.0–1.0) that starts from the
+AVE-class baseline and is adjusted by FP-2 through FP-4 before appearing in output.
+`confidence_band()` maps it to `"high"` / `"medium"` / `"low"` for human display.
+See [Evidence Lifecycle](docs/guides/evidence-lifecycle.md) for the full pipeline.
+
 See [Suppression Guide](docs/guides/suppression.md) for full details.
+
+---
+
+## Toxic flow detection
+
+A single `fetch()` call is a finding. A `fetch()` that retrieves credentials and then
+sends them to an external endpoint is an attack chain — and the two findings together
+are far more dangerous than either alone.
+
+Bawbel is the only open-source scanner that detects these **toxic flows**: compound
+attack sequences where two or more findings combine into a higher-severity threat.
+After deduplication, every finding is mapped to a capability tag. Bawbel then checks
+all pairs against 12 built-in chain definitions and raises a `ToxicFlow` when a
+dangerous combination is found.
+
+```
+  skill.md findings:
+    AVE-2026-00003  credential-read   (READ ~/.ssh/id_rsa)         AIVSS 6.8 MEDIUM
+    AVE-2026-00026  data-exfil        (POST to external endpoint)  AIVSS 6.8 MEDIUM
+          │                │
+          └───── chain ────┘
+                   │
+                   ▼
+  ToxicFlow: credential-exfiltration   AIVSS 9.8  CRITICAL
+    confidence: 0.83  (min of contributing baselines)
+```
+
+The toxic flow AIVSS (9.8) is higher than either individual finding (6.8), because
+the chain represents a complete, end-to-end exploit — not just a capability.
+
+**12 built-in chains:**
+
+| Flow | Capabilities required | AIVSS |
+|---|---|---|
+| Credential Exfiltration | credential-read + data-exfil | 9.8 |
+| Remote Code Execution | code-exec + external-fetch | 9.7 |
+| Supply Chain RCE | supply-chain + code-exec | 9.6 |
+| Goal Override + Execution | goal-hijack + code-exec | 9.5 |
+| Lateral Movement + Execution | lateral-movement + code-exec | 9.4 |
+| Tool Poisoning + Exfiltration | tool-poison + data-exfil | 9.3 |
+| Identity Spoof + Escalation | identity-spoof + privilege-escalation | 9.2 |
+| Persistence + Exfiltration | persistence + data-exfil | 9.1 |
+| Context Inject + Memory Write | context-inject + memory-write | 8.9 |
+| Goal Override + Exfiltration | goal-hijack + data-exfil | 8.8 |
+| Scope Expansion + Exfiltration | scope-expansion + data-exfil | 8.7 |
+| Covert Channel + Persistence | covert-channel + persistence | 8.6 |
+
+**Toxic flow in JSON output:**
+
+```json
+{
+  "flow_id": "credential-exfiltration",
+  "title": "Credential Exfiltration Chain",
+  "severity": "CRITICAL",
+  "aivss_score": 9.8,
+  "confidence": 0.83,
+  "ave_ids": ["AVE-2026-00003", "AVE-2026-00026"],
+  "capabilities": ["credential-read", "data-exfil"],
+  "owasp_mcp": ["MCP06", "MCP07"],
+  "remediation": "Remove credential access. Block egress to untrusted endpoints."
+}
+```
+
+`confidence` is `min(baseline confidence)` across the contributing findings —
+the weakest link in the chain. A chain is only as confident as its least certain component.
+
+Adding a new flow requires one entry in `scanner/core/toxic_flows/flows.py`. No other
+files need to change.
 
 ---
 
@@ -215,8 +288,8 @@ Requires Python 3.10+. No other system dependencies for core install.
 
 | Image | Engines | Best for |
 |---|---|---|
-| [`bawbel/scanner:latest`](https://hub.docker.com/r/bawbel/scanner) · `1.2.3` | Pattern | Lightweight CI pipelines |
-| [`bawbel/scanner:full`](https://hub.docker.com/r/bawbel/scanner) · `1.2.3-full` | Pattern + YARA | Recommended for most users |
+| [`bawbel/scanner:latest`](https://hub.docker.com/r/bawbel/scanner) · `1.3.0` | Pattern | Lightweight CI pipelines |
+| [`bawbel/scanner:full`](https://hub.docker.com/r/bawbel/scanner) · `1.3.0-full` | Pattern + YARA | Recommended for most users |
 
 ```bash
 # Scan a local directory (recommended image)
@@ -363,10 +436,43 @@ AARS is the sum of 10 Agentic Risk Amplification Factors scored per the
     "aivss_severity": "HIGH",
     "spec_version": "0.8"
   },
+  "confidence": 0.98,
+  "evidence_kind": "multi_engine",
+  "detection_stage": "static_detection",
+  "detection_layer": "content",
   "owasp_mcp": ["MCP03", "MCP04"],
   "piranha_url": "https://api.piranha.bawbel.io/records/AVE-2026-00001"
 }
 ```
+
+---
+
+## AVE — the taxonomy behind every finding
+
+Bawbel Scanner implements [**AVE** (Agentic Vulnerability Enumeration)](https://ave.bawbel.io),
+the behavioral classification standard for agentic AI components.
+
+AVE assigns stable identifiers to distinct attack classes — each with an AIVSS score,
+a behavioral fingerprint, OWASP MCP Top 10 and MITRE ATLAS mappings, and indicators of
+compromise. Every finding Bawbel produces maps to an AVE ID so teams using different
+scanners speak the same language.
+
+```
+AVE-2026-00001  Metamorphic Payload via External Config Fetch   AIVSS 8.0  HIGH
+AVE-2026-00002  Tool Poisoning via Description Manipulation     AIVSS 7.3  HIGH
+AVE-2026-00046  MCP Tool Hook Hijacking                         AIVSS 9.2  CRITICAL
+... 51 records total
+```
+
+| | |
+|---|---|
+| Records | 51 (AVE-2026-00001 → 00051) |
+| Schema | v1.0.0 — validates at [ave.bawbel.io/schema.html](https://ave.bawbel.io/schema.html) |
+| AIVSS | v0.8 — every record scored |
+| Crosswalks | OWASP MCP Top 10 · MITRE ATLAS · NIST AI RMF · OWASP AST10 |
+
+Any scanner can emit AVE IDs — see [ave.bawbel.io](https://ave.bawbel.io) for the
+implementer guide and record index.
 
 ---
 
@@ -487,8 +593,8 @@ bawbel scan ./skills/ --format sarif   # GitHub Security / GHAS
 
 | | |
 |---|---|
-| [github.com/bawbel/ave](https://github.com/bawbel/ave) | AVE vulnerability database - 48 records |
-| [api.piranha.bawbel.io](https://api.piranha.bawbel.io) | PiranhaDB - public threat intel API |
+| [ave.bawbel.io](https://ave.bawbel.io) | AVE — Agentic Vulnerability Enumeration standard (51 records, schema, crosswalks) |
+| [api.piranha.bawbel.io](https://api.piranha.bawbel.io) | PiranhaDB — public threat intel API |
 | [aivss.owasp.org](https://aivss.owasp.org) | OWASP AIVSS v0.8 scoring standard |
 | [bawbel.io/docs](https://bawbel.io/docs) | Full documentation |
 

@@ -13,6 +13,7 @@ import re
 from pathlib import Path
 from typing import Optional
 
+from scanner.ave_meta import get_ave_meta
 from scanner.messages import Logs
 from scanner.models import Finding, Severity
 from scanner.utils import (
@@ -163,6 +164,7 @@ def run_semgrep_scan(file_path: str, stripped_content: Optional[str] = None) -> 
 
             ave_id = meta.get("ave_id") or None
             piranha_url = f"https://api.piranha.bawbel.io/records/{ave_id}" if ave_id else None
+            ave_meta = get_ave_meta(ave_id, "semgrep")
 
             findings.append(
                 Finding(
@@ -178,6 +180,10 @@ def run_semgrep_scan(file_path: str, stripped_content: Optional[str] = None) -> 
                     owasp=meta.get("owasp_mapping", []),
                     owasp_mcp=meta.get("owasp_mcp", []),
                     piranha_url=piranha_url,
+                    confidence=ave_meta.confidence_baseline,
+                    evidence_kind=ave_meta.evidence_kind,
+                    detection_stage=ave_meta.detection_stage,
+                    detection_layer=ave_meta.detection_layer,
                 )
             )
             log.debug(

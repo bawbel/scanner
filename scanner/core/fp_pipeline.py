@@ -3,7 +3,10 @@ Bawbel Scanner - FP pipeline: file classification, negation context, confidence 
 
 FP-2: has_negation_context — suppress findings preceded by documentation signals.
 FP-3: score_confidence     — score each finding 0.0-1.0, suppress below threshold.
+FP-4: meta-analyzer        — see scanner/engines/meta_analyzer.py.
 FP-5: classify_file        — derive scan profile from file name and path.
+
+confidence_band() — maps a score to "high" | "medium" | "low" for human output.
 """
 
 import os as _os
@@ -137,8 +140,13 @@ def score_confidence(
     path: Path,
     all_findings: list[Finding],
 ) -> float:
-    """Compute a confidence score (0.0-1.0) for a finding."""
-    score = 1.0
+    """Adjust a finding's confidence score based on file context.
+
+    Seeds from finding.confidence (the AVE confidence_baseline) so that
+    each rule's prior probability is respected before context adjustments
+    are applied.
+    """
+    score = finding.confidence if finding.confidence > 0.0 else 1.0
     line_no = finding.line
 
     if line_no is not None:
@@ -179,6 +187,21 @@ def score_confidence(
 
 
 # ── FP pipeline ───────────────────────────────────────────────────────────────
+
+
+def confidence_band(confidence: float) -> str:
+    """Map a confidence score to a human-readable band.
+
+    Bands align with the meta-analyzer thresholds and the default profile thresholds:
+      high   ≥ 0.80  trusted as-is, meta-analyzer skips
+      medium  0.55–0.79  worth LLM review, visible in output
+      low    < 0.55  typically suppressed by profile threshold
+    """
+    if confidence >= 0.80:
+        return "high"
+    if confidence >= 0.55:
+        return "medium"
+    return "low"
 
 
 def run_fp_pipeline(

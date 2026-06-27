@@ -33,6 +33,7 @@ import json
 import os
 from typing import Optional
 
+from scanner.ave_meta import get_ave_meta
 from scanner.messages import Logs
 from scanner.models import Finding, Severity
 from scanner.utils import get_logger, parse_cvss, parse_severity, truncate_match
@@ -132,12 +133,12 @@ def _call_llm(model: str, content: str) -> Optional[str]:
     Returns None on any failure - never raises.
     """
     try:
-        import litellm
-
-        litellm.suppress_debug_info = True
         import logging
 
         logging.getLogger("LiteLLM").setLevel(logging.ERROR)
+        import litellm
+
+        litellm.suppress_debug_info = True
     except ImportError:
         log.warning("LLM engine: litellm not installed - " 'pip install "bawbel-scanner[llm]"')
         return None
@@ -211,6 +212,7 @@ def _parse_findings(raw: str) -> list[Finding]:
 
             owasp = [o for o in item.get("owasp", []) if o in _OWASP_VALID]
 
+            _lm = get_ave_meta(None, "llm")
             finding = Finding(
                 rule_id=rule_id,
                 ave_id=None,
@@ -224,6 +226,10 @@ def _parse_findings(raw: str) -> list[Finding]:
                 owasp=owasp,
                 owasp_mcp=[],
                 piranha_url=None,
+                confidence=_lm.confidence_baseline,
+                evidence_kind=_lm.evidence_kind,
+                detection_stage=_lm.detection_stage,
+                detection_layer=_lm.detection_layer,
             )
             findings.append(finding)
             log.debug(Logs.FINDING_DETECTED, rule_id, severity.value, "llm", "-")

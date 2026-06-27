@@ -20,6 +20,7 @@ Rule authoring guide:
 
 import re
 
+from scanner.ave_meta import get_ave_meta
 from scanner.messages import Logs
 from scanner.models import Finding, Severity
 from scanner.utils import get_logger
@@ -1080,6 +1081,7 @@ def _make_pattern_finding(
 
     ave_id = rule.get("ave_id")
     piranha_url = f"https://api.piranha.bawbel.io/records/{ave_id}" if ave_id else None
+    meta = get_ave_meta(ave_id, "pattern")
 
     return Finding(
         rule_id=rule["rule_id"],
@@ -1094,6 +1096,10 @@ def _make_pattern_finding(
         owasp=rule.get("owasp", []),
         owasp_mcp=rule.get("owasp_mcp", []),
         piranha_url=piranha_url,
+        confidence=meta.confidence_baseline,
+        evidence_kind=meta.evidence_kind,
+        detection_stage=meta.detection_stage,
+        detection_layer=meta.detection_layer,
     )
 
 
