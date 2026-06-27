@@ -10,8 +10,8 @@
 #                docker run --rm bawbel/scanner:test
 #
 #   production - minimal runtime image, non-root user, read-only fs
-#                docker build --target production -t bawbel/scanner:1.2.3 .
-#                docker run --rm -v $(pwd)/skills:/scan:ro bawbel/scanner:1.2.3 scan /scan
+#                docker build --target production -t bawbel/scanner:1.3.0 .
+#                docker run --rm -v $(pwd)/skills:/scan:ro bawbel/scanner:1.3.0 scan /scan
 #
 # Build args:
 #
@@ -24,7 +24,7 @@
 # ─────────────────────────────────────────────────────────────────────────────
 
 ARG PYTHON_VERSION=3.12
-ARG VERSION=1.2.3
+ARG VERSION=1.3.0
 
 
 # ── Base: shared system dependencies ──────────────────────────────────────────
@@ -101,7 +101,7 @@ CMD ["python", "-m", "pytest", "tests/", "-v", "--tb=short"]
 # ── Production: minimal runtime image ─────────────────────────────────────────
 FROM python:${PYTHON_VERSION}-slim AS production
 
-ARG VERSION=1.2.3
+ARG VERSION=1.3.0
 ARG WITH_YARA=false
 ARG WITH_SEMGREP=false
 ARG WITH_LLM=false
@@ -117,7 +117,7 @@ LABEL org.opencontainers.image.title="Bawbel Scanner" \
       org.opencontainers.image.vendor="Bawbel" \
       org.opencontainers.image.documentation="https://bawbel.io/docs" \
       bawbel.aivss.spec="0.8" \
-      bawbel.ave.records="45"
+      bawbel.ave.records="51"
 
 WORKDIR /app
 

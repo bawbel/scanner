@@ -24,6 +24,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
+from scanner.ave_meta import get_ave_meta
 from scanner.messages import Logs
 from scanner.models import Finding, Severity
 from scanner.utils import Timer, get_logger
@@ -114,6 +115,7 @@ def run_magika_scan(file_path: str) -> list[Finding]:
             # Check 1: known-dangerous content type
             if content_type in _DANGEROUS_TYPES:
                 desc, sev, aivss_score = _DANGEROUS_TYPES[content_type]
+                _m = get_ave_meta("AVE-2026-00024", "magika")
                 findings.append(
                     Finding(
                         rule_id="bawbel-content-type-dangerous",
@@ -133,6 +135,10 @@ def run_magika_scan(file_path: str) -> list[Finding]:
                         owasp=["ASI07"],
                         owasp_mcp=["MCP04"],
                         piranha_url="https://api.piranha.bawbel.io/records/AVE-2026-00024",
+                        confidence=_m.confidence_baseline,
+                        evidence_kind=_m.evidence_kind,
+                        detection_stage=_m.detection_stage,
+                        detection_layer=_m.detection_layer,
                     )
                 )
                 log.debug(
@@ -150,6 +156,7 @@ def run_magika_scan(file_path: str) -> list[Finding]:
                 and content_type not in expected
                 and not _is_benign_mismatch(ext, content_type)
             ):
+                _m2 = get_ave_meta("AVE-2026-00024", "magika")
                 findings.append(
                     Finding(
                         rule_id="bawbel-content-type-mismatch",
@@ -172,6 +179,10 @@ def run_magika_scan(file_path: str) -> list[Finding]:
                         owasp=["ASI07"],
                         owasp_mcp=["MCP04"],
                         piranha_url="https://api.piranha.bawbel.io/records/AVE-2026-00024",
+                        confidence=_m2.confidence_baseline,
+                        evidence_kind=_m2.evidence_kind,
+                        detection_stage=_m2.detection_stage,
+                        detection_layer=_m2.detection_layer,
                     )
                 )
 

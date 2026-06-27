@@ -60,6 +60,9 @@ def detect_toxic_flows(findings: list[Finding]) -> list[ToxicFlow]:
     detected: list[ToxicFlow] = []
     seen_flow_ids: set[str] = set()
 
+    # Build ave_id → confidence lookup from findings for toxic flow confidence
+    ave_confidence: dict[str, float] = {f.ave_id: f.confidence for f in findings if f.ave_id}
+
     for cap_a, cap_b in combinations(all_caps, 2):
         flow_def = get_flow(cap_a, cap_b)
         if flow_def is None:
@@ -72,6 +75,10 @@ def detect_toxic_flows(findings: list[Finding]) -> list[ToxicFlow]:
         ave_ids_b = cap_to_ave[cap_b]
         contributing = tuple(sorted(ave_ids_a | ave_ids_b))
 
+        # Confidence of the chain = min confidence of contributing findings
+        chain_confidences = [ave_confidence.get(aid, 0.0) for aid in contributing]
+        chain_confidence = min(chain_confidences) if chain_confidences else 0.0
+
         detected.append(
             ToxicFlow(
                 flow_id=flow_def.flow_id,
@@ -80,6 +87,7 @@ def detect_toxic_flows(findings: list[Finding]) -> list[ToxicFlow]:
                 capabilities=(flow_def.cap_a, flow_def.cap_b),
                 severity=flow_def.severity,
                 aivss_score=flow_def.aivss_score,
+                confidence=round(chain_confidence, 2),
                 description=flow_def.description,
                 owasp_mcp=flow_def.owasp_mcp,
                 remediation=flow_def.remediation,

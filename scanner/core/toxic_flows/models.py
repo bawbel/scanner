@@ -44,6 +44,7 @@ class ToxicFlow:
     description: str  # what the combined attack achieves
     owasp_mcp: tuple[str, ...]  # OWASP MCP categories for the combined flow
     remediation: str  # how to break the chain
+    confidence: float  # min confidence across contributing findings (new in v1.3.0)
 
     def to_dict(self) -> dict:
         """Serialise for JSON output."""
@@ -54,6 +55,7 @@ class ToxicFlow:
             "capabilities": list(self.capabilities),
             "severity": self.severity,
             "aivss_score": self.aivss_score,
+            "confidence": round(self.confidence, 2),
             "description": self.description,
             "owasp_mcp": list(self.owasp_mcp),
             "remediation": self.remediation,

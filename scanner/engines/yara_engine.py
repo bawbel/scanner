@@ -14,6 +14,7 @@ import tempfile
 from pathlib import Path
 from typing import Optional
 
+from scanner.ave_meta import get_ave_meta
 from scanner.messages import Errors, Logs  # noqa: F401
 from scanner.models import Finding, Severity
 from scanner.utils import Timer, get_logger, parse_cvss, parse_severity, truncate_match
@@ -120,6 +121,7 @@ def run_yara_scan(
 
         ave_id = meta.get("ave_id") or None
         piranha_url = f"https://api.piranha.bawbel.io/records/{ave_id}" if ave_id else None
+        ave_meta = get_ave_meta(ave_id, "yara")
 
         findings.append(
             Finding(
@@ -135,6 +137,10 @@ def run_yara_scan(
                 owasp=[s.strip() for s in meta.get("owasp", "").split(",") if s.strip()],
                 owasp_mcp=[s.strip() for s in meta.get("owasp_mcp", "").split(",") if s.strip()],
                 piranha_url=piranha_url,
+                confidence=ave_meta.confidence_baseline,
+                evidence_kind=ave_meta.evidence_kind,
+                detection_stage=ave_meta.detection_stage,
+                detection_layer=ave_meta.detection_layer,
             )
         )
         log.debug(

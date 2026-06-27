@@ -1,80 +1,122 @@
 # Evidence Lifecycle
 
-AIVSS answers: "How bad would this be?"
-Confidence answers: "How certain are we?"
-These are separate. Never collapse them into one score.
+AIVSS answers: "How bad would this be if exploited?"
+Confidence answers: "How certain are we that this is real?"
+These are separate scores. Never collapse them into one field.
 
-## Lifecycle states
+## The confidence chain
 
-| State | Meaning |
-|---|---|
-| raw_source | Unprocessed input |
-| static_detection | Engine matched — not through FP pipeline yet |
-| active_finding | Passed FP pipeline, above threshold |
-| low_confidence_suppressed | Below threshold — in suppressed_findings[] |
-| inline_suppressed | bawbel-ignore comment |
-| block_suppressed | bawbel-ignore-start/end block |
-| ignored_by_bawbelignore | .bawbelignore pattern |
-| justified_false_positive | Human-confirmed FP, permanent |
-| accepted_risk_active | Human-accepted risk, before expiry |
-| accepted_risk_expired | Past expiry — resurfaces next scan |
-| resurfaced_finding | Was suppressed, now active again |
-| toxic_flow_participant | Finding contributed to a ToxicFlow |
-| toxic_flow_derived | The ToxicFlow artifact itself |
-| runtime_observed | (Phase 4) Runtime observation |
-| runtime_drift_detected | (Phase 4) Differs from contract |
-| runtime_blocked | (Phase 4) Blocked by bawbel-hook |
-| reported | Included in final output |
+```
+AVE_META[ave_id].confidence_baseline
+        │
+        ▼  set by engine at detection time (Finding.confidence)
+FP-2: has_negation_context()
+        │  suppresses immediately if preceding line is a documentation signal
+        ▼  (negation suppression skips all subsequent stages)
+FP-3: score_confidence()
+        │  adjusts confidence ± based on file context:
+        │    -0.40  negation context in same line check
+        │    -0.45  match is inside a markdown table row
+        │    -0.55  match is inside a markdown heading
+        │    -0.35  file path contains docs/, guides/, examples/, …
+        │    -0.20  match string is < 6 characters
+        │    +0.15  match is on line ≤ 30 (not in docs path)
+        │    +0.25  same AVE ID detected by a second engine
+        │    +0.15  filename is a known skill name (skill.md, system_prompt.*)
+        │    +0.05  aivss_score ≥ 9.0
+        │  result is clamped to [0.0, 1.0]
+        ▼
+Threshold check (profile-specific)
+        │    skill           threshold 0.60
+        │    mcp_manifest    threshold 0.55
+        │    documentation   threshold 0.85
+        │    unknown         threshold 0.60
+        │  below threshold → low_confidence_suppressed
+        ▼  (above threshold → active finding)
+FP-4: meta-analyzer (medium-confidence window: 0.35–0.80)
+        │  LLM reviews context around the match
+        │    "real"          → confidence += 0.15  (capped at 1.0)
+        │    "needs_review"  → confidence -= 0.05  (floored at 0.0)
+        │    "false_positive"→ suppressed = True
+        │  Skipped when: no LLM provider, disabled, or no medium findings
+        ▼
+Finding.confidence  (final value in ScanResult output)
+        │
+        ▼  detect_toxic_flows() runs BEFORE FP pipeline (pre-adjustment baselines)
+ToxicFlow.confidence = min(baseline confidence across contributing findings)
+```
+
+## confidence_band()
+
+The `confidence_band()` function in `scanner.core.fp_pipeline` maps a score to a
+human-readable tier:
+
+| Score range | Band | Meaning |
+|---|---|---|
+| 0.80 – 1.00 | `high` | Meta-analyzer skips; trusted as-is |
+| 0.55 – 0.79 | `medium` | Within LLM review window; worth inspecting |
+| 0.00 – 0.54 | `low` | Below most profile thresholds; typically suppressed |
+
+## Pipeline ordering note
+
+`detect_toxic_flows()` is called **before** the FP pipeline runs, so
+`ToxicFlow.confidence` reflects the raw AVE baselines, not the post-FP-adjusted
+values. This is intentional: toxic flows are detected from all findings (including
+those that the FP pipeline will later suppress), preserving attack chain visibility
+even for borderline findings.
 
 ## Invariants
 
-1. suppressed ≠ deleted. Evidence persists in suppressed_findings[].
-2. accepted_risk_expired resurfaces automatically on next scan.
-3. ToxicFlow is always derived: true. Never active_finding.
-4. ToxicFlow confidence ≤ min(constituent finding confidences).
-5. aivss_score ≠ confidence. Separate fields, separate meaning.
-6. runtime_observed is stronger evidence than static_detection.
+1. `suppressed ≠ deleted`. Suppressed findings appear in `suppressed_findings[]`.
+2. `accepted_risk_expired` resurfaces automatically on next scan.
+3. `ToxicFlow` is always derived from existing findings, never created by an engine.
+4. `ToxicFlow.confidence ≤ min(constituent finding baselines)`.
+5. `aivss_score ≠ confidence`. Separate fields, separate meaning.
+6. `detection_stage = "runtime_observed"` carries higher confidence than `"static_detection"`.
 
-## State transitions
+## Lifecycle states (conceptual)
 
-raw_source → static_detection (engine fires)
-static_detection → active_finding (confidence >= threshold)
-static_detection → low_confidence_suppressed (confidence < threshold)
-active_finding → accepted_risk_active (bawbel accept --type accepted-risk)
-active_finding → justified_false_positive (bawbel accept --type false-positive)
-active_finding → toxic_flow_participant (capability matches chain)
-toxic_flow_participant → toxic_flow_derived (ToxicFlow created)
-accepted_risk_active → accepted_risk_expired (expiry passes)
-accepted_risk_expired → resurfaced_finding (next scan run)
-resurfaced_finding → active_finding (re-enters pipeline)
+| State | When |
+|---|---|
+| raw detection | Engine matched — Finding created with AVE baseline |
+| active_finding | Passed FP pipeline, confidence ≥ threshold |
+| low_confidence_suppressed | Confidence < profile threshold |
+| negation_suppressed | Preceding line was a documentation signal |
+| meta_analyzer_fp | LLM classified as false positive |
+| inline_suppressed | `bawbel-ignore` comment on matched line |
+| block_suppressed | Inside `bawbel-ignore-start` / `bawbel-ignore-end` |
+| ignored_by_bawbelignore | Matched a `.bawbelignore` pattern |
+| justified_false_positive | Human-confirmed FP via `bawbel accept` |
+| accepted_risk | Human-accepted risk, before expiry |
+| accepted_risk_expired | Past expiry — resurfaces next scan |
+| toxic_flow_participant | Finding contributed to a ToxicFlow |
 
-## Expected JSON shape (after Issue #69)
+## Finding fields (implemented in v1.3.0)
 
-Finding:
+```json
 {
+  "rule_id": "bawbel-external-fetch",
   "ave_id": "AVE-2026-00001",
-  "severity": "HIGH",
+  "severity": "CRITICAL",
   "aivss_score": 8.0,
-  "confidence": 0.92,
-  "confidence_band": "high",
-  "evidence_stage": "active_finding",
-  "evidence_kind": "tool_description_pattern",
-  "evidence_basis": ["pattern", "semgrep"],
-  "confidence_reason": "two engines agreed, file profile was skill",
-  "derived": false
+  "confidence": 0.98,
+  "evidence_kind": "multi_engine",
+  "detection_stage": "static_detection",
+  "detection_layer": "content",
+  "engine": "pattern",
+  "suppressed": false
 }
+```
 
-ToxicFlow:
+## ToxicFlow fields (implemented in v1.3.0)
+
+```json
 {
   "flow_id": "credential-exfiltration",
   "severity": "CRITICAL",
   "aivss_score": 9.8,
-  "confidence": 0.78,
-  "confidence_band": "medium",
-  "derived": true,
-  "chain_confidence_reason": "one leg is statically inferred",
-  "derived_from_findings": [
-    {"ave_id": "AVE-2026-00003", "confidence": 0.91, "engine": "pattern"},
-    {"ave_id": "AVE-2026-00026", "confidence": 0.65, "engine": "semgrep"}
-  ]
+  "confidence": 0.83,
+  "ave_ids": ["AVE-2026-00003", "AVE-2026-00026"],
+  "capabilities": ["credential-read", "data-exfil"]
 }
+```

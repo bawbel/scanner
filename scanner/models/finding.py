@@ -54,6 +54,15 @@ class Finding:
     # -- Threat intelligence -------------------------------------------------
     piranha_url: Optional[str] = None  # https://api.piranha.bawbel.io/records/{ave_id}
 
+    # -- Evidence (new in v1.3.0) --------------------------------------------
+    # confidence starts at ave.confidence_baseline, adjusted by the FP pipeline.
+    confidence: float = 0.0
+    evidence_kind: Optional[str] = (
+        None  # "multi_engine"|"behavioral_pattern"|"semantic_inference"|...
+    )
+    detection_stage: Optional[str] = None  # "static_detection"|"runtime_observed"
+    detection_layer: Optional[str] = None  # "content"|"server_card"|"runtime"|"registry_metadata"
+
     # -- Suppression ---------------------------------------------------------
     suppressed: bool = False
     suppression_reason: Optional[str] = None
