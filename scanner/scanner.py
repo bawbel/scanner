@@ -181,7 +181,6 @@ def scan(file_path: str, no_ignore: bool = False) -> ScanResult:
         ScanResult.is_clean == True only if no findings AND no error.
     """
     with Timer() as t:
-
         # ── Step 1: Resolve path ──────────────────────────────────────────────
         path, path_err = resolve_path(file_path)
         if path_err:

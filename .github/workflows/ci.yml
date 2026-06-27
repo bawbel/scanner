@@ -21,10 +21,10 @@ jobs:
           cache: pip
 
       - name: Install lint deps
-        run: pip install black flake8 flake8-bugbear flake8-simplify flake8-bandit flake8-pyproject bandit
+        run: pip install black==24.4.2 flake8 flake8-bugbear flake8-simplify flake8-bandit flake8-pyproject bandit
 
       - name: Check formatting (black)
-        run: black --check --line-length 100 scanner/
+        run: black --check --config pyproject.toml scanner/
 
       - name: Lint (flake8)
         run: flake8 scanner/ --max-line-length 100
