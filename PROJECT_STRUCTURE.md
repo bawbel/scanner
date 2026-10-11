@@ -38,9 +38,10 @@ bawbel-scanner/
 │                                scan.recursive, fail_on_severity, format
 ├── .bawbelignore                Paths suppressed during self-scan
 │                                docs/**, tests/fixtures/skills/clean/**, examples/**
-├── .pre-commit-hooks.yaml       Pre-commit hook definitions
-│                                id: bawbel-scan (pattern only, ~15ms)
-│                                id: bawbel-scan-all (all engines)
+│                                No .pre-commit-hooks.yaml in this repo. Hook definitions
+│                                (bawbel-scan, bawbel-scan-all) live in bawbel/integrations
+│                                on main; no tag there includes them yet. README documents
+│                                a `repo: local` hook that calls scanner.bawbel_pre_commit
 │
 ├── ── Git and secrets ──────────────────────────────────────────────────────
 ├── .gitignore                   Standard Python + bawbel-specific ignores
@@ -78,7 +79,8 @@ bawbel-scanner/
 │
 ├── ── CI/CD ────────────────────────────────────────────────────────────────
 ├── action.yml                   GitHub Action definition, lives in this repo
-│                                Referenced as `uses: bawbel/scanner@v1` (see README)
+│                                Referenced as `uses: bawbel/scanner@v1.3.0` (see README)
+│                                No floating `v1` tag exists; pin a release tag
 │
 ├── .github/
 │   ├── workflows/
@@ -152,7 +154,8 @@ bawbel-scanner/
 │   │                            Used by: cli/cmd_ssc.py
 │   │
 │   ├── bawbel_pre_commit.py     Pre-commit entry point
-│   │                            Invoked by .pre-commit-hooks.yaml
+│   │                            Run as `python -m scanner.bawbel_pre_commit`
+│   │                            (README `repo: local` hook); no console script
 │   │                            Wraps scan() for pre-commit file list format
 │   │                            Exits 0 (clean) or 1 (findings >= threshold)
 │   │

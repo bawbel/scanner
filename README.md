@@ -4,7 +4,7 @@
 
 <!-- mcp-name: io.github.bawbel/scanner -->
 
-**The only open-source scanner that produces OWASP AIVSS scores for MCP servers and skill files. Never executes code.**
+**Static security scanner for MCP servers and agent skill files, with an OWASP AIVSS score on every finding. Never starts your MCP servers, and runs no scanned content unless you enable the optional Docker sandbox.**
 
 
 [![PyPI version](https://badge.fury.io/py/bawbel-scanner.svg)](https://pypi.org/project/bawbel-scanner/)
@@ -13,10 +13,11 @@
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://pypi.org/project/bawbel-scanner/)
 [![AIVSS aligned](https://img.shields.io/badge/AIVSS-v0.8-teal.svg)](https://aivss.owasp.org)
-<!-- Record counts are generated from the live AVE corpus. Do not hand-edit.
+<!-- Record counts are measured from the live AVE corpus, last on 2026-10-11.
      Source: https://raw.githubusercontent.com/aveproject/ave/main/dist/ave-records-latest.json
-     Regeneration tooling tracked in the issue linked below the AVE section. -->
-[![AVE Records](https://img.shields.io/badge/AVE_Records-80-green.svg)](https://aveproject.org)
+     They are still hand-edited: re-run the commands in bawbel/scanner#79 before
+     changing any count. Regeneration tooling is tracked there too. -->
+[![AVE Records](https://img.shields.io/badge/AVE_Records-87-green.svg)](https://aveproject.org)
 [![MCP Registry](https://img.shields.io/badge/MCP_Registry-listed-purple.svg)](https://registry.modelcontextprotocol.io)
 
 <!-- [![Star History Chart](https://api.star-history.com/svg?repos=bawbel/scanner&type=Date)](https://star-history.com/#bawbel/scanner&Date) -->
@@ -62,14 +63,15 @@ bawbel ssc https://server    # scan MCP server without starting it
 
 | | Bawbel | NVIDIA SkillSpector | Snyk agent-scan | Cisco DefenseClaw |
 |---|---|---|---|---|
-| Executes the scanned component | Never | Never | Yes | ? |
-| Open vulnerability database | Yes (AVE, 80 records, public API) | No (internal rule IDs) | No (internal rule IDs) | ? |
+| Starts MCP servers during a scan | Never | Never | Yes (stdio servers) | ? |
+| Runs scanned skill content | Only in the optional Docker sandbox stage, off by default | Never | ? | ? |
+| Open vulnerability database | Yes (AVE, 87 records, public API) | No (internal rule IDs) | No (internal rule IDs) | ? |
 | OWASP AIVSS v0.8 scores | Yes | No (custom 0-100 risk score) | No | ? |
 | Compound attack chain detection | Yes (12 AVE capability chains) | Yes (TT1-TT5 taint flows + AST8 chain) | Yes (chain count not published) | ? |
 | MCP spec conformance grading (A+ to F) | Yes | No | No | ? |
 | Git-committed pin / rug pull detection | Yes | No | No | ? |
 | Suppression with expiry and audit trail | Yes (reason, reviewer, expiry) | Baseline (glob and fingerprint, no expiry) | Baseline (ignore flags, no expiry) | ? |
-| Per-scan LLM usage and cost telemetry | No (tracked, see issue linked in PR) | Yes (`metadata.inference_usage`) | No | ? |
+| Per-scan LLM usage and cost telemetry | No (tracked in [#79](https://github.com/bawbel/scanner/issues/79)) | Yes (`metadata.inference_usage`) | No | ? |
 | SARIF 2.1.0 output | Yes | Yes | No | ? |
 | License | Apache 2.0 | Apache 2.0 | Apache 2.0 | Apache 2.0 |
 
@@ -311,8 +313,11 @@ Requires Python 3.10+. No other system dependencies for core install.
 
 | Image | Engines | Best for |
 |---|---|---|
-| [`bawbel/scanner:latest`](https://hub.docker.com/r/bawbel/scanner) · `1.3.0` | Pattern | Lightweight CI pipelines |
-| [`bawbel/scanner:full`](https://hub.docker.com/r/bawbel/scanner) · `1.3.0-full` | Pattern + YARA | Recommended for most users |
+| [`bawbel/scanner:latest`](https://hub.docker.com/r/bawbel/scanner) · `1.2.3` | Pattern | Lightweight CI pipelines |
+| [`bawbel/scanner:full`](https://hub.docker.com/r/bawbel/scanner) · `1.2.3-full` | Pattern + YARA | Recommended for most users |
+
+The published images are v1.2.3; no 1.3.0 image has been pushed yet. For v1.3.0
+features in a container, build from source with the command below.
 
 ```bash
 # Scan a local directory (recommended image)
@@ -484,19 +489,24 @@ scanners speak the same language.
 AVE-2026-00001  Metamorphic Payload via External Config Fetch   AIVSS 8.0  HIGH
 AVE-2026-00002  Tool Poisoning via Description Manipulation     AIVSS 7.3  HIGH
 AVE-2026-00046  MCP Tool Hook Hijacking                         AIVSS 9.2  CRITICAL
-... 80 records published total
+... 87 records published total
 ```
 
 | | |
 |---|---|
-| Records published | 80 (AVE-2026-00001 to AVE-2026-00080) |
-| Records with detection rules in this scanner | 51 |
+| Records published | 87 (AVE-2026-00001 to AVE-2026-00087) |
+| Records with a detection rule in this scanner | 43 (42 by pattern, YARA, or Semgrep rules; AVE-2026-00024 by Magika) |
+| Records with scanner metadata only, no rule | 8 (AVE-2026-00041 to 00045, 00049 to 00051) |
 | Schema | 1.1.0, validates at [aveproject.org/schema.html](https://aveproject.org/schema.html) |
 | AIVSS | v0.8, every record scored |
 | Crosswalks | OWASP MCP Top 10, MITRE ATLAS, NIST AI RMF, OWASP AST10 |
 
-Detection rules for AVE-2026-00052 onward are not yet implemented (29 of the 80
-published records). Coverage gap tracked in
+44 of the 87 published records have no detection rule in this scanner. 27 of them are
+`static_detection` records that a rule could catch and are the scanner's backlog. The
+other 17 are runtime-stage records (15 `runtime_observed`, 2 `runtime_drift_detected`):
+they describe behavior that only shows up while an agent runs, so static analysis of a
+file cannot detect them by design. The record-by-record list, and the commands that
+produce every count in this section, are in
 [bawbel/scanner#79](https://github.com/bawbel/scanner/issues/79).
 
 Any scanner can emit AVE IDs. See [aveproject.org](https://aveproject.org) for the
@@ -579,30 +589,38 @@ BAWBEL_SANDBOX_ENABLED=true \
 
 ```yaml
 # .github/workflows/security.yml
+# The SARIF upload needs: permissions: security-events: write
 - name: Bawbel scan
-  uses: bawbel/scanner@v1
+  id: bawbel
+  uses: bawbel/scanner@v1.3.0
   with:
     path: ./skills/
     fail-on-severity: high
     format: sarif
-    output: bawbel.sarif
 
 - name: Upload to GitHub Security
+  if: always()
   uses: github/codeql-action/upload-sarif@v3
   with:
-    sarif_file: bawbel.sarif
+    sarif_file: ${{ steps.bawbel.outputs.sarif-file }}
 ```
 
-Pre-commit:
+Pin a release tag. There is no floating `v1` tag. The action writes the SARIF file
+itself and exposes its path as the `sarif-file` output.
+
+Pre-commit (scans staged `.md`, `.json`, `.yaml`, `.yml`, and `.txt` files):
 
 ```yaml
 # .pre-commit-config.yaml
 repos:
-  - repo: https://github.com/bawbel/scanner
-    rev: v1.2.3
+  - repo: local
     hooks:
       - id: bawbel-scan
-        args: [--fail-on-severity, high]
+        name: bawbel scan
+        entry: python -m scanner.bawbel_pre_commit --fail-on-severity high
+        language: python
+        additional_dependencies: ["bawbel-scanner==1.3.0"]
+        files: \.(md|json|ya?ml|txt)$
 ```
 
 ---
@@ -621,8 +639,8 @@ bawbel scan ./skills/ --format sarif   # GitHub Security / GHAS
 
 | | |
 |---|---|
-| [aveproject.org](https://aveproject.org) | AVE: Agentic Vulnerability Enumeration standard (80 records, schema, crosswalks) |
-| [api.piranha.bawbel.io](https://api.piranha.bawbel.io) | PiranhaDB: public threat intel API |
+| [aveproject.org](https://aveproject.org) | AVE: Agentic Vulnerability Enumeration standard (87 records, schema, crosswalks) |
+| [api.aveproject.org](https://api.aveproject.org) | AVE records API, one JSON record per ID |
 | [aivss.owasp.org](https://aivss.owasp.org) | OWASP AIVSS v0.8 scoring standard |
 | [bawbel.io/docs](https://bawbel.io/docs) | Full documentation |
 
@@ -632,7 +650,7 @@ bawbel scan ./skills/ --format sarif   # GitHub Security / GHAS
 
 See [CONTRIBUTING.md](CONTRIBUTING.md). The most impactful contribution is a
 new detection rule tied to an [AVE record](https://github.com/aveproject/ave). The
-[coverage gap](https://github.com/bawbel/scanner/issues/79) lists the 29 published
+[coverage gap](https://github.com/bawbel/scanner/issues/79) lists the published
 records with no rule yet.
 
 ```bash
