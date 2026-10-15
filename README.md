@@ -4,7 +4,7 @@
 
 <!-- mcp-name: io.github.bawbel/scanner -->
 
-**The only open-source scanner that produces OWASP AIVSS scores for MCP servers and skill files. Never executes code.**
+**Static security scanner for MCP servers and agent skill files, with an OWASP AIVSS score on every finding. Never starts your MCP servers, and runs no scanned content unless you enable the optional Docker sandbox.**
 
 
 [![PyPI version](https://badge.fury.io/py/bawbel-scanner.svg)](https://pypi.org/project/bawbel-scanner/)
@@ -13,7 +13,11 @@
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://pypi.org/project/bawbel-scanner/)
 [![AIVSS aligned](https://img.shields.io/badge/AIVSS-v0.8-teal.svg)](https://aivss.owasp.org)
-[![AVE Records](https://img.shields.io/badge/AVE_Records-51-green.svg)](https://ave.bawbel.io)
+<!-- Record counts are measured from the live AVE corpus, last on 2026-10-11.
+     Source: https://raw.githubusercontent.com/aveproject/ave/main/dist/ave-records-latest.json
+     They are still hand-edited: re-run the commands in bawbel/scanner#79 before
+     changing any count. Regeneration tooling is tracked there too. -->
+[![AVE Records](https://img.shields.io/badge/AVE_Records-87-green.svg)](https://aveproject.org)
 [![MCP Registry](https://img.shields.io/badge/MCP_Registry-listed-purple.svg)](https://registry.modelcontextprotocol.io)
 
 <!-- [![Star History Chart](https://api.star-history.com/svg?repos=bawbel/scanner&type=Date)](https://star-history.com/#bawbel/scanner&Date) -->
@@ -40,33 +44,39 @@ bawbel ssc https://server    # scan MCP server without starting it
 |---|---|
 | `bawbel scan <path>` | Scan a skill file or directory for AVE vulnerabilities. Supports `--recursive`, `--format text\|json\|sarif`, `--fail-on-severity`, `--no-ignore`, `--watch` |
 | `bawbel report <path>` | Scan a component and show a full remediation guide with fix guidance per finding |
-| `bawbel creds <path>` | Focused scan — hardcoded credentials and secret exposure only |
-| `bawbel chain <path>` | Focused scan — unsafe agent delegation chains only |
+| `bawbel creds <path>` | Focused scan: hardcoded credentials and secret exposure only |
+| `bawbel chain <path>` | Focused scan: unsafe agent delegation chains only |
 | `bawbel ssc <url>` | Fetch and scan an MCP server-card for AVE vulnerabilities without starting the server |
 | `bawbel scan-server-card <url>` | Alias for `ssc` |
 | `bawbel conform <target>` | Score an MCP server manifest against the MCP specification (A+ to F grade) |
 | `bawbel scan-conformance <target>` | Alias for `conform` |
-| `bawbel accept <id> <file>` | Mark a finding as a false positive or accepted risk — inserts a justified suppression comment with reviewer and optional expiry |
+| `bawbel accept <id> <file>` | Mark a finding as a false positive or accepted risk: inserts a justified suppression comment with reviewer and optional expiry |
 | `bawbel pin <path>` | Hash skill files and save to `.bawbel-pins.json` for rug pull detection |
 | `bawbel check-pins <path>` | Check skill files for drift against `.bawbel-pins.json` |
 | `bawbel cp <path>` | Alias for `check-pins` |
-| `bawbel init` | Initialise Bawbel Scanner in a project — generates `.bawbelignore` and `bawbel.yml` |
+| `bawbel init` | Initialise Bawbel Scanner in a project: generates `.bawbelignore` and `bawbel.yml` |
 | `bawbel version` | Show version and detection engine status |
 
 ---
 
 ## Why Bawbel
 
-| | Bawbel | Snyk agent-scan | ClawGuard | Cisco DefenseClaw |
+| | Bawbel | NVIDIA SkillSpector | Snyk agent-scan | Cisco DefenseClaw |
 |---|---|---|---|---|
-| Executes MCP servers during scan | **Never** | Yes | No | Sandboxed |
-| Open vulnerability database | **Yes** (48 records, public API) | No | No | No |
-| OWASP AIVSS v0.8 scores | **Yes** | No | No | No |
-| Toxic flow detection | **Yes** (12 chains) | No | No | No |
-| Conformance grading (A+ to F) | **Yes** | No | No | No |
-| Git-committed rug pull detection | **Yes** | Local only | No | No |
-| Justified suppression with expiry | **Yes** | No | No | No |
-| License | Apache 2.0 | Apache 2.0 | MIT | Proprietary |
+| Starts MCP servers during a scan | Never | Never | Yes (stdio servers) | ? |
+| Runs scanned skill content | Only in the optional Docker sandbox stage, off by default | Never | ? | ? |
+| Open vulnerability database | Yes (AVE, 87 records, public API) | No (internal rule IDs) | No (internal rule IDs) | ? |
+| OWASP AIVSS v0.8 scores | Yes | No (custom 0-100 risk score) | No | ? |
+| Compound attack chain detection | Yes (12 AVE capability chains) | Yes (TT1-TT5 taint flows + AST8 chain) | Yes (chain count not published) | ? |
+| MCP spec conformance grading (A+ to F) | Yes | No | No | ? |
+| Git-committed pin / rug pull detection | Yes | No | No | ? |
+| Suppression with expiry and audit trail | Yes (reason, reviewer, expiry) | Baseline (glob and fingerprint, no expiry) | Baseline (ignore flags, no expiry) | ? |
+| Per-scan LLM usage and cost telemetry | No (tracked in [#79](https://github.com/bawbel/scanner/issues/79)) | Yes (`metadata.inference_usage`) | No | ? |
+| SARIF 2.1.0 output | Yes | Yes | No | ? |
+| License | Apache 2.0 | Apache 2.0 | Apache 2.0 | Apache 2.0 |
+
+`?` means not verifiable from each project's public README at the time of writing
+(2026-09-12). Sources for every other cell are listed in the PR description.
 
 ---
 
@@ -83,6 +93,11 @@ How a scan flows from your file to an AIVSS-scored finding:
   [ Pre-processing ]
     code fence stripping
     negation context detection
+      |
+      v
+  [ Stage 0: Magika ]
+    ML content-type verification
+    gates the text engines below if content type is dangerous
       |
       v
   [ Detection engines ]  (run in parallel)
@@ -114,9 +129,13 @@ How a scan flows from your file to an AIVSS-scored finding:
 
 ### Detection stages
 
-Six engines run in parallel. Results merge before toxic flow analysis:
+Six engines run across the pipeline. Results merge before toxic flow analysis:
 
 ```
+  Stage 0    Magika engine
+             ML-based content-type verification, gates the engines below
+             pip install "bawbel-scanner[all]"
+
   Stage 1a   Pattern engine
              40 regex rules, no deps, < 5ms
              always active
@@ -205,14 +224,20 @@ See [Suppression Guide](docs/guides/suppression.md) for full details.
 ## Toxic flow detection
 
 A single `fetch()` call is a finding. A `fetch()` that retrieves credentials and then
-sends them to an external endpoint is an attack chain — and the two findings together
+sends them to an external endpoint is an attack chain, and the two findings together
 are far more dangerous than either alone.
 
-Bawbel is the only open-source scanner that detects these **toxic flows**: compound
-attack sequences where two or more findings combine into a higher-severity threat.
-After deduplication, every finding is mapped to a capability tag. Bawbel then checks
-all pairs against 12 built-in chain definitions and raises a `ToxicFlow` when a
-dangerous combination is found.
+Bawbel detects these compound sequences as **toxic flows**. After deduplication, every
+finding is mapped to a capability tag. Bawbel then checks all pairs against 12 built-in
+chain definitions and raises a `ToxicFlow` when a dangerous combination is found.
+
+Other scanners detect compound attacks too. NVIDIA SkillSpector, for example, ships a
+source-to-sink taint tracker (TT1-TT5) over its own AST, including a credential
+exfiltration chain. Bawbel's approach differs in what it operates on and what it emits:
+chains are composed from AVE capability tags rather than traced through an AST, so a
+flow is detected across natural-language instructions and configuration, not only
+executable code. Each flow carries a stable `flow_id`, its own AIVSS score, and the
+AVE IDs of its contributing findings.
 
 ```
   skill.md findings:
@@ -227,7 +252,7 @@ dangerous combination is found.
 ```
 
 The toxic flow AIVSS (9.8) is higher than either individual finding (6.8), because
-the chain represents a complete, end-to-end exploit — not just a capability.
+the chain represents a complete, end-to-end exploit, not just a capability.
 
 **12 built-in chains:**
 
@@ -262,8 +287,8 @@ the chain represents a complete, end-to-end exploit — not just a capability.
 }
 ```
 
-`confidence` is `min(baseline confidence)` across the contributing findings —
-the weakest link in the chain. A chain is only as confident as its least certain component.
+`confidence` is `min(baseline confidence)` across the contributing findings: the weakest
+link in the chain. A chain is only as confident as its least certain component.
 
 Adding a new flow requires one entry in `scanner/core/toxic_flows/flows.py`. No other
 files need to change.
@@ -288,8 +313,11 @@ Requires Python 3.10+. No other system dependencies for core install.
 
 | Image | Engines | Best for |
 |---|---|---|
-| [`bawbel/scanner:latest`](https://hub.docker.com/r/bawbel/scanner) · `1.3.0` | Pattern | Lightweight CI pipelines |
-| [`bawbel/scanner:full`](https://hub.docker.com/r/bawbel/scanner) · `1.3.0-full` | Pattern + YARA | Recommended for most users |
+| [`bawbel/scanner:latest`](https://hub.docker.com/r/bawbel/scanner) · `1.2.3` | Pattern | Lightweight CI pipelines |
+| [`bawbel/scanner:full`](https://hub.docker.com/r/bawbel/scanner) · `1.2.3-full` | Pattern + YARA | Recommended for most users |
+
+The published images are v1.2.3; no 1.3.0 image has been pushed yet. For v1.3.0
+features in a container, build from source with the command below.
 
 ```bash
 # Scan a local directory (recommended image)
@@ -420,7 +448,7 @@ AIVSS = ((CVSS_Base + AARS) / 2) * ThM * Mitigation_Factor
 ```
 
 AARS is the sum of 10 Agentic Risk Amplification Factors scored per the
-[AVE record](https://github.com/bawbel/ave) for that attack class.
+[AVE record](https://github.com/aveproject/ave) for that attack class.
 
 ```json
 {
@@ -447,12 +475,12 @@ AARS is the sum of 10 Agentic Risk Amplification Factors scored per the
 
 ---
 
-## AVE — the taxonomy behind every finding
+## AVE: the taxonomy behind every finding
 
-Bawbel Scanner implements [**AVE** (Agentic Vulnerability Enumeration)](https://ave.bawbel.io),
+Bawbel Scanner implements [**AVE** (Agentic Vulnerability Enumeration)](https://aveproject.org),
 the behavioral classification standard for agentic AI components.
 
-AVE assigns stable identifiers to distinct attack classes — each with an AIVSS score,
+AVE assigns stable identifiers to distinct attack classes, each with an AIVSS score,
 a behavioral fingerprint, OWASP MCP Top 10 and MITRE ATLAS mappings, and indicators of
 compromise. Every finding Bawbel produces maps to an AVE ID so teams using different
 scanners speak the same language.
@@ -461,17 +489,27 @@ scanners speak the same language.
 AVE-2026-00001  Metamorphic Payload via External Config Fetch   AIVSS 8.0  HIGH
 AVE-2026-00002  Tool Poisoning via Description Manipulation     AIVSS 7.3  HIGH
 AVE-2026-00046  MCP Tool Hook Hijacking                         AIVSS 9.2  CRITICAL
-... 51 records total
+... 87 records published total
 ```
 
 | | |
 |---|---|
-| Records | 51 (AVE-2026-00001 → 00051) |
-| Schema | v1.0.0 — validates at [ave.bawbel.io/schema.html](https://ave.bawbel.io/schema.html) |
-| AIVSS | v0.8 — every record scored |
-| Crosswalks | OWASP MCP Top 10 · MITRE ATLAS · NIST AI RMF · OWASP AST10 |
+| Records published | 87 (AVE-2026-00001 to AVE-2026-00087) |
+| Records with a detection rule in this scanner | 43 (42 by pattern, YARA, or Semgrep rules; AVE-2026-00024 by Magika) |
+| Records with scanner metadata only, no rule | 8 (AVE-2026-00041 to 00045, 00049 to 00051) |
+| Schema | 1.1.0, validates at [aveproject.org/schema.html](https://aveproject.org/schema.html) |
+| AIVSS | v0.8, every record scored |
+| Crosswalks | OWASP MCP Top 10, MITRE ATLAS, NIST AI RMF, OWASP AST10 |
 
-Any scanner can emit AVE IDs — see [ave.bawbel.io](https://ave.bawbel.io) for the
+44 of the 87 published records have no detection rule in this scanner. 27 of them are
+`static_detection` records that a rule could catch and are the scanner's backlog. The
+other 17 are runtime-stage records (15 `runtime_observed`, 2 `runtime_drift_detected`):
+they describe behavior that only shows up while an agent runs, so static analysis of a
+file cannot detect them by design. The record-by-record list, and the commands that
+produce every count in this section, are in
+[bawbel/scanner#79](https://github.com/bawbel/scanner/issues/79).
+
+Any scanner can emit AVE IDs. See [aveproject.org](https://aveproject.org) for the
 implementer guide and record index.
 
 ---
@@ -480,7 +518,7 @@ implementer guide and record index.
 
 | Engine | What it does | Install |
 |---|---|---|
-| Pattern | 40+ regex rules mapped to AVE records | Always on |
+| Pattern | 40 regex rules mapped to AVE records | Always on |
 | YARA | 39 binary and behavioral YARA rules | `[yara]` |
 | Semgrep | 41 structural Semgrep rules | `[semgrep]` |
 | LLM | Semantic analysis of intent and context | `[llm]` |
@@ -491,7 +529,7 @@ implementer guide and record index.
 
 ## Stage 3: Behavioral sandbox
 
-The sandbox runs your skill file inside an isolated Docker container and watches for malicious behavior at runtime — outbound connections, credential reads, shell injections, and filesystem writes that static rules cannot catch.
+The sandbox runs your skill file inside an isolated Docker container and watches for malicious behavior at runtime: outbound connections, credential reads, shell injections, and filesystem writes that static rules cannot catch.
 
 **Image:** [hub.docker.com/r/bawbel/sandbox](https://hub.docker.com/r/bawbel/sandbox) · `bawbel/sandbox:latest` · `bawbel/sandbox:1.2.3`
 
@@ -515,11 +553,11 @@ sandbox:
 
 | `BAWBEL_SANDBOX_IMAGE` | What happens |
 |---|---|
-| `default` *(recommended)* | Checks local Docker cache first. If not found, pulls [`bawbel/sandbox:latest`](https://hub.docker.com/r/bawbel/sandbox) from Docker Hub once and caches it. Subsequent scans use the cache — no network needed. |
+| `default` *(recommended)* | Checks local Docker cache first. If not found, pulls [`bawbel/sandbox:latest`](https://hub.docker.com/r/bawbel/sandbox) from Docker Hub once and caches it. Subsequent scans use the cache; no network needed. |
 | `local` | Skips Docker Hub entirely. Builds the sandbox image from the bundled Dockerfile inside the package. Use this for air-gapped or offline environments. |
 | `<custom-image>` | Uses your own image. Point to any registry: `registry.company.com/bawbel/sandbox@sha256:abc123` |
 
-**First run with `default`:** Bawbel pulls `bawbel/sandbox:latest` from Docker Hub automatically (~200MB, one time only). Every scan after that uses the local cache — instant, no network call.
+**First run with `default`:** Bawbel pulls `bawbel/sandbox:latest` from Docker Hub automatically (~200MB, one time only). Every scan after that uses the local cache: instant, no network call.
 
 **First run with `local`:** Bawbel builds the image from the bundled Dockerfile. Takes ~60 seconds on first run, cached afterwards.
 
@@ -551,30 +589,38 @@ BAWBEL_SANDBOX_ENABLED=true \
 
 ```yaml
 # .github/workflows/security.yml
+# The SARIF upload needs: permissions: security-events: write
 - name: Bawbel scan
-  uses: bawbel/scanner@v1
+  id: bawbel
+  uses: bawbel/scanner@v1.3.0
   with:
     path: ./skills/
     fail-on-severity: high
     format: sarif
-    output: bawbel.sarif
 
 - name: Upload to GitHub Security
+  if: always()
   uses: github/codeql-action/upload-sarif@v3
   with:
-    sarif_file: bawbel.sarif
+    sarif_file: ${{ steps.bawbel.outputs.sarif-file }}
 ```
 
-Pre-commit:
+Pin a release tag. There is no floating `v1` tag. The action writes the SARIF file
+itself and exposes its path as the `sarif-file` output.
+
+Pre-commit (scans staged `.md`, `.json`, `.yaml`, `.yml`, and `.txt` files):
 
 ```yaml
 # .pre-commit-config.yaml
 repos:
-  - repo: https://github.com/bawbel/scanner
-    rev: v1.2.1
+  - repo: local
     hooks:
       - id: bawbel-scan
-        args: [--fail-on-severity, high]
+        name: bawbel scan
+        entry: python -m scanner.bawbel_pre_commit --fail-on-severity high
+        language: python
+        additional_dependencies: ["bawbel-scanner==1.3.0"]
+        files: \.(md|json|ya?ml|txt)$
 ```
 
 ---
@@ -593,8 +639,8 @@ bawbel scan ./skills/ --format sarif   # GitHub Security / GHAS
 
 | | |
 |---|---|
-| [ave.bawbel.io](https://ave.bawbel.io) | AVE — Agentic Vulnerability Enumeration standard (51 records, schema, crosswalks) |
-| [api.piranha.bawbel.io](https://api.piranha.bawbel.io) | PiranhaDB — public threat intel API |
+| [aveproject.org](https://aveproject.org) | AVE: Agentic Vulnerability Enumeration standard (87 records, schema, crosswalks) |
+| [api.aveproject.org](https://api.aveproject.org) | AVE records API, one JSON record per ID |
 | [aivss.owasp.org](https://aivss.owasp.org) | OWASP AIVSS v0.8 scoring standard |
 | [bawbel.io/docs](https://bawbel.io/docs) | Full documentation |
 
@@ -603,7 +649,9 @@ bawbel scan ./skills/ --format sarif   # GitHub Security / GHAS
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md). The most impactful contribution is a
-new detection rule tied to an [AVE record](https://github.com/bawbel/ave).
+new detection rule tied to an [AVE record](https://github.com/aveproject/ave). The
+[coverage gap](https://github.com/bawbel/scanner/issues/79) lists the published
+records with no rule yet.
 
 ```bash
 git clone https://github.com/bawbel/scanner
