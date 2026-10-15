@@ -38,9 +38,10 @@ bawbel-scanner/
 │                                scan.recursive, fail_on_severity, format
 ├── .bawbelignore                Paths suppressed during self-scan
 │                                docs/**, tests/fixtures/skills/clean/**, examples/**
-├── .pre-commit-hooks.yaml       Pre-commit hook definitions
-│                                id: bawbel-scan (pattern only, ~15ms)
-│                                id: bawbel-scan-all (all engines)
+│                                No .pre-commit-hooks.yaml in this repo. Hook definitions
+│                                (bawbel-scan, bawbel-scan-all) live in bawbel/integrations
+│                                on main; no tag there includes them yet. README documents
+│                                a `repo: local` hook that calls scanner.bawbel_pre_commit
 │
 ├── ── Git and secrets ──────────────────────────────────────────────────────
 ├── .gitignore                   Standard Python + bawbel-specific ignores
@@ -62,7 +63,7 @@ bawbel-scanner/
 ├── ── Docker ───────────────────────────────────────────────────────────────
 ├── Dockerfile                   Scanner image for CI and sandbox engine
 │                                Multi-stage: builder (pip install) → runtime
-│                                Used by: bawbel/integrations GitHub Action
+│                                Used by: action.yml (this repo, CI/CD scanning)
 │                                         Stage 3 behavioral sandbox
 ├── docker-compose.yml           Local development stack
 │                                services: scanner (CLI), piranha (API), sandbox
@@ -77,15 +78,16 @@ bawbel-scanner/
 │                                in README.md verifies PyPI ownership
 │
 ├── ── CI/CD ────────────────────────────────────────────────────────────────
-├── action.yml                   GitHub Action definition (in bawbel/integrations)
-│                                For bawbel/scanner: lives in bawbel/integrations repo
-│                                This file: .github/workflows/ are in scanner repo
+├── action.yml                   GitHub Action definition, lives in this repo
+│                                Referenced as `uses: bawbel/scanner@v1.3.0` (see README)
+│                                No floating `v1` tag exists; pin a release tag
 │
 ├── .github/
 │   ├── workflows/
 │   │   ├── ci.yml               Run tests on push and PR
+│   │   │                        Self-scan job present but commented out (not active)
 │   │   ├── publish.yml          PyPI publish on release tag
-│   │   └── bawbel-scan.yml      Self-scan using bawbel/integrations@v2
+│   │   └── pr-review.yml        Semantic PR title check + review automation
 │   ├── ISSUE_TEMPLATE/
 │   │   ├── bug_report.md
 │   │   └── feature_request.md
@@ -152,7 +154,8 @@ bawbel-scanner/
 │   │                            Used by: cli/cmd_ssc.py
 │   │
 │   ├── bawbel_pre_commit.py     Pre-commit entry point
-│   │                            Invoked by .pre-commit-hooks.yaml
+│   │                            Run as `python -m scanner.bawbel_pre_commit`
+│   │                            (README `repo: local` hook); no console script
 │   │                            Wraps scan() for pre-commit file list format
 │   │                            Exits 0 (clean) or 1 (findings >= threshold)
 │   │
