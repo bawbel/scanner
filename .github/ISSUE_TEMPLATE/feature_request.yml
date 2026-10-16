@@ -1,0 +1,34 @@
+name: Feature request
+description: Additive work. Output fields are added, never renamed or removed.
+title: "feat: "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What cannot be done today. Name the caller or workflow.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: Commands, flags, data structures. Examples over prose.
+    validations:
+      required: true
+
+  - type: textarea
+    id: output-contract
+    attributes:
+      label: Output contract impact
+      description: >-
+        Fields added to Finding, ScanResult, the JSON output, or the SARIF output.
+        Renames and removals are not accepted (CONTRIBUTING.md).
+      value: |
+        Fields added:
+        Fields renamed: none
+        Fields removed: none
+    validations:
+      required: true
