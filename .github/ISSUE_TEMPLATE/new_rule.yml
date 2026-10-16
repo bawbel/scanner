@@ -1,0 +1,62 @@
+name: New detection rule
+description: A pattern, YARA, or Semgrep rule for an attack class that has an AVE record.
+title: "rule: "
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A rule maps to an existing AVE record. If the class has no record yet, submit
+        one to bawbel/ave first (CONTRIBUTING.md, "AVE records").
+
+  - type: input
+    id: ave-id
+    attributes:
+      label: AVE id
+      placeholder: AVE-2026-00001
+    validations:
+      required: true
+
+  - type: input
+    id: record-link
+    attributes:
+      label: AVE record link
+      description: Link to the record in the bawbel/ave repository.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: engine
+    attributes:
+      label: Engine
+      multiple: true
+      options:
+        - pattern
+        - yara
+        - semgrep
+    validations:
+      required: true
+
+  - type: textarea
+    id: positive-fixture
+    attributes:
+      label: Positive fixture
+      description: Content that must trigger the rule. Redact secrets.
+      render: text
+    validations:
+      required: true
+
+  - type: textarea
+    id: negative-fixture
+    attributes:
+      label: Negative fixture
+      description: Similar, innocent content that must not trigger the rule.
+      render: text
+    validations:
+      required: true
+
+  - type: textarea
+    id: false-positive-risk
+    attributes:
+      label: False-positive risk
+      description: Legitimate content this rule could match, and how the rule avoids it.

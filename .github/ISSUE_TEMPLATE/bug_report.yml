@@ -1,0 +1,77 @@
+name: Bug report
+description: A crash, a wrong or missed finding, or output that breaks the documented contract.
+title: "bug: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        If the bug is a security issue in the scanner itself, stop here and report it
+        privately per SECURITY.md.
+
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Kind
+      options:
+        - false positive
+        - false negative
+        - crash or error code
+        - output contract (JSON, SARIF, exit code)
+        - CLI
+        - docs
+        - other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: engine
+    attributes:
+      label: Engine
+      description: The `engine` value on the finding, if there is one.
+      multiple: true
+      options:
+        - pattern
+        - yara
+        - semgrep
+        - llm
+        - magika
+        - sandbox
+        - not engine specific
+        - unknown
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Output of `bawbel --version`, or the commit SHA for a source install.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Exact command and a minimal input file. Redact secrets.
+      render: shell
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected
+      description: Finding, AVE id, severity, exit code, or output you expected.
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual
+      description: Output of the command, with `--format json` where it applies.
+      render: text
+    validations:
+      required: true
