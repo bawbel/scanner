@@ -4,7 +4,9 @@
 
 ## GitHub Actions - reusable action
 
-The simplest integration. Uses `action.yml` at the repo root.
+The simplest integration. The action is maintained in
+[bawbel/integrations](https://github.com/bawbel/integrations) and referenced as
+`bawbel/integrations@v1`.
 
 ```yaml
 # .github/workflows/security.yml
@@ -19,7 +21,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Bawbel scan
-        uses: bawbel/scanner@v1
+        uses: bawbel/integrations@v1
         with:
           path: ./skills/
           fail-on-severity: high
@@ -37,11 +39,11 @@ jobs:
 |---|---|---|
 | `path` | `.` | Path to scan |
 | `recursive` | `true` | Scan recursively |
-| `fail-on-severity` | none | Exit 2 if findings at or above: `critical`, `high`, `medium`, `low` |
-| `format` | `text` | `text`, `json`, or `sarif` |
+| `fail-on-severity` | `high` | Exit 2 if findings at or above: `critical`, `high`, `medium`, `low`, or `none` to never fail |
+| `format` | `sarif` | `text`, `json`, or `sarif` |
 | `no-ignore` | `false` | Disable all suppressions (audit mode) |
 | `version` | `latest` | Specific `bawbel-scanner` version |
-| `extras` | `""` | Additional pip extras e.g. `yara,semgrep` |
+| `extras` | `all` | pip extras: `yara`, `semgrep`, `llm`, `magika`, or `all` |
 
 ---
 
