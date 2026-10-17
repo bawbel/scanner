@@ -1,0 +1,28 @@
+name: Factory task
+description: A task the Factory can execute
+body:
+  - type: dropdown
+    id: playbook
+    attributes:
+      label: Playbook
+      options: [doc_sync, ave_rule, code, frontend]
+    validations: {required: true}
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: One paragraph. What should be true when this is done
+    validations: {required: true}
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance checks
+      description: Shell commands that must exit 0. One per line. These are run by the
+        verifier from the base branch, not from the patch
+      render: shell
+    validations: {required: true}
+  - type: input
+    id: allowed_paths
+    attributes:
+      label: Allowed paths
+      description: Glob list, narrower than the playbook default
