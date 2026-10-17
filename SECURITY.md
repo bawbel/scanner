@@ -12,9 +12,11 @@
 
 ## Reporting a vulnerability in Bawbel Scanner
 
-**Do not open a public GitHub issue.**
+**Do not open a public GitHub issue.** Report privately, using either:
 
-Email: **bawbel.io@gmail.com**
+- GitHub private vulnerability reporting: the "Report a vulnerability" button under this
+  repository's Security tab.
+- Email: **bawbel.io@gmail.com**
 Subject: `SECURITY: bawbel-scanner [brief description]`
 
 We will acknowledge within 48 hours and coordinate disclosure.
