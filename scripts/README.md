@@ -410,7 +410,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Bawbel scan
-        uses: bawbel/scanner@v1
+        uses: bawbel/integrations@v1
         with:
           path: ./skills/
           fail-on-severity: high

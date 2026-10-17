@@ -592,7 +592,7 @@ BAWBEL_SANDBOX_ENABLED=true \
 # The SARIF upload needs: permissions: security-events: write
 - name: Bawbel scan
   id: bawbel
-  uses: bawbel/scanner@v1.3.0
+  uses: bawbel/integrations@v1
   with:
     path: ./skills/
     fail-on-severity: high
@@ -605,8 +605,8 @@ BAWBEL_SANDBOX_ENABLED=true \
     sarif_file: ${{ steps.bawbel.outputs.sarif-file }}
 ```
 
-Pin a release tag. There is no floating `v1` tag. The action writes the SARIF file
-itself and exposes its path as the `sarif-file` output.
+The action is maintained in [bawbel/integrations](https://github.com/bawbel/integrations).
+It writes the SARIF file itself and exposes its path as the `sarif-file` output.
 
 Pre-commit (scans staged `.md`, `.json`, `.yaml`, `.yml`, and `.txt` files):
 
