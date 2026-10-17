@@ -63,8 +63,7 @@ bawbel-scanner/
 ├── ── Docker ───────────────────────────────────────────────────────────────
 ├── Dockerfile                   Scanner image for CI and sandbox engine
 │                                Multi-stage: builder (pip install) → runtime
-│                                Used by: action.yml (this repo, CI/CD scanning)
-│                                         Stage 3 behavioral sandbox
+│                                Used by: Stage 3 behavioral sandbox
 ├── docker-compose.yml           Local development stack
 │                                services: scanner (CLI), piranha (API), sandbox
 │                                Mounts: ./scanner, ./tests, ./rules
@@ -78,9 +77,8 @@ bawbel-scanner/
 │                                in README.md verifies PyPI ownership
 │
 ├── ── CI/CD ────────────────────────────────────────────────────────────────
-├── action.yml                   GitHub Action definition, lives in this repo
-│                                Referenced as `uses: bawbel/scanner@v1.3.0` (see README)
-│                                No floating `v1` tag exists; pin a release tag
+│                                The GitHub Action lives in bawbel/integrations,
+│                                referenced as `uses: bawbel/integrations@v1` (see README)
 │
 ├── .github/
 │   ├── workflows/
@@ -89,8 +87,12 @@ bawbel-scanner/
 │   │   ├── publish.yml          PyPI publish on release tag
 │   │   └── pr-review.yml        Semantic PR title check + review automation
 │   ├── ISSUE_TEMPLATE/
-│   │   ├── bug_report.md
-│   │   └── feature_request.md
+│   │   ├── config.yml
+│   │   ├── bug_report.yml
+│   │   ├── feature_request.yml
+│   │   ├── new_rule.yml
+│   │   └── factory-task.yml
+│   ├── CODEOWNERS
 │   └── PULL_REQUEST_TEMPLATE.md
 │
 ├── ── Claude Code skills ────────────────────────────────────────────────────

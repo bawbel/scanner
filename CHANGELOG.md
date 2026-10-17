@@ -6,6 +6,11 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Removed
+
+- `action.yml` at the repo root. The GitHub Action is `bawbel/integrations@v1`. Existing
+  tags, such as `bawbel/scanner@v1.3.0`, still carry their copy (#92).
+
 ---
 
 ## [1.3.0] - 2026-06-28
