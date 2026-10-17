@@ -28,7 +28,9 @@ We will acknowledge within 48 hours and coordinate disclosure.
 If you found a vulnerability in an MCP server, skill file, or other agentic
 component, that is a candidate for a new AVE record.
 
-See [github.com/bawbel/ave/CONTRIBUTING.md](https://github.com/bawbel/ave/CONTRIBUTING.md)
+AVE is an independent project. See
+[aveproject/ave CONTRIBUTING.md](https://github.com/aveproject/ave/blob/main/CONTRIBUTING.md),
+or email **aveproject.org@gmail.com**.
 
 ---
 
