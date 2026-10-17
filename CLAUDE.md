@@ -6,13 +6,16 @@
 >
 > When working on any task, also check `.claude/skills/` for reusable
 > task-specific instructions (security review, adding rules, writing tests, etc.)
+>
+> `.claude/` is gitignored (`.gitignore`), so the `.claude/` files named in this document
+> are local to the maintainer and are not in the repository.
 
 ---
 
 ## Repository Structure
 
 ```
-bawbel-scanner/
+scanner/
 ├── CLAUDE.md                        ← YOU ARE HERE
 ├── PROJECT_CONTEXT.md               ← Business context (gitignored)
 ├── PROJECT_CONTEXT.example.md       ← Template for contributors
@@ -30,45 +33,45 @@ bawbel-scanner/
 │       ├── add-engine.md
 │       └── write-test.md
 │
-├── config/
-│   ├── __init__.py
-│   └── default.py                   ← ALL config — limits, paths, env vars
-│
 ├── scanner/                         ← Core package
 │   ├── __init__.py                  ← Package version
 │   ├── scanner.py                   ← Orchestrator only — scan() entry point
 │   ├── utils.py                     ← Shared helpers — always use, never inline
 │   ├── messages.py                  ← ALL strings — errors, logs, UI text
+│   ├── config/default.py            ← ALL config: limits, paths, env vars
+│   ├── cli/                         ← CLI entry point (Click + Rich), scanner.cli:main
 │   ├── models/                      ← Data models
 │   │   ├── __init__.py              ← Exports Finding, ScanResult, Severity
 │   │   ├── finding.py               ← Finding dataclass + Severity enum
 │   │   └── result.py                ← ScanResult dataclass
 │   ├── engines/                     ← One file per detection engine
 │   │   ├── __init__.py              ← Engine registry + exports
-│   │   ├── pattern.py               ← Stage 1a: regex (stdlib, always runs)
+│   │   ├── magika_engine.py         ← Stage 0: Magika file type verification
+│   │   ├── pattern_engine.py        ← Stage 1a: regex (stdlib, always runs)
 │   │   ├── yara_engine.py           ← Stage 1b: YARA (optional)
 │   │   ├── semgrep_engine.py        ← Stage 1c: Semgrep (optional)
-│   │   └── [llm_engine.py]          ← Stage 2: LLM (planned, v0.2.0)
+│   │   ├── llm_engine.py            ← Stage 2: LLM (optional)
+│   │   ├── sandbox_engine.py        ← Stage 3: behavioral sandbox
+│   │   └── meta_analyzer.py         ← FP-4 meta-analyzer
 │   └── rules/
 │       ├── yara/ave_rules.yar       ← YARA rules
 │       └── semgrep/ave_rules.yaml   ← Semgrep rules
 │
 ├── tests/
-│   ├── test_scanner.py              ← Full test suite (45 tests)
+│   ├── test_scanner.py              ← Golden fixture and core tests
 │   ├── unit/                        ← Unit tests per module
 │   │   ├── engines/                 ← Engine-specific tests
 │   │   └── models/                  ← Model tests
 │   ├── integration/                 ← End-to-end tests
 │   └── fixtures/
 │       ├── skills/
-│       │   ├── malicious/
-│       │   │   └── malicious_skill.md  ← GOLDEN FIXTURE — never modify
-│       │   └── clean/               ← False-positive regression fixtures
+│       │   └── malicious/
+│       │       └── malicious_skill.md  ← GOLDEN FIXTURE: never modify
+│       ├── golden/                  ← Recorded golden scan output
 │       └── mcp/                     ← MCP manifest fixtures
 │
 ├── scripts/
 │
-├── cli.py                           ← CLI entry point (Click + Rich)
 ├── Dockerfile
 ├── docker-compose.yml
 ├── pyproject.toml
@@ -76,7 +79,8 @@ bawbel-scanner/
 ├── .pre-commit-config.yaml
 ├── .github/workflows/
 │   ├── ci.yml
-│   └── pr-review.yml
+│   ├── pr-review.yml
+│   └── publish.yml
 ├── .gitignore
 └── .dockerignore
 ```
@@ -110,7 +114,7 @@ Full documentation lives in `docs/`. Read it — do not duplicate it here.
 | `scanner/scanner.py` | Orchestrator — scan() entry point | Modifying pipeline order |
 | `scanner/models/` | All data models | Modifying Finding or ScanResult |
 | `scanner/engines/` | One file per engine | Adding/modifying detection logic |
-| `config/default.py` | All config and limits | Changing timeouts, sizes, paths |
+| `scanner/config/default.py` | All config and limits | Changing timeouts, sizes, paths |
 
 **Never inline a message string.** Always use `messages.py`.
 **Never write a helper inline.** Always check `utils.py` first.
@@ -175,7 +179,7 @@ ALWAYS handle both ImportError and Exception → optional deps may fail in two w
 ```
 ALWAYS run golden fixture after any change   → bawbel scan tests/fixtures/skills/malicious/malicious_skill.md
 ALWAYS add positive + negative test          → new rule needs both fixture types
-ALWAYS run 45/45 before committing           → python -m pytest tests/ -v
+ALWAYS run the full suite before committing  → python -m pytest tests/ -v
 ALWAYS activate venv before any command      → source .venv/bin/activate
 ```
 
@@ -304,18 +308,18 @@ Info.REPORT_COMING_SOON      # "Full A-BOM report generation coming in v0.2.0"
 ./scripts/setup.sh && source .venv/bin/activate
 
 # Scan
-bawbel scan tests/fixtures/skills/malicious/malicious_skill.md      # expected: 2 findings, CRITICAL 9.4
+bawbel scan tests/fixtures/skills/malicious/malicious_skill.md      # expected: CRITICAL, includes AVE-2026-00001
 bawbel scan ./skills/ --recursive --format json
 
 # Test
-python -m pytest tests/ -v                        # must be 45/45
+python -m pytest tests/ -v                        # must all pass
 
 # Security check
-bandit -r scanner/ cli.py -f screen               # must be 0 issues
+bandit -r scanner/ -f screen                      # must be 0 issues
 pip-audit -r requirements.txt                     # must be 0 CVEs
 
 # Lint
-flake8 scanner/ cli.py --max-line-length 100
+flake8 scanner/ --max-line-length 100
 
 # Docker
 docker build -t bawbel/scanner . && docker run --rm -v $(pwd)/tests:/scan:ro bawbel/scanner scan /scan
@@ -330,8 +334,8 @@ docker build -t bawbel/scanner . && docker run --rm -v $(pwd)/tests:/scan:ro baw
 | `rule_id` | str | ✅ | kebab-case, unique, never change |
 | `title` | str | ✅ | max 80 chars, use `_make_finding()` |
 | `severity` | Severity | ✅ | use `Severity` enum, not raw string |
-| `cvss_ai` | float | ✅ | use `parse_cvss()` — clamps to 0.0–10.0 |
-| `engine` | str | ✅ | `pattern` / `yara` / `semgrep` / `llm` |
+| `aivss_score` | float | ✅ | OWASP AIVSS v0.8 score. Use `parse_cvss()`, which clamps to 0.0-10.0 |
+| `engine` | str | ✅ | `pattern` / `yara` / `semgrep` / `llm` / `magika` / `sandbox` |
 | `match` | str | — | use `truncate_match()` — max 80 chars |
 | `ave_id` | str | — | `AVE-2026-NNNNN` or `None` |
 | `owasp` | list[str] | — | `ASI01`–`ASI10` |
@@ -549,6 +553,7 @@ These are the approved suppressions. Any new nosec must be reviewed.
 
 ### Self-scan
 
-The scanner scans itself on every PR via `.github/workflows/bawbel-scan.yml`.
+The `bawbel-self-scan` pre-commit hook runs `bawbel scan docs/ --recursive` on every
+commit. The self-scan job in `.github/workflows/ci.yml` is commented out.
 If bawbel finds a security finding in its own code, that is a real finding.
 Fix it before merging.

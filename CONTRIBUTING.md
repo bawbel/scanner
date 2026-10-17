@@ -103,9 +103,9 @@ python -m pytest tests/test_scanner.py -k golden -v
 - [ ] No new bandit issues: `bandit -r scanner/ -f screen`
 - [ ] Linted: `black --check scanner/ tests/`
 - [ ] No em dashes in source
-- [ ] No AIVSS references (use AIVSS)
-- [ ] No github.com/bawbel/scanner URLs (use bawbel/scanner)
-- [ ] No github.com/bawbel/ave URLs (use bawbel/ave)
+- [ ] No CVSS-AI references (use OWASP AIVSS)
+- [ ] No github.com/bawbel/bawbel-scanner URLs (use github.com/bawbel/scanner)
+- [ ] No github.com/bawbel/bawbel-ave URLs (use github.com/bawbel/ave)
 
 ---
 
