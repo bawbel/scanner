@@ -135,9 +135,10 @@ rule AVE_ShellPipeInjection
         $pipe4 = "wget|bash"      nocase
         $pipe5 = "wget | sh"      nocase
         $pipe6 = "curl | sh"      nocase
-        $pipe7 = "| python"       nocase
-        $pipe8 = "| pip"          nocase
-        $pipe9 = "| npm"          nocase
+        // A pipe into an interpreter counts only after a fetch or a decode on the
+        // same line. A bare "| python" also matches local pipes in CI scripts.
+        $pipe_fetch  = /(curl|wget)[^\n|]{0,300}\|\s*(sudo\s+)?(python[0-9.]*|pip[0-9]*|npm|npx|node|perl|ruby|bash|sh|zsh)\b/ nocase
+        $pipe_decode = /base64\s+(-d|-D|--decode)[^\n|]{0,100}\|\s*(sudo\s+)?(python[0-9.]*|bash|sh|zsh|perl|ruby|node)\b/ nocase
         $pipe10 = "eval $("       nocase
 
     condition:
