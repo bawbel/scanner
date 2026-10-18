@@ -573,8 +573,9 @@ rule AVE_NetworkRecon
         aivss  = "8.2"
     strings:
         $a = "nmap" nocase
-        $b = "port scan" nocase
-        $c = "network scan" nocase
+        // Word boundary first: "port scan" also occurs inside "import scan".
+        $b = /\bport\s*scan/ nocase
+        $c = /\bnetwork\s*scan/ nocase
         $d = "host discovery" nocase
         $e = "service enumeration" nocase
         $f = "scan internal network" nocase
