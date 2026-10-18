@@ -9,7 +9,7 @@ Every contribution makes agentic AI safer. Thank you.
 | Type | Description |
 |---|---|
 | Detection rule | Add a pattern, YARA, or Semgrep rule for a new attack class |
-| AVE record | Research and document a new agentic vulnerability at github.com/bawbel/ave |
+| AVE record | Research and document a new agentic vulnerability at github.com/aveproject/ave (an independent project) |
 | False positive fix | A rule fires on legitimate content - fix the regex or add exclusion |
 | CLI command | Add a new `bawbel <command>` |
 | Bug report | Something is broken |
@@ -50,7 +50,7 @@ The most impactful contribution. Full guide in `docs/guides/writing-rules.md`.
 
 ```
 1. Add rule to PATTERN_RULES in scanner/engines/pattern.py
-2. Map to the correct AVE record ID (github.com/bawbel/ave)
+2. Map to the correct AVE record ID (github.com/aveproject/ave)
 3. Add AIVSS score from the AVE record
 4. Add positive test fixture (content that triggers the rule)
 5. Add negative test fixture (similar but innocent content)
@@ -105,7 +105,7 @@ python -m pytest tests/test_scanner.py -k golden -v
 - [ ] No em dashes in source
 - [ ] No CVSS-AI references (use OWASP AIVSS)
 - [ ] No github.com/bawbel/bawbel-scanner URLs (use github.com/bawbel/scanner)
-- [ ] No github.com/bawbel/bawbel-ave URLs (use github.com/bawbel/ave)
+- [ ] No github.com/bawbel/bawbel-ave or github.com/bawbel/ave URLs (use github.com/aveproject/ave)
 
 ---
 
@@ -113,7 +113,8 @@ python -m pytest tests/test_scanner.py -k golden -v
 
 Detection rules reference AVE record IDs. If your rule covers a new attack
 class not yet in the database, submit an AVE record first at
-[github.com/bawbel/ave](https://github.com/bawbel/ave).
+[github.com/aveproject/ave](https://github.com/aveproject/ave). AVE is an independent
+project with its own maintainers; its contact is aveproject.org@gmail.com.
 
 ---
 
