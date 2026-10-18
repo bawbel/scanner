@@ -4,9 +4,9 @@
 
 | Version | Supported |
 |---|---|
-| 1.2.x | Active |
-| 1.1.x | Security fixes only |
-| < 1.1 | Not supported |
+| 1.3.x | Active |
+| 1.2.x | Security fixes only |
+| < 1.2 | Not supported |
 
 ---
 
@@ -38,7 +38,6 @@ This policy covers:
 
 - `bawbel-scanner` PyPI package
 - `github.com/bawbel/scanner` source repository
-- `api.piranha.bawbel.io` API
 - `bawbel.io` website
 
 ---
