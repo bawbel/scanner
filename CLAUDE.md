@@ -553,7 +553,8 @@ These are the approved suppressions. Any new nosec must be reviewed.
 
 ### Self-scan
 
-The `bawbel-self-scan` pre-commit hook runs `bawbel scan docs/ --recursive` on every
-commit. The self-scan job in `.github/workflows/ci.yml` is commented out.
+`scripts/self_scan.sh` scans the agent-facing files this repository ships (CLAUDE.md, the
+top-level docs, `bawbel.yml`, `server.json`, `.github/`) with this checkout's code and fails
+on HIGH. The `bawbel-self-scan` pre-commit hook and the `self-scan` CI job both run it.
 If bawbel finds a security finding in its own code, that is a real finding.
 Fix it before merging.

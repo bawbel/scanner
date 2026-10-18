@@ -50,16 +50,16 @@ repos:
       - id: gitleaks
 
   # ── Bawbel Scanner self-scan ──────────────────────────────────────────────
-  # The scanner scans itself - dogfooding
+  # The scanner scans the agent-facing files it ships (scripts/self_scan.sh), using
+  # this checkout's code. The self-scan CI job runs the same script.
   - repo: local
     hooks:
       - id: bawbel-self-scan
         name: Bawbel self-scan
-        entry: bawbel scan docs/ --recursive
-        language: python
+        entry: bash scripts/self_scan.sh
+        language: system
         pass_filenames: false
         always_run: true
-        additional_dependencies: ["click", "rich"]
 
       # ── Run tests before every commit ──────────────────────────────────────
       - id: pytest-check
