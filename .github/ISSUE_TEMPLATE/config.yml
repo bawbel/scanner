@@ -6,7 +6,8 @@ contact_links:
       Security issues in bawbel-scanner itself. Report privately per SECURITY.md,
       never in a public issue.
   - name: Propose a new AVE record
-    url: https://github.com/bawbel/ave
+    url: https://github.com/aveproject/ave
     about: >-
-      A new class of agentic vulnerability starts as an AVE record in bawbel/ave,
-      before any detection rule here.
+      AVE is an independent project (aveproject/ave, aveproject.org@gmail.com). A new
+      class of agentic vulnerability starts as an AVE record there, before any detection
+      rule here.

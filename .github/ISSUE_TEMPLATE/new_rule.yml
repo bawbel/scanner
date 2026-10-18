@@ -7,7 +7,7 @@ body:
     attributes:
       value: |
         A rule maps to an existing AVE record. If the class has no record yet, submit
-        one to bawbel/ave first (CONTRIBUTING.md, "AVE records").
+        one to aveproject/ave first, an independent project (CONTRIBUTING.md, "AVE records").
 
   - type: input
     id: ave-id
@@ -21,7 +21,7 @@ body:
     id: record-link
     attributes:
       label: AVE record link
-      description: Link to the record in the bawbel/ave repository.
+      description: Link to the record in the aveproject/ave repository.
     validations:
       required: true
 
