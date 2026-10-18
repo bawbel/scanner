@@ -779,7 +779,7 @@ PATTERN_RULES_V2: list[dict] = [
         "owasp": ["ASI05", "ASI06"],
         "owasp_mcp": ["MCP05", "MCP02"],
         "patterns": [
-            r"(nmap|port\s*scan|network\s*scan|host\s*discovery|service\s+enumeration)",
+            r"\b(nmap|port\s*scan|network\s*scan|host\s*discovery|service\s+enumeration)",
             r"(scan|probe|enumerate|discover)\s+(port|host|service|subnet|internal\s+network)",
             (
                 r"(find|discover|list|enumerate|map)"

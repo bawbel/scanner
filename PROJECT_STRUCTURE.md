@@ -83,7 +83,7 @@ bawbel-scanner/
 ├── .github/
 │   ├── workflows/
 │   │   ├── ci.yml               Run tests on push and PR
-│   │   │                        Self-scan job present but commented out (not active)
+│   │   │                        Self-scan job runs scripts/self_scan.sh
 │   │   ├── publish.yml          PyPI publish on release tag
 │   │   └── pr-review.yml        Semantic PR title check + review automation
 │   ├── ISSUE_TEMPLATE/
