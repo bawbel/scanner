@@ -69,6 +69,28 @@ def env_http_url(var: str) -> Optional[str]:
     return None
 
 
+def env_int(var: str, default: int, minimum: int = 1) -> int:
+    """Return the integer in environment variable var, or default.
+
+    default when var is unset or empty, or when its value is not an integer of at least
+    minimum; the last case logs a warning.
+    """
+    raw = (os.environ.get(var) or "").strip()
+    if not raw:
+        return default
+    try:
+        value = int(raw)
+    except ValueError:
+        value = minimum - 1
+    if value < minimum:
+        logging.getLogger(__name__).warning(Logs.CONFIG_INT_IGNORED, var, default)
+        return default
+    return value
+
+
+# Outbound HTTP: one timeout for server-card fetches and MCP registry lookups.
+HTTP_TIMEOUT_SEC = env_int("BAWBEL_HTTP_TIMEOUT_SEC", 10)
+
 # AVE records. Findings link to {AVE_API_URL}/records/{ave_id} as ave_url and
 # piranha_url (same value until 2.0).
 AVE_API_URL = env_http_url("BAWBEL_AVE_API_URL") or AVE_API_URL_DEFAULT
@@ -77,6 +99,17 @@ AVE_RECORD_URL_TEMPLATE = AVE_API_URL + "/records/{ave_id}"
 # Opt-in false-positive signal (suppression/justified.py). No default: the hosted
 # PiranhaDB API is offline, so nothing is sent unless BAWBEL_PIRANHA_URL is set.
 FP_SIGNAL_URL = env_http_url("BAWBEL_PIRANHA_URL")
+FP_SIGNAL_TIMEOUT_SEC = 5  # the signal is best-effort; never hold up the caller
+
+# Bawbel Scanner's homepage, reported as the SARIF tool informationUri.
+PROJECT_HOMEPAGE_URL = "https://bawbel.io"
+
+# The AVE project, linked from SARIF rules that have no AVE record.
+AVE_PROJECT_URL = "https://github.com/aveproject/ave"
+
+# Official MCP registry, used by `bawbel conform` to look up a server by name.
+MCP_REGISTRY_URL_DEFAULT = "https://registry.modelcontextprotocol.io"
+MCP_REGISTRY_URL = env_http_url("BAWBEL_MCP_REGISTRY_URL") or MCP_REGISTRY_URL_DEFAULT
 
 
 # ── Stage 2: LLM semantic analysis ────────────────────────────────────────────

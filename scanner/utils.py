@@ -409,6 +409,20 @@ class AveLinks:
         return AVE_RECORD_URL_TEMPLATE.format(ave_id=ave_id)
 
 
+# ── HttpIdentity ──────────────────────────────────────────────────────────────
+
+
+class HttpIdentity:
+    """The identity the scanner sends on outbound HTTP requests."""
+
+    @staticmethod
+    def user_agent() -> str:
+        """User-Agent built from the package version, so it never goes stale."""
+        from scanner import __version__  # local: scanner/__init__ imports modules using this
+
+        return f"bawbel-scanner/{__version__} (+https://github.com/bawbel/scanner)"
+
+
 # ── Timer ─────────────────────────────────────────────────────────────────────
 
 
@@ -493,3 +507,8 @@ def truncate_match(text: Optional[str], max_len: int) -> Optional[str]:
 def ave_record_url(ave_id: Optional[str]) -> Optional[str]:
     """Alias for AveLinks.record_url(ave_id)."""
     return AveLinks.record_url(ave_id)
+
+
+def user_agent() -> str:
+    """Alias for HttpIdentity.user_agent()."""
+    return HttpIdentity.user_agent()

@@ -11,8 +11,15 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - `ave_url` on every finding (JSON, SARIF, `scan()`): the AVE record at
   https://api.aveproject.org/records/{ave_id}, built from `AVE_RECORD_URL_TEMPLATE` (#116).
 
+- Outbound HTTP settings in one place (`scanner/config`), each overridable from the
+  environment and validated: `BAWBEL_AVE_API_URL`, `BAWBEL_MCP_REGISTRY_URL`,
+  `BAWBEL_HTTP_TIMEOUT_SEC`. A value that is not an http(s) URL or a positive integer is
+  ignored with a warning (#116).
+
 ### Changed
 
+- The User-Agent on outbound requests is built from the package version (it said
+  1.0 or 1.2.0). SARIF rule `helpUri` links each rule's AVE record (#116).
 - `piranha_url` now carries the same `api.aveproject.org` value as `ave_url`.
   `api.piranha.bawbel.io` no longer resolves (#116).
 - `BAWBEL_PIRANHA_URL` has no default: the opt-in false-positive signal sends nothing

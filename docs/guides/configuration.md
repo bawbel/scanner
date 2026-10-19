@@ -45,6 +45,8 @@ BAWBEL_SCAN_TIMEOUT_SEC=10 bawbel scan ./skills/
 |---|---|---|
 | `BAWBEL_AVE_API_URL` | `https://api.aveproject.org` | Base URL for AVE record links. Findings get `ave_url` (and the deprecated `piranha_url`) = `<base>/records/<ave_id>` |
 | `BAWBEL_PIRANHA_URL` | unset | Endpoint for the opt-in false-positive signal. Unset means nothing is sent |
+| `BAWBEL_MCP_REGISTRY_URL` | `https://registry.modelcontextprotocol.io` | MCP registry used by `bawbel conform` to look up a server by name |
+| `BAWBEL_HTTP_TIMEOUT_SEC` | `10` | Timeout for server-card fetches and MCP registry lookups. A value that is not a positive integer is ignored with a warning |
 
 Both must be `http://` or `https://` URLs. Any other value is ignored with a warning: the
 AVE base falls back to its default, and the false-positive signal stays off.

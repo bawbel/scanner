@@ -20,8 +20,8 @@ from scanner.models.acceptance import (
     SUPPRESSION_TYPE_ACCEPTED_RISK,
 )
 from scanner.models.finding import Finding
-from scanner.config import FP_SIGNAL_URL
-from scanner.utils import get_logger
+from scanner.config import FP_SIGNAL_TIMEOUT_SEC, FP_SIGNAL_URL
+from scanner.utils import get_logger, user_agent
 
 log = get_logger(__name__)
 
@@ -256,11 +256,13 @@ def send_fp_signal(af: AcceptedFinding, engine: str, confidence: float, match_ha
             data=data,
             headers={
                 "Content-Type": "application/json",
-                "User-Agent": "bawbel-scanner/1.2.0",
+                "User-Agent": user_agent(),
             },
             method="POST",
         )
-        with urllib.request.urlopen(req, timeout=5) as resp:  # nosec B310  # noqa: S310
+        # B310/S310: FP_SIGNAL_URL only ever holds an http(s) URL (env_http_url in config).
+        timeout = FP_SIGNAL_TIMEOUT_SEC
+        with urllib.request.urlopen(req, timeout=timeout) as resp:  # nosec B310  # noqa: S310
             status = resp.status
             log.debug("FP signal sent: ave_id=%s status=%d", af.ave_id, status)
             return status == 200

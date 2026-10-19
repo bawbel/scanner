@@ -68,6 +68,7 @@ class Logs:
 
     # Configuration
     CONFIG_URL_IGNORED = "Ignoring %s: not an http(s) URL"
+    CONFIG_INT_IGNORED = "Ignoring %s: not a positive integer; using %d"
 
     # Path validation
     SYMLINK_REJECTED = "Symlink rejected: path=%s"
