@@ -39,6 +39,16 @@ BAWBEL_MAX_FILE_SIZE_MB=50 bawbel scan ./large-skill.md
 BAWBEL_SCAN_TIMEOUT_SEC=10 bawbel scan ./skills/
 ```
 
+### External endpoints
+
+| Variable | Default | Description |
+|---|---|---|
+| `BAWBEL_AVE_API_URL` | `https://api.aveproject.org` | Base URL for AVE record links. Findings get `ave_url` (and the deprecated `piranha_url`) = `<base>/records/<ave_id>` |
+| `BAWBEL_PIRANHA_URL` | unset | Endpoint for the opt-in false-positive signal. Unset means nothing is sent |
+
+Both must be `http://` or `https://` URLs. Any other value is ignored with a warning: the
+AVE base falls back to its default, and the false-positive signal stays off.
+
 #
 ## Stage 0 - Magika
 

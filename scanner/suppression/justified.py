@@ -20,6 +20,7 @@ from scanner.models.acceptance import (
     SUPPRESSION_TYPE_ACCEPTED_RISK,
 )
 from scanner.models.finding import Finding
+from scanner.config import FP_SIGNAL_URL
 from scanner.utils import get_logger
 
 log = get_logger(__name__)
@@ -233,15 +234,12 @@ def send_fp_signal(af: AcceptedFinding, engine: str, confidence: float, match_ha
         return False
 
     import json
-    import os
     import urllib.request
 
-    # No default endpoint: the hosted PiranhaDB API is offline, so the signal is sent
-    # only when BAWBEL_PIRANHA_URL names an endpoint explicitly.
-    piranha_url = os.environ.get("BAWBEL_PIRANHA_URL")
-    if not piranha_url:
+    # FP_SIGNAL_URL is None unless BAWBEL_PIRANHA_URL is set (scanner/config/default.py).
+    if not FP_SIGNAL_URL:
         return False
-    endpoint = f"{piranha_url}/feedback/false-positive"
+    endpoint = f"{FP_SIGNAL_URL}/feedback/false-positive"
 
     payload = {
         "ave_id": af.ave_id,

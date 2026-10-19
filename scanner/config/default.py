@@ -8,8 +8,12 @@ To override at runtime: set environment variables.
 To change defaults for a deployment: edit this file only.
 """
 
+import logging
 import os
 from pathlib import Path
+from typing import Optional
+
+from scanner.messages import Logs
 
 # ── Paths ──────────────────────────────────────────────────────────────────────
 
@@ -43,10 +47,36 @@ COMPONENT_EXTENSIONS: dict[str, str] = {
 LOG_LEVEL = os.environ.get("BAWBEL_LOG_LEVEL", "WARNING").upper()
 
 
-# ── AVE record links ───────────────────────────────────────────────────────────
-# Findings link here as ave_url and piranha_url (same value until 2.0).
+# ── External endpoints ─────────────────────────────────────────────────────────
+# The one place that sets them. Each is overridable from the environment, and a value
+# that is not an http(s) URL is ignored with a warning, never used.
 
-AVE_RECORD_URL_TEMPLATE = "https://api.aveproject.org/records/{ave_id}"
+AVE_API_URL_DEFAULT = "https://api.aveproject.org"
+
+
+def env_http_url(var: str) -> Optional[str]:
+    """Return the http(s) URL in environment variable var, without a trailing slash.
+
+    None when var is unset or empty, or when its value is not an http(s) URL; the last
+    case logs a warning so a misconfiguration is visible.
+    """
+    raw = (os.environ.get(var) or "").strip()
+    if not raw:
+        return None
+    if raw.lower().startswith(("https://", "http://")):
+        return raw.rstrip("/")
+    logging.getLogger(__name__).warning(Logs.CONFIG_URL_IGNORED, var)
+    return None
+
+
+# AVE records. Findings link to {AVE_API_URL}/records/{ave_id} as ave_url and
+# piranha_url (same value until 2.0).
+AVE_API_URL = env_http_url("BAWBEL_AVE_API_URL") or AVE_API_URL_DEFAULT
+AVE_RECORD_URL_TEMPLATE = AVE_API_URL + "/records/{ave_id}"
+
+# Opt-in false-positive signal (suppression/justified.py). No default: the hosted
+# PiranhaDB API is offline, so nothing is sent unless BAWBEL_PIRANHA_URL is set.
+FP_SIGNAL_URL = env_http_url("BAWBEL_PIRANHA_URL")
 
 
 # ── Stage 2: LLM semantic analysis ────────────────────────────────────────────

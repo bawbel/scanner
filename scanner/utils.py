@@ -29,7 +29,7 @@ import time
 from pathlib import Path
 from typing import Optional
 
-from scanner.config.default import AVE_RECORD_URL_TEMPLATE
+from scanner.config import AVE_RECORD_URL_TEMPLATE
 from scanner.messages import Errors, Logs
 
 # ── Logger ────────────────────────────────────────────────────────────────────

@@ -22,6 +22,10 @@ from scanner.config.default import (
     COMPONENT_EXTENSIONS,
     # Logging
     LOG_LEVEL,
+    # External endpoints
+    AVE_API_URL,
+    AVE_RECORD_URL_TEMPLATE,
+    FP_SIGNAL_URL,
     # Stage 2 LLM
     LLM_ENABLED,
     LLM_MODEL,
@@ -46,6 +50,9 @@ __all__ = [
     "MAX_SCAN_TIMEOUT_SEC",
     "COMPONENT_EXTENSIONS",
     "LOG_LEVEL",
+    "AVE_API_URL",
+    "AVE_RECORD_URL_TEMPLATE",
+    "FP_SIGNAL_URL",
     "LLM_ENABLED",
     "LLM_MODEL",
     "LLM_MAX_TOKENS",

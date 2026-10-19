@@ -6,8 +6,13 @@ until 2.0, when piranha_url is removed. The opt-in false-positive signal sends n
 unless BAWBEL_PIRANHA_URL is set.
 """
 
-from unittest.mock import patch
+import logging
+from unittest.mock import MagicMock, patch
 
+import pytest
+
+from scanner.config import AVE_RECORD_URL_TEMPLATE
+from scanner.config.default import AVE_API_URL_DEFAULT, env_http_url
 from scanner.engines.pattern_engine import run_pattern_scan
 from scanner.models import Severity
 from scanner.models.acceptance import AcceptedFinding
@@ -16,7 +21,7 @@ from scanner.models.result import ScanResult
 from scanner.suppression.justified import send_fp_signal
 from scanner.utils import ave_record_url
 
-AVE_RECORDS = "https://api.aveproject.org/records/"
+AVE_RECORDS = AVE_RECORD_URL_TEMPLATE.format(ave_id="")
 
 
 def _finding(**kwargs) -> Finding:
@@ -30,6 +35,30 @@ def _finding(**kwargs) -> Finding:
     )
     defaults.update(kwargs)
     return Finding(**defaults)
+
+
+class TestEndpointConfig:
+    def test_ave_api_default(self):
+        assert AVE_API_URL_DEFAULT == "https://api.aveproject.org"
+
+    def test_env_url_used_without_trailing_slash(self, monkeypatch):
+        monkeypatch.setenv("BAWBEL_TEST_URL", " https://records.example.org/ ")
+        assert env_http_url("BAWBEL_TEST_URL") == "https://records.example.org"
+
+    def test_env_url_unset_or_empty_is_none(self, monkeypatch):
+        monkeypatch.delenv("BAWBEL_TEST_URL", raising=False)
+        assert env_http_url("BAWBEL_TEST_URL") is None
+        monkeypatch.setenv("BAWBEL_TEST_URL", "  ")
+        assert env_http_url("BAWBEL_TEST_URL") is None
+
+    @pytest.mark.parametrize(
+        "value", ["file:///etc/passwd", "ftp://x.example", "api.aveproject.org"]
+    )
+    def test_env_url_not_http_is_ignored_with_a_warning(self, monkeypatch, caplog, value):
+        monkeypatch.setenv("BAWBEL_TEST_URL", value)
+        with caplog.at_level(logging.WARNING):
+            assert env_http_url("BAWBEL_TEST_URL") is None
+        assert "BAWBEL_TEST_URL" in caplog.text
 
 
 class TestAveRecordUrl:
@@ -75,8 +104,18 @@ class TestFalsePositiveSignal:
             report_to_piranha=True,
         )
 
-    def test_sends_nothing_without_bawbel_piranha_url(self, monkeypatch):
-        monkeypatch.delenv("BAWBEL_PIRANHA_URL", raising=False)
+    def test_sends_nothing_without_an_endpoint(self, monkeypatch):
+        monkeypatch.setattr("scanner.suppression.justified.FP_SIGNAL_URL", None)
         with patch("urllib.request.urlopen") as urlopen:
             assert send_fp_signal(self._accepted(), "pattern", 0.9, "hash") is False
         urlopen.assert_not_called()
+
+    def test_posts_to_the_configured_endpoint(self, monkeypatch):
+        monkeypatch.setattr("scanner.suppression.justified.FP_SIGNAL_URL", "https://fp.example.org")
+        resp = MagicMock(status=200)
+        resp.__enter__.return_value = resp
+        with patch("urllib.request.urlopen", return_value=resp) as urlopen:
+            assert send_fp_signal(self._accepted(), "pattern", 0.9, "hash") is True
+        req = urlopen.call_args.args[0]
+        assert req.full_url == "https://fp.example.org/feedback/false-positive"
+        assert urlopen.call_args.kwargs["timeout"] == 5
