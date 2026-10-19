@@ -43,6 +43,12 @@ COMPONENT_EXTENSIONS: dict[str, str] = {
 LOG_LEVEL = os.environ.get("BAWBEL_LOG_LEVEL", "WARNING").upper()
 
 
+# ── AVE record links ───────────────────────────────────────────────────────────
+# Findings link here as ave_url and piranha_url (same value until 2.0).
+
+AVE_RECORD_URL_TEMPLATE = "https://api.aveproject.org/records/{ave_id}"
+
+
 # ── Stage 2: LLM semantic analysis ────────────────────────────────────────────
 
 LLM_ENABLED = bool(os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("OPENAI_API_KEY"))

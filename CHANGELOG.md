@@ -6,6 +6,22 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- `ave_url` on every finding (JSON, SARIF, `scan()`): the AVE record at
+  https://api.aveproject.org/records/{ave_id}, built from `AVE_RECORD_URL_TEMPLATE` (#116).
+
+### Changed
+
+- `piranha_url` now carries the same `api.aveproject.org` value as `ave_url`.
+  `api.piranha.bawbel.io` no longer resolves (#116).
+- `BAWBEL_PIRANHA_URL` has no default: the opt-in false-positive signal sends nothing
+  unless it is set (#116).
+
+### Deprecated
+
+- `piranha_url`. Use `ave_url`. Removed in 2.0 (#116).
+
 ### Removed
 
 - `action.yml` at the repo root. The GitHub Action is `bawbel/integrations@v1`. Existing

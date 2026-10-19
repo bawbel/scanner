@@ -30,6 +30,7 @@ def print_json(results: list[ScanResult]) -> None:
             "owasp": f.owasp,
             "owasp_mcp": f.owasp_mcp or get_owasp_mcp(f.ave_id),
             "piranha_url": f.piranha_url,
+            "ave_url": f.ave_url,
         }
         if suppressed:
             d["suppressed"] = True
@@ -104,6 +105,7 @@ def print_sarif(results: list[ScanResult]) -> None:
                         "aivss_score": f.aivss_score,
                         "owasp_mcp": f.owasp_mcp or get_owasp_mcp(f.ave_id),
                         "piranha_url": f.piranha_url,
+                        "ave_url": f.ave_url,
                     },
                 }
             )

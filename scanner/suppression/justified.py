@@ -228,7 +228,7 @@ def check_expiring_soon(
 
 
 def send_fp_signal(af: AcceptedFinding, engine: str, confidence: float, match_hash: str) -> bool:
-    """J8: Send anonymous false positive signal to PiranhaDB (opt-in)."""
+    """J8: Send an anonymous false-positive signal (opt-in; needs BAWBEL_PIRANHA_URL)."""
     if not af.report_to_piranha:
         return False
 
@@ -236,7 +236,11 @@ def send_fp_signal(af: AcceptedFinding, engine: str, confidence: float, match_ha
     import os
     import urllib.request
 
-    piranha_url = os.environ.get("BAWBEL_PIRANHA_URL", "https://api.piranha.bawbel.io")
+    # No default endpoint: the hosted PiranhaDB API is offline, so the signal is sent
+    # only when BAWBEL_PIRANHA_URL names an endpoint explicitly.
+    piranha_url = os.environ.get("BAWBEL_PIRANHA_URL")
+    if not piranha_url:
+        return False
     endpoint = f"{piranha_url}/feedback/false-positive"
 
     payload = {

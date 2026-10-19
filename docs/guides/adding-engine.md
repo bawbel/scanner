@@ -175,6 +175,7 @@ Finding(
     engine="my-engine",             # must match ENGINE_NAME
     owasp=["ASI01"],
     owasp_mcp=["MCP04"],
-    piranha_url=f"https://api.piranha.bawbel.io/records/{ave_id}",
+    piranha_url=ave_record_url(ave_id),  # deprecated, same value as ave_url
+    ave_url=ave_record_url(ave_id),      # from scanner.utils
 )
 ```

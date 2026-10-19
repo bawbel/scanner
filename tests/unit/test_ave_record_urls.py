@@ -69,7 +69,7 @@ class TestFalsePositiveSignal:
             ave_id="AVE-2026-00004",
             rule_id="bawbel-shell-pipe",
             line=3,
-            file_path="/tmp/skill.md",
+            file_path="skill.md",
             suppression_type="false_positive",
             reason="documentation example",
             report_to_piranha=True,

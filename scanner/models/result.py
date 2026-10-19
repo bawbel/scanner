@@ -107,6 +107,7 @@ class ScanResult:
                     "owasp": f.owasp,
                     "owasp_mcp": f.owasp_mcp,
                     "piranha_url": f.piranha_url,
+                    "ave_url": f.ave_url,
                     "confidence": round(f.confidence, 2),
                     "evidence_kind": f.evidence_kind,
                     "detection_stage": f.detection_stage,
