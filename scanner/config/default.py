@@ -10,8 +10,10 @@ To change defaults for a deployment: edit this file only.
 
 import logging
 import os
+import re
 from pathlib import Path
 from typing import Optional
+from urllib.parse import quote, urlsplit
 
 from scanner.messages import Logs
 
@@ -54,17 +56,27 @@ LOG_LEVEL = os.environ.get("BAWBEL_LOG_LEVEL", "WARNING").upper()
 AVE_API_URL_DEFAULT = "https://api.aveproject.org"
 
 
-def env_http_url(var: str) -> Optional[str]:
-    """Return the http(s) URL in environment variable var, without a trailing slash.
+# host or host:port, letters, digits, dots, and hyphens only: no credentials, no spaces,
+# no quotes.
+_HOST_PORT = re.compile(r"^[A-Za-z0-9.-]+(:[0-9]{1,5})?$")
 
-    None when var is unset or empty, or when its value is not an http(s) URL; the last
-    case logs a warning so a misconfiguration is visible.
+
+def env_http_url(var: str) -> Optional[str]:
+    """Return the http(s) URL in environment variable var, normalised, or None.
+
+    The value must parse as http(s) with a plain host[:port]. The result is rebuilt from
+    scheme, host, and percent-encoded path, without query, fragment, or trailing slash.
+    None when var is unset or empty, or when the value does not qualify; the last case
+    logs a warning so a misconfiguration is visible.
     """
     raw = (os.environ.get(var) or "").strip()
     if not raw:
         return None
-    if raw.lower().startswith(("https://", "http://")):
-        return raw.rstrip("/")
+    parts = urlsplit(raw)
+    scheme = parts.scheme.lower()
+    if scheme in ("http", "https") and _HOST_PORT.match(parts.netloc):
+        path = quote(parts.path, safe="/%")
+        return f"{scheme}://{parts.netloc}{path}".rstrip("/")
     logging.getLogger(__name__).warning(Logs.CONFIG_URL_IGNORED, var)
     return None
 

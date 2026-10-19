@@ -45,6 +45,10 @@ class TestEndpointConfig:
         monkeypatch.setenv("BAWBEL_TEST_URL", " https://records.example.org/ ")
         assert env_http_url("BAWBEL_TEST_URL") == "https://records.example.org"
 
+    def test_env_url_normalised(self, monkeypatch):
+        monkeypatch.setenv("BAWBEL_TEST_URL", "HTTPS://ave.example.org/api/v1/?q=1#frag")
+        assert env_http_url("BAWBEL_TEST_URL") == "https://ave.example.org/api/v1"
+
     def test_env_url_unset_or_empty_is_none(self, monkeypatch):
         monkeypatch.delenv("BAWBEL_TEST_URL", raising=False)
         assert env_http_url("BAWBEL_TEST_URL") is None
@@ -52,7 +56,15 @@ class TestEndpointConfig:
         assert env_http_url("BAWBEL_TEST_URL") is None
 
     @pytest.mark.parametrize(
-        "value", ["file:///etc/passwd", "ftp://x.example", "api.aveproject.org"]
+        "value",
+        [
+            "file:///etc/passwd",
+            "ftp://x.example",
+            "api.aveproject.org",
+            "https://",
+            'https://x" onmouseover="y',
+            "https://user:secret@ave.example.org",
+        ],
     )
     def test_env_url_not_http_is_ignored_with_a_warning(self, monkeypatch, caplog, value):
         monkeypatch.setenv("BAWBEL_TEST_URL", value)
