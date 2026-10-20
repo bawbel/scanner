@@ -6,6 +6,13 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- `scripts/sync_record_counts.py` derives the record, rule, and chain counts in README.md from
+  the AVE corpus and the scanner's rule files. Each count sits in a
+  `<!-- count:NAME -->` marker, the corpus is pinned by commit in the README, and a
+  `Record Counts` CI job runs `--check`. `--update-ref` moves the pin (#120).
+
 ### Removed
 
 - `action.yml` at the repo root. The GitHub Action is `bawbel/integrations@v1`. Existing
