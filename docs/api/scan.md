@@ -31,7 +31,7 @@ result = scan("./skills/my-skill.md")
 if result.has_error:
     print(f"Scan failed: {result.error}")
 elif result.is_clean:
-    print("No vulnerabilities found")
+    print("No findings from the engines that ran")
 else:
     print(f"Risk score: {result.risk_score:.1f}  Severity: {result.max_severity.value}")
     for f in result.findings:
