@@ -13,6 +13,15 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   `<!-- count:NAME -->` marker, the corpus is pinned by commit in the README, and a
   `Record Counts` CI job runs `--check`. `--update-ref` moves the pin (#120).
 
+### Changed
+
+- Output when nothing matched no longer gives a verdict. `scan` and `report` printed
+  "No vulnerabilities found", "Risk score: 0.0 / 10  CLEAN", and "This component passed
+  all AVE checks" (`report` added "It is safe to install and use"). They now print "No
+  findings from the engines that ran", "No rule matched. This is not proof that the
+  component is safe.", and "Risk score: 0.0 / 10  (no findings, not a safety verdict)".
+  The strings live in `messages.Info`. JSON, SARIF, and exit codes are unchanged (#118).
+
 ### Removed
 
 - `action.yml` at the repo root. The GitHub Action is `bawbel/integrations@v1`. Existing
