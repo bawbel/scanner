@@ -46,6 +46,8 @@ def print_json(results: list[ScanResult]) -> None:
                 "max_severity": sev_value(r.max_severity) if r.max_severity else None,
                 "scan_time_ms": r.scan_time_ms,
                 "has_error": r.has_error,
+                "engines_run": list(r.engines_run),
+                "engines_degraded": [d.to_dict() for d in r.engines_degraded],
                 "findings": [_finding_dict(f) for f in r.findings],
                 "suppressed_findings": [
                     _finding_dict(f, suppressed=True) for f in r.suppressed_findings
@@ -54,6 +56,43 @@ def print_json(results: list[ScanResult]) -> None:
             }
         )
     print(json.dumps(output, indent=2, default=str))
+
+
+def _sarif_invocation(results: list[ScanResult]) -> dict:
+    """SARIF invocation: one warning notification per engine that did not run.
+
+    SARIF 2.1.0 puts these on runs[].invocations[].toolExecutionNotifications. One run covers
+    every file, so an engine is reported once, with how many files it did not run on.
+    """
+    not_run: dict[str, list] = {}
+    ran: set[str] = set()
+    for r in results:
+        ran.update(r.engines_run)
+        for d in r.engines_degraded:
+            not_run.setdefault(d.engine, []).append(d)
+    notifications = [
+        {
+            "level": "warning",
+            "descriptor": {"id": "bawbel-engine-degraded"},
+            "message": {
+                "text": (
+                    f"Engine {engine} did not run on {len(items)} of {len(results)} file(s): "
+                    f"{items[0].reason}"
+                )
+            },
+            "properties": {
+                "engine": engine,
+                "reason": items[0].reason,
+                "detail": items[0].detail,
+            },
+        }
+        for engine, items in not_run.items()
+    ]
+    return {
+        "executionSuccessful": all(r.error is None for r in results),
+        "toolExecutionNotifications": notifications,
+        "properties": {"enginesRun": sorted(ran)},
+    }
 
 
 def print_sarif(results: list[ScanResult]) -> None:
@@ -124,6 +163,7 @@ def print_sarif(results: list[ScanResult]) -> None:
                         "rules": rules,
                     }
                 },
+                "invocations": [_sarif_invocation(results)],
                 "results": run_results,
             }
         ],

@@ -15,8 +15,9 @@ from pathlib import Path
 from typing import Optional
 
 from scanner.ave_meta import get_ave_meta
+from scanner.core.engine_ledger import error_code, report_degraded, report_ran
 from scanner.messages import Errors, Logs  # noqa: F401
-from scanner.models import Finding, Severity
+from scanner.models import DegradedReason, Finding, Severity
 from scanner.utils import Timer, get_logger, parse_cvss, parse_severity, truncate_match
 
 log = get_logger(__name__)
@@ -53,10 +54,12 @@ def run_yara_scan(
         import yara  # optional
     except ImportError:
         log.info(Logs.ENGINE_UNAVAILABLE, "yara")
+        report_degraded("yara", DegradedReason.NOT_INSTALLED)
         return findings
 
     if not YARA_RULES_PATH.exists():
         log.warning(Logs.RULES_MISSING, "yara", YARA_RULES_PATH)
+        report_degraded("yara", DegradedReason.RULES_MISSING)
         return findings
 
     log.debug(Logs.ENGINE_START, "yara", file_path)
@@ -90,6 +93,9 @@ def run_yara_scan(
         except yara.SyntaxError as e:
             log.error(Logs.ENGINE_ERROR, "yara", file_path, type(e).__name__)
             log.debug("YARA syntax error detail: %s", e)
+            report_degraded(
+                "yara", DegradedReason.ENGINE_ERROR, error_code(Errors.YARA_COMPILE_FAILED)
+            )
             if tmp_path:
                 with contextlib.suppress(OSError):
                     os.unlink(tmp_path)
@@ -97,6 +103,9 @@ def run_yara_scan(
 
         except Exception as e:  # nosec B110
             log.error(Logs.ENGINE_ERROR, "yara", file_path, type(e).__name__)
+            report_degraded(
+                "yara", DegradedReason.ENGINE_ERROR, error_code(Errors.YARA_SCAN_FAILED)
+            )
             if tmp_path:
                 with contextlib.suppress(OSError):
                     os.unlink(tmp_path)
@@ -151,5 +160,6 @@ def run_yara_scan(
             None,
         )
 
+    report_ran("yara")
     log.debug(Logs.ENGINE_COMPLETE, "yara", len(findings), t.elapsed_ms)
     return findings

@@ -14,8 +14,9 @@ from pathlib import Path
 from typing import Optional
 
 from scanner.ave_meta import get_ave_meta
-from scanner.messages import Logs
-from scanner.models import Finding, Severity
+from scanner.core.engine_ledger import error_code, report_degraded, report_ran
+from scanner.messages import Errors, Logs
+from scanner.models import DegradedReason, Finding, Severity
 from scanner.utils import (
     Timer,
     get_logger,
@@ -100,6 +101,7 @@ def run_semgrep_scan(file_path: str, stripped_content: Optional[str] = None) -> 
 
     if not SEMGREP_RULES_PATH.exists():
         log.warning(Logs.RULES_MISSING, "semgrep", SEMGREP_RULES_PATH)
+        report_degraded("semgrep", DegradedReason.RULES_MISSING)
         return findings
 
     # ── Resolve scan target ───────────────────────────────────────────────────
@@ -139,16 +141,31 @@ def run_semgrep_scan(file_path: str, stripped_content: Optional[str] = None) -> 
             _os.unlink(tmp_path)
 
     if stdout is None:
+        # (None, None): the semgrep CLI is not installed. (None, "E013..."): it timed out.
+        # Anything else: it failed. All three are reported, none raises.
+        if err is None:
+            report_degraded("semgrep", DegradedReason.NOT_INSTALLED)
+        else:
+            log.warning(Logs.ENGINE_ERROR, "semgrep", file_path, err)
+            timed_out = error_code(err) == error_code(Errors.SEMGREP_TIMEOUT)
+            reason = DegradedReason.TIMEOUT if timed_out else DegradedReason.ENGINE_ERROR
+            report_degraded("semgrep", reason, error_code(err))
         return findings
 
     if err:
         log.warning(Logs.ENGINE_ERROR, "semgrep", file_path, err)
+        report_degraded("semgrep", DegradedReason.ENGINE_ERROR, error_code(err))
         return findings
 
     data, parse_err = parse_json_safe(stdout, label="semgrep")
     if parse_err or not data:
         log.warning(Logs.ENGINE_ERROR, "semgrep", file_path, parse_err)
+        report_degraded(
+            "semgrep", DegradedReason.ENGINE_ERROR, error_code(Errors.SEMGREP_PARSE_FAILED)
+        )
         return findings
+
+    report_ran("semgrep")
 
     for r in data.get("results", []):
         try:

@@ -63,3 +63,5 @@ SANDBOX_TIMEOUT = int(os.environ.get("BAWBEL_SANDBOX_TIMEOUT_SEC", "120"))
 EXIT_CODE_FINDINGS = 2
 EXIT_CODE_CLEAN = 0
 EXIT_CODE_WARNING = 1
+# A required engine (--require-engines) did not run. Takes precedence over EXIT_CODE_FINDINGS.
+EXIT_CODE_ENGINE_MISSING = 3
