@@ -14,6 +14,7 @@ import pytest
 from scanner.cli.shared.utils import collect_files
 from scanner.config import SCANNER_CONFIG_FILES, SUPPRESSION_COMMENT_MAX_CHARS
 from scanner.core.preprocessor import mask_suppression_comments
+from scanner.models import Finding, Severity
 from scanner.scanner import scan
 
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures" / "skills" / "clean"
@@ -216,11 +217,27 @@ class TestScan:
         )
         assert "AVE-2026-00007" in _ave_ids(scan(path))
 
+    @pytest.mark.parametrize("magika_finding", [False, True], ids=["plain", "magika-note"])
     def test_the_llm_engine_reads_the_masked_text_only_when_suppressions_are_honored(
-        self, tmp_path, monkeypatch
+        self, tmp_path, monkeypatch, magika_finding
     ):
+        # scan() calls the LLM engine from two places: the usual path, and the path taken
+        # when Magika reports a content-type finding that is not "dangerous".
         seen: list = []
         monkeypatch.setattr("scanner.scanner.run_llm_scan", lambda c: seen.append(c) or [])
+        note = Finding(
+            rule_id="bawbel-content-type-note",
+            ave_id=None,
+            title="t",
+            description="t",
+            severity=Severity.LOW,
+            aivss_score=1.0,
+            match="detected: markdown",
+            engine="magika",
+        )
+        monkeypatch.setattr(
+            "scanner.scanner.run_magika_scan", lambda p: [note] if magika_finding else []
+        )
         path = _write(
             tmp_path,
             "llm.md",
