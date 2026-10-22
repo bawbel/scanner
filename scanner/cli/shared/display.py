@@ -13,6 +13,7 @@ from rich.panel import Panel
 from rich.text import Text
 
 from scanner import __version__
+from scanner.messages import Info
 from scanner.models import ENGINES, ScanResult
 from scanner.scanner import SEVERITY_SCORES
 from scanner.cli.shared.constants import (
@@ -88,7 +89,7 @@ def print_summary(result: ScanResult) -> None:
             f"Risk score:   [{color}]" f"{result.risk_score:.1f} / 10  {sev_value(max_sev)}[/]"
         )
     else:
-        console.print("Risk score:   [bold #1DB894]0.0 / 10  CLEAN[/]")
+        console.print(f"Risk score:   [bold #1DB894]{Info.CLEAN_RISK_SCORE}[/]")
 
     console.print(f"Findings:     [bold]{len(result.findings)}[/]")
 
@@ -141,8 +142,8 @@ def build_scan_renderables(
     items.append(Text(""))
 
     if result.is_clean:
-        items.append(Text("✓  No vulnerabilities found", style="bold #1DB894"))
-        items.append(Text("This component passed all AVE checks.", style="dim"))
+        items.append(Text(f"✓  {Info.CLEAN_COMPONENT}", style="bold #1DB894"))
+        items.append(Text(Info.CLEAN_DESCRIPTION, style="dim"))
     else:
         items.append(Text("FINDINGS", style="bold white"))
         for f in result.findings:
@@ -259,7 +260,7 @@ def build_scan_renderables(
             )
         )
     else:
-        items.append(Text("Risk score:   0.0 / 10  CLEAN", style="bold #1DB894"))
+        items.append(Text(f"Risk score:   {Info.CLEAN_RISK_SCORE}", style="bold #1DB894"))
 
     items.append(
         Text.assemble(
