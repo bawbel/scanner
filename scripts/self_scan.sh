@@ -5,6 +5,7 @@
 # Not scanned, because they contain attack text on purpose: tests/fixtures/ (the golden
 # fixture must stay out of .bawbelignore or its tests break), scanner/rules/ (detection
 # rules), scripts/*.json (recorded scan data), docs/ and CHANGELOG.md (they describe attacks).
+# bawbel.yml and .bawbelignore are the scanner's own configuration, not agent-facing files.
 set -euo pipefail
 
 cd "$(git rev-parse --show-toplevel)"
@@ -18,7 +19,6 @@ TARGETS=(
   ARCHITECTURE.md
   LANGUAGE.md
   PROJECT_STRUCTURE.md
-  bawbel.yml
   server.json
   .github
 )

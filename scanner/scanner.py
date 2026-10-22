@@ -41,7 +41,7 @@ from scanner.engines.sandbox_engine import (
 )
 
 # Core pure functions
-from scanner.core.preprocessor import strip_code_fences
+from scanner.core.preprocessor import mask_suppression_comments, strip_code_fences
 from scanner.core.dedup import deduplicate
 from scanner.core.fp_pipeline import run_fp_pipeline
 
@@ -210,10 +210,14 @@ def scan(file_path: str, no_ignore: bool = False) -> ScanResult:
 
         log.info(Logs.SCAN_START, path, component_type, size_kb)
 
-        # ── Step 5: FP-1 - Strip code fences ─────────────────────────────────
-        # Content inside ``` blocks is replaced with blank lines.
-        # Line numbers stay accurate. Original content preserved for sandbox.
-        stripped = strip_code_fences(content)
+        # ── Step 5: FP-1 - Strip code fences, mask suppression comments ──────
+        # Content inside ``` blocks is replaced with blank lines. So is the text of
+        # bawbel-ignore / bawbel-accept comments, which would otherwise raise findings of
+        # their own (issue #122). Under --no-ignore a comment is ordinary text and is scanned.
+        # Line numbers stay accurate. Original content preserved for sandbox and suppression.
+        honor_suppressions = not (no_ignore or NO_IGNORE)
+        engine_content = mask_suppression_comments(content) if honor_suppressions else content
+        stripped = strip_code_fences(engine_content)
 
         findings: list[Finding] = []
 
@@ -231,12 +235,12 @@ def scan(file_path: str, no_ignore: bool = False) -> ScanResult:
                 findings.extend(run_pattern_scan(stripped))
                 findings.extend(run_yara_scan(str(path), stripped))
                 findings.extend(run_semgrep_scan(str(path), stripped))
-                findings.extend(run_llm_scan(content))
+                findings.extend(run_llm_scan(engine_content))
         else:
             findings.extend(run_pattern_scan(stripped))
             findings.extend(run_yara_scan(str(path), stripped))
             findings.extend(run_semgrep_scan(str(path), stripped))
-            findings.extend(run_llm_scan(content))
+            findings.extend(run_llm_scan(engine_content))
 
         # ── Stage 3: Behavioral sandbox ───────────────────────────────────────
         if SANDBOX_ENABLED:

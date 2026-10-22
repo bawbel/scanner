@@ -11,6 +11,14 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - `action.yml` at the repo root. The GitHub Action is `bawbel/integrations@v1`. Existing
   tags, such as `bawbel/scanner@v1.3.0`, still carry their copy (#92).
 
+### Fixed
+
+- A suppression comment could raise findings of its own: a `bawbel-ignore` reason that quoted
+  the pattern it suppressed created a second, unsuppressed finding, and a block comment's text
+  was listed as a suppressed finding. The text of `bawbel-ignore` and `bawbel-accept` comments
+  is now kept out of content analysis when suppressions are honored. `--no-ignore` still scans
+  it. `bawbel.yml` and `.bawbelignore` at the root of a directory scan are skipped (#122).
+
 ---
 
 ## [1.3.0] - 2026-06-28
