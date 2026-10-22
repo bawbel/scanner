@@ -145,20 +145,19 @@ def parse_corpus(raw: bytes, source: str) -> list[dict[str, Any]]:
     return records
 
 
-def corpus_sha256(records: list[dict[str, Any]]) -> str:
-    """Hash of the records in a canonical serialization, to name the corpus used."""
-    canonical = json.dumps(records, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
-    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+def corpus_sha256(raw: bytes) -> str:
+    """SHA-256 of the exact bytes consumed (AVE-CONSUMPTION R3). Not of a re-serialization."""
+    return hashlib.sha256(raw).hexdigest()
 
 
-def load_corpus(source: str) -> list[dict[str, Any]]:
-    """Read the corpus from a file path or an https URL."""
+def load_corpus(source: str) -> tuple[list[dict[str, Any]], str]:
+    """Read the corpus from a file path or an https URL. Returns the records and the digest."""
     path = Path(source)
     if path.is_file():
         raw = path.read_bytes()
     else:
         raw = _https_get(source, "application/json")
-    return parse_corpus(raw, source)
+    return parse_corpus(raw, source), corpus_sha256(raw)
 
 
 # ── Reading the scanner's rule files ──────────────────────────────────────────
@@ -442,14 +441,14 @@ def run(args: argparse.Namespace) -> int:
 
     ref = head_sha() if args.update_ref else pinned_ref(text)
     source = corpus_source(args, ref)
-    records = load_corpus(source)
+    records, digest = load_corpus(source)
     values, warnings = measure(records)
 
     for warning in warnings:
         print(f"warning: {warning}", file=sys.stderr)
     new_text, changes = apply_counts(set_ref(text, ref) if args.update_ref else text, values)
     pin_changed = args.update_ref and ref != pinned_ref(text)
-    print(f"corpus: {len(records)} records, sha256 {corpus_sha256(records)[:16]}, {source}")
+    print(f"corpus: {len(records)} records, sha256 {digest}, {source}")
 
     if args.check:
         for line, name, old, new in changes:

@@ -12,6 +12,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   the AVE corpus and the scanner's rule files. Each count sits in a
   `<!-- count:NAME -->` marker, the corpus is pinned by commit in the README, and a
   `Record Counts` CI job runs `--check`. `--update-ref` moves the pin (#120).
+  The corpus is named by the SHA-256 of the exact bytes read, the identifier AVE-CONSUMPTION R3 asks for.
 
 ### Changed
 

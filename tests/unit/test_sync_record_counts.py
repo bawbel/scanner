@@ -7,6 +7,7 @@ Issue #120: a count typed by hand drifts (the corpus grew from 80 to 87 records 
 Run: pytest tests/unit/test_sync_record_counts.py -q
 """
 
+import hashlib
 import importlib.util
 import json
 import re
@@ -367,18 +368,22 @@ class TestCorpus:
         with pytest.raises(src.CountsError, match=message):
             src.parse_corpus(raw, "t")
 
-    def test_the_hash_ignores_key_order_and_changes_with_content(self):
-        a = [{"ave_id": "AVE-2026-00001", "x": 1, "y": 2}]
-        b = [{"y": 2, "x": 1, "ave_id": "AVE-2026-00001"}]
-        c = [{"ave_id": "AVE-2026-00001", "x": 1, "y": 3}]
-        assert src.corpus_sha256(a) == src.corpus_sha256(b) != src.corpus_sha256(c)
-        assert re.fullmatch(r"[0-9a-f]{64}", src.corpus_sha256(a))
+    def test_the_digest_is_of_the_exact_bytes(self):
+        """AVE-CONSUMPTION R3: corpus_sha256 is the digest of the bytes consumed."""
+        compact = json.dumps(RECORDS, separators=(",", ":")).encode()
+        indented = json.dumps(RECORDS, indent=2).encode()
+        assert json.loads(compact) == json.loads(indented)
+        assert src.corpus_sha256(compact) == hashlib.sha256(compact).hexdigest()
+        assert src.corpus_sha256(compact) != src.corpus_sha256(indented)
+        assert re.fullmatch(r"[0-9a-f]{64}", src.corpus_sha256(compact))
 
     def test_a_local_file_loads_without_the_network(self, tmp_path, monkeypatch):
         monkeypatch.setattr(src, "_https_get", lambda *a, **k: pytest.fail("network used"))
         path = tmp_path / "corpus.json"
         path.write_text(json.dumps(RECORDS), encoding="utf-8")
-        assert len(src.load_corpus(str(path))) == 8
+        records, digest = src.load_corpus(str(path))
+        assert len(records) == 8
+        assert digest == hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 class _Response:
@@ -548,6 +553,12 @@ class TestMain:
         assert src.main(["--check", "--corpus", str(corpus), "--readme", str(readme)]) == 0
         assert "match the corpus" in capsys.readouterr().out
 
+    def test_the_run_prints_the_digest_of_the_file_bytes(self, workspace, capsys):
+        readme, corpus = workspace
+        assert src.main(["--check", "--corpus", str(corpus), "--readme", str(readme)]) == 0
+        digest = hashlib.sha256(corpus.read_bytes()).hexdigest()
+        assert f"8 records, sha256 {digest}," in capsys.readouterr().out
+
     def test_check_fails_and_names_the_line_when_stale(self, workspace, capsys):
         readme, corpus = workspace
         readme.write_text(readme.read_text().replace(">8<", ">9<"), encoding="utf-8")
@@ -598,7 +609,9 @@ class TestMain:
         readme, _ = workspace
         seen = []
         monkeypatch.delenv(src.CORPUS_URL_ENV, raising=False)
-        monkeypatch.setattr(src, "load_corpus", lambda source: seen.append(source) or RECORDS)
+        monkeypatch.setattr(
+            src, "load_corpus", lambda source: seen.append(source) or (RECORDS, "0" * 64)
+        )
         assert src.main(["--check", "--readme", str(readme)]) == 0
         assert seen == [src.CORPUS_URL_TEMPLATE.format(ref=PIN)]
 
@@ -606,7 +619,9 @@ class TestMain:
         readme, _ = workspace
         seen = []
         monkeypatch.setenv(src.CORPUS_URL_ENV, "https://example.com/corpus.json")
-        monkeypatch.setattr(src, "load_corpus", lambda source: seen.append(source) or RECORDS)
+        monkeypatch.setattr(
+            src, "load_corpus", lambda source: seen.append(source) or (RECORDS, "0" * 64)
+        )
         assert src.main(["--check", "--readme", str(readme)]) == 0
         assert seen == ["https://example.com/corpus.json"]
 
@@ -614,7 +629,9 @@ class TestMain:
         readme, _ = workspace
         seen = []
         monkeypatch.setenv(src.CORPUS_URL_ENV, "https://example.com/corpus.json")
-        monkeypatch.setattr(src, "load_corpus", lambda source: seen.append(source) or RECORDS)
+        monkeypatch.setattr(
+            src, "load_corpus", lambda source: seen.append(source) or (RECORDS, "0" * 64)
+        )
         assert src.main(["--check", "--corpus", "local.json", "--readme", str(readme)]) == 0
         assert seen == ["local.json"]
 
