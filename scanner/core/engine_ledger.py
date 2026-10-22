@@ -21,7 +21,6 @@ from typing import Iterator, Optional
 
 from scanner.models.engine_status import ENGINES, EngineDegradation
 
-
 _ERROR_CODE = re.compile(r"^(E\d{3})\b")
 
 
