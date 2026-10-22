@@ -103,6 +103,7 @@ Logs.FINDING_DETECTED = "Finding detected: rule_id=%s severity=%s engine=%s line
 Informational strings for the UI.
 
 ```python
-Info.CLEAN_COMPONENT   = "No vulnerabilities found"
-Info.CLEAN_DESCRIPTION = "This component passed all AVE checks."
+Info.CLEAN_COMPONENT   = "No findings from the engines that ran"
+Info.CLEAN_DESCRIPTION = "No rule matched. This is not proof that the component is safe."
+Info.CLEAN_RISK_SCORE  = "0.0 / 10  (no findings, not a safety verdict)"
 ```

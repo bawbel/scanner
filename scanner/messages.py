@@ -102,8 +102,10 @@ class Logs:
 class Info:
     """Informational strings shown in the UI (not errors, not logs)."""
 
-    CLEAN_COMPONENT = "No vulnerabilities found"
-    CLEAN_DESCRIPTION = "This component passed all AVE checks."
+    # No findings: say what was not found. Never a verdict: no rule matching proves nothing.
+    CLEAN_COMPONENT = "No findings from the engines that ran"
+    CLEAN_DESCRIPTION = "No rule matched. This is not proof that the component is safe."
+    CLEAN_RISK_SCORE = "0.0 / 10  (no findings, not a safety verdict)"
     REPORT_COMING_SOON = "Full A-BOM report generation coming in v0.2.0"
     NO_FILES_FOUND = "No scannable files found in: {path}"
     ENGINE_SKIPPED_MISSING = "Engine skipped - not installed: {engine}"
