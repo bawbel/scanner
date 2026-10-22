@@ -102,7 +102,7 @@ for result in data:
         print(f'    aivss_score:  {f[\"aivss_score\"]}')
         print(f'    aivss.spec:   {f[\"aivss\"][\"spec_version\"]}')
         print(f'    owasp_mcp:    {f[\"owasp_mcp\"]}')
-        print(f'    piranha_url:  {f[\"piranha_url\"]}')
+        print(f'    ave_url:      {f[\"ave_url\"]}')
 "
 ```
 
@@ -284,7 +284,7 @@ for f in result.findings:
     print(f.aivss_score)          # OWASP AIVSS v0.8 score
     print(f.to_aivss_dict())      # full AIVSS breakdown
     print(f.owasp_mcp)            # ['MCP06', ...]
-    print(f.piranha_url)          # https://api.piranha.bawbel.io/records/AVE-...
+    print(f.ave_url)              # https://api.aveproject.org/records/AVE-...
 
 print(result.findings_by_severity)  # {'CRITICAL': [...], 'HIGH': [...]}
 print(result.to_dict())             # full serialisable dict

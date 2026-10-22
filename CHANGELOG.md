@@ -6,14 +6,34 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- `ave_url` on every finding (JSON, SARIF, `scan()`): the AVE record at
+  https://api.aveproject.org/records/{ave_id}, built from `AVE_RECORD_URL_TEMPLATE` (#116).
+
+- Outbound HTTP settings in one place (`scanner/config`), each overridable from the
+  environment and validated: `BAWBEL_AVE_API_URL`, `BAWBEL_MCP_REGISTRY_URL`,
+  `BAWBEL_HTTP_TIMEOUT_SEC`. A value that is not an http(s) URL or a positive integer is
+  ignored with a warning (#116).
+
 ### Changed
 
+- The User-Agent on outbound requests is built from the package version (it said
+  1.0 or 1.2.0). SARIF rule `helpUri` links each rule's AVE record (#116).
+- `piranha_url` now carries the same `api.aveproject.org` value as `ave_url`.
+  `api.piranha.bawbel.io` no longer resolves (#116).
+- `BAWBEL_PIRANHA_URL` has no default: the opt-in false-positive signal sends nothing
+  unless it is set (#116).
 - Output when nothing matched no longer gives a verdict. `scan` and `report` printed
   "No vulnerabilities found", "Risk score: 0.0 / 10  CLEAN", and "This component passed
   all AVE checks" (`report` added "It is safe to install and use"). They now print "No
   findings from the engines that ran", "No rule matched. This is not proof that the
   component is safe.", and "Risk score: 0.0 / 10  (no findings, not a safety verdict)".
   The strings live in `messages.Info`. JSON, SARIF, and exit codes are unchanged (#118).
+
+### Deprecated
+
+- `piranha_url`. Use `ave_url`. Removed in 2.0 (#116).
 
 ### Removed
 

@@ -66,6 +66,10 @@ class Logs:
     SCAN_ERROR = "Scan error: path=%s error=%s"
     SCAN_SKIPPED = "Scan skipped: path=%s reason=%s"
 
+    # Configuration
+    CONFIG_URL_IGNORED = "Ignoring %s: not an http(s) URL"
+    CONFIG_INT_IGNORED = "Ignoring %s: not a positive integer; using %d"
+
     # Path validation
     SYMLINK_REJECTED = "Symlink rejected: path=%s"
     FILE_TOO_LARGE = "File too large, skipping: path=%s size_kb=%d max_kb=%d"

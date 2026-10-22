@@ -52,7 +52,8 @@ class Finding:
     owasp_mcp: list[str] = field(default_factory=list)  # ["MCP01", "MCP05"]
 
     # -- Threat intelligence -------------------------------------------------
-    piranha_url: Optional[str] = None  # https://api.piranha.bawbel.io/records/{ave_id}
+    piranha_url: Optional[str] = None  # deprecated, removed in 2.0; same value as ave_url
+    ave_url: Optional[str] = None  # https://api.aveproject.org/records/{ave_id}
 
     # -- Evidence (new in v1.3.0) --------------------------------------------
     # confidence starts at ave.confidence_baseline, adjusted by the FP pipeline.
