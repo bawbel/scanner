@@ -6,6 +6,14 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- `scripts/sync_record_counts.py` derives the record, rule, and chain counts in README.md from
+  the AVE corpus and the scanner's rule files. Each count sits in a
+  `<!-- count:NAME -->` marker, the corpus is pinned by commit in the README, and a
+  `Record Counts` CI job runs `--check`. `--update-ref` moves the pin (#120).
+  The corpus is named by the SHA-256 of the exact bytes read, the identifier AVE-CONSUMPTION R3 asks for.
+
 ### Changed
 
 - Output when nothing matched no longer gives a verdict. `scan` and `report` printed

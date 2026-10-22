@@ -13,11 +13,12 @@
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://pypi.org/project/bawbel-scanner/)
 [![AIVSS aligned](https://img.shields.io/badge/AIVSS-v0.8-teal.svg)](https://aivss.owasp.org)
-<!-- Record counts are measured from the live AVE corpus, last on 2026-10-11.
-     Source: https://raw.githubusercontent.com/aveproject/ave/main/dist/ave-records-latest.json
-     They are still hand-edited: re-run the commands in bawbel/scanner#79 before
-     changing any count. Regeneration tooling is tracked there too. -->
-[![AVE Records](https://img.shields.io/badge/AVE_Records-87-green.svg)](https://aveproject.org)
+<!-- The record, rule, and chain counts in this file are written by
+     scripts/sync_record_counts.py from the AVE corpus and the scanner's rule files. Do not
+     edit a number between count markers by hand: run the script. CI runs it with --check.
+     To pick up newly published records: python scripts/sync_record_counts.py --update-ref -->
+<!-- counts:corpus ref=6b9f1748c6ceedc1787af7a114361a216d3017d1 -->
+<!-- count:badge -->[![AVE Records](https://img.shields.io/badge/AVE_Records-87-green.svg)](https://aveproject.org)<!-- /count -->
 [![MCP Registry](https://img.shields.io/badge/MCP_Registry-listed-purple.svg)](https://registry.modelcontextprotocol.io)
 
 <!-- [![Star History Chart](https://api.star-history.com/svg?repos=bawbel/scanner&type=Date)](https://star-history.com/#bawbel/scanner&Date) -->
@@ -65,9 +66,9 @@ bawbel ssc https://server    # scan MCP server without starting it
 |---|---|---|---|---|
 | Starts MCP servers during a scan | Never | Never | Yes (stdio servers) | ? |
 | Runs scanned skill content | Only in the optional Docker sandbox stage, off by default | Never | ? | ? |
-| Open vulnerability database | Yes (AVE, 87 records, public API) | No (internal rule IDs) | No (internal rule IDs) | ? |
+| Open vulnerability database | Yes (AVE, <!-- count:published -->87<!-- /count --> records, public API) | No (internal rule IDs) | No (internal rule IDs) | ? |
 | OWASP AIVSS v0.8 scores | Yes | No (custom 0-100 risk score) | No | ? |
-| Compound attack chain detection | Yes (12 AVE capability chains) | Yes (TT1-TT5 taint flows + AST8 chain) | Yes (chain count not published) | ? |
+| Compound attack chain detection | Yes (<!-- count:chains -->12<!-- /count --> AVE capability chains) | Yes (TT1-TT5 taint flows + AST8 chain) | Yes (chain count not published) | ? |
 | MCP spec conformance grading (A+ to F) | Yes | No | No | ? |
 | Git-committed pin / rug pull detection | Yes | No | No | ? |
 | Suppression with expiry and audit trail | Yes (reason, reviewer, expiry) | Baseline (glob and fingerprint, no expiry) | Baseline (ignore flags, no expiry) | ? |
@@ -101,9 +102,9 @@ How a scan flows from your file to an AIVSS-scored finding:
       |
       v
   [ Detection engines ]  (run in parallel)
-    1a  Pattern    40 regex rules, stdlib only, always on
-    1b  YARA       39 binary/behavioral rules
-    1c  Semgrep    41 structural rules
+    1a  Pattern    regex rules, stdlib only, always on
+    1b  YARA       binary/behavioral rules
+    1c  Semgrep    structural rules
     2   LLM        semantic analysis via LiteLLM
     3   Sandbox    Docker behavioral sandbox
       |
@@ -115,7 +116,7 @@ How a scan flows from your file to an AIVSS-scored finding:
       v
   [ Toxic flow analysis ]
     map findings to capability tags
-    check all pairs against 12 chain definitions
+    check all pairs against the chain definitions
       |
       v
   [ ScanResult ]
@@ -137,15 +138,15 @@ Six engines run across the pipeline. Results merge before toxic flow analysis:
              pip install "bawbel-scanner[all]"
 
   Stage 1a   Pattern engine
-             40 regex rules, no deps, < 5ms
+             regex rules, no deps, < 5ms
              always active
 
   Stage 1b   YARA engine
-             39 rules, multi-condition matching
+             multi-condition rules
              pip install "bawbel-scanner[yara]"
 
   Stage 1c   Semgrep engine
-             41 structural rules, multi-line context
+             structural rules, multi-line context
              pip install "bawbel-scanner[semgrep]"
 
   Stage 2    LLM engine
@@ -254,7 +255,7 @@ AVE IDs of its contributing findings.
 The toxic flow AIVSS (9.8) is higher than either individual finding (6.8), because
 the chain represents a complete, end-to-end exploit, not just a capability.
 
-**12 built-in chains:**
+**<!-- count:chains -->12<!-- /count --> built-in chains:**
 
 | Flow | Capabilities required | AIVSS |
 |---|---|---|
@@ -489,21 +490,21 @@ scanners speak the same language.
 AVE-2026-00001  Metamorphic Payload via External Config Fetch   AIVSS 8.0  HIGH
 AVE-2026-00002  Tool Poisoning via Description Manipulation     AIVSS 7.3  HIGH
 AVE-2026-00046  MCP Tool Hook Hijacking                         AIVSS 9.2  CRITICAL
-... 87 records published total
+... and the rest of the published records
 ```
 
 | | |
 |---|---|
-| Records published | 87 (AVE-2026-00001 to AVE-2026-00087) |
-| Records with a detection rule in this scanner | 43 (42 by pattern, YARA, or Semgrep rules; AVE-2026-00024 by Magika) |
-| Records with scanner metadata only, no rule | 8 (AVE-2026-00041 to 00045, 00049 to 00051) |
-| Schema | 1.1.0, validates at [aveproject.org/schema.html](https://aveproject.org/schema.html) |
-| AIVSS | v0.8, every record scored |
+| Records published | <!-- count:published -->87<!-- /count --> (<!-- count:id_first -->AVE-2026-00001<!-- /count --> to <!-- count:id_last -->AVE-2026-00087<!-- /count -->) |
+| Records with a detection rule in this scanner | <!-- count:detected -->43<!-- /count --> (<!-- count:detected_static -->42<!-- /count --> by pattern, YARA, or Semgrep rules; <!-- count:magika_only_ids -->AVE-2026-00024<!-- /count --> by Magika) |
+| Records with scanner metadata only, no rule | <!-- count:metadata_only -->8<!-- /count --> (<!-- count:metadata_only_ids -->AVE-2026-00041 to 00045, 00049 to 00051<!-- /count -->) |
+| Schema | <!-- count:schema_version -->1.1.0<!-- /count -->, validates at [aveproject.org/schema.html](https://aveproject.org/schema.html) |
+| AIVSS | v<!-- count:aivss_spec -->0.8<!-- /count -->, every record scored |
 | Crosswalks | OWASP MCP Top 10, MITRE ATLAS, NIST AI RMF, OWASP AST10 |
 
-44 of the 87 published records have no detection rule in this scanner. 27 of them are
+<!-- count:uncovered -->44<!-- /count --> of the <!-- count:published -->87<!-- /count --> published records have no detection rule in this scanner. <!-- count:uncovered_static -->27<!-- /count --> of them are
 `static_detection` records that a rule could catch and are the scanner's backlog. The
-other 17 are runtime-stage records (15 `runtime_observed`, 2 `runtime_drift_detected`):
+other <!-- count:uncovered_runtime -->17<!-- /count --> are runtime-stage records (<!-- count:runtime_observed -->15<!-- /count --> `runtime_observed`, <!-- count:runtime_drift_detected -->2<!-- /count --> `runtime_drift_detected`):
 they describe behavior that only shows up while an agent runs, so static analysis of a
 file cannot detect them by design. The record-by-record list, and the commands that
 produce every count in this section, are in
@@ -519,8 +520,8 @@ implementer guide and record index.
 | Engine | What it does | Install |
 |---|---|---|
 | Pattern | 40 regex rules mapped to AVE records | Always on |
-| YARA | 39 binary and behavioral YARA rules | `[yara]` |
-| Semgrep | 41 structural Semgrep rules | `[semgrep]` |
+| YARA | <!-- count:yara_rules -->39<!-- /count --> binary and behavioral YARA rules | `[yara]` |
+| Semgrep | <!-- count:semgrep_rules -->41<!-- /count --> structural Semgrep rules | `[semgrep]` |
 | LLM | Semantic analysis of intent and context | `[llm]` |
 | Magika | ML-based content type verification | `[all]` |
 | Sandbox | Dynamic behavioral analysis in Docker | See below |
@@ -639,7 +640,7 @@ bawbel scan ./skills/ --format sarif   # GitHub Security / GHAS
 
 | | |
 |---|---|
-| [aveproject.org](https://aveproject.org) | AVE: Agentic Vulnerability Enumeration standard (87 records, schema, crosswalks) |
+| [aveproject.org](https://aveproject.org) | AVE: Agentic Vulnerability Enumeration standard (<!-- count:published -->87<!-- /count --> records, schema, crosswalks) |
 | [api.aveproject.org](https://api.aveproject.org) | AVE records API, one JSON record per ID |
 | [aivss.owasp.org](https://aivss.owasp.org) | OWASP AIVSS v0.8 scoring standard |
 | [bawbel.io/docs](https://bawbel.io/docs) | Full documentation |
