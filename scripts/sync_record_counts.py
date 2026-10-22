@@ -51,6 +51,9 @@ CORPUS_URL_TEMPLATE = f"https://raw.githubusercontent.com/{AVE_REPO}/{{ref}}/{CO
 HEAD_SHA_URL = f"https://api.github.com/repos/{AVE_REPO}/commits/main"
 CORPUS_URL_ENV = "BAWBEL_AVE_CORPUS_URL"  # same name bawbel-mcp uses for the same setting
 FETCH_TIMEOUT_SEC = 15
+# The only host that is sent GITHUB_TOKEN, and only to raise the API rate limit. Matched on the
+# exact host name, never a suffix: "evil-github.com" must not receive the token.
+TOKEN_HOSTS = frozenset({"api.github.com"})
 MAX_BYTES = 8 * 1024 * 1024  # the corpus is about 0.7 MB (87 records, 2026-10)
 USER_AGENT = "bawbel-scanner-sync-record-counts"
 
@@ -80,20 +83,32 @@ class CountsError(Exception):
 # ── Reading the corpus ────────────────────────────────────────────────────────
 
 
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    """Refuse redirects. urllib would carry an Authorization header to the new host."""
+
+    def redirect_request(self, *args, **kwargs):  # type: ignore[no-untyped-def]
+        return None  # the 3xx surfaces as an HTTPError, which _https_get reports
+
+
 def _https_get(url: str, accept: str) -> bytes:
-    """GET an https URL with a timeout and a size cap. Raises CountsError."""
+    """GET an https URL with a timeout and a size cap. Raises CountsError.
+
+    GITHUB_TOKEN is sent only to TOKEN_HOSTS, and such a request does not follow redirects.
+    """
     parts = urlsplit(url)
     if parts.scheme != "https" or not parts.netloc:
         raise CountsError(f"not an https URL: {url}")
     headers = {"User-Agent": USER_AGENT, "Accept": accept}
     token = os.environ.get("GITHUB_TOKEN")
-    if token and parts.netloc.endswith("github.com"):
+    authenticated = bool(token) and parts.hostname in TOKEN_HOSTS
+    if authenticated:
         headers["Authorization"] = f"Bearer {token}"
     request = urllib.request.Request(url, headers=headers)
+    opener = urllib.request.build_opener(*([_NoRedirect] if authenticated else []))
     timeout = FETCH_TIMEOUT_SEC
     try:
-        # B310/S310: the scheme is checked above, so only https reaches urlopen.
-        with urllib.request.urlopen(request, timeout=timeout) as resp:  # nosec B310  # noqa: S310
+        # B310/S310: the scheme is checked above, so only https is opened.
+        with opener.open(request, timeout=timeout) as resp:  # nosec B310  # noqa: S310
             body = resp.read(MAX_BYTES + 1)
     except OSError as exc:  # URLError, HTTPError, and TimeoutError are all OSError
         raise CountsError(f"could not fetch {url}: {exc}") from exc

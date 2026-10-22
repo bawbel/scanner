@@ -395,35 +395,119 @@ class _Response:
         return self._body if n < 0 else self._body[:n]
 
 
+class _FakeOpener:
+    """Stands in for the opener _https_get builds. Records what it was asked to open."""
+
+    def __init__(self, handlers, outcome):
+        self.handlers, self.outcome = handlers, outcome
+        self.request = self.timeout = None
+
+    def open(self, request, timeout):
+        self.request, self.timeout = request, timeout
+        if isinstance(self.outcome, Exception):
+            raise self.outcome
+        return _Response(self.outcome)
+
+
+def _patch_opener(monkeypatch, outcome=b"{}"):
+    """Replace urllib's build_opener; returns the list of openers it created."""
+    made: list = []
+
+    def build(*handlers):
+        made.append(_FakeOpener(handlers, outcome))
+        return made[-1]
+
+    monkeypatch.setattr(src.urllib.request, "build_opener", build)
+    return made
+
+
 class TestNetwork:
     @pytest.mark.parametrize(
         "url", ["http://example.com/x", "file:///etc/passwd", "ftp://x/y", "no-scheme", ""]
     )
     def test_only_https_is_fetched(self, url, monkeypatch):
-        monkeypatch.setattr(src.urllib.request, "urlopen", lambda *a, **k: pytest.fail("fetched"))
+        made = _patch_opener(monkeypatch)
         with pytest.raises(src.CountsError, match="not an https URL"):
             src._https_get(url, "application/json")
+        assert made == []
 
     def test_a_network_error_becomes_a_counts_error(self, monkeypatch):
-        def boom(*a, **k):
-            raise urllib.error.URLError("down")
-
-        monkeypatch.setattr(src.urllib.request, "urlopen", boom)
+        _patch_opener(monkeypatch, urllib.error.URLError("down"))
         with pytest.raises(src.CountsError, match="could not fetch"):
             src._https_get("https://example.com/x", "application/json")
 
     def test_a_timeout_is_set_and_an_oversized_body_is_refused(self, monkeypatch):
-        seen = {}
-
-        def fake(request, timeout):
-            seen["timeout"] = timeout
-            return _Response(b"x" * (src.MAX_BYTES + 5))
-
-        monkeypatch.setattr(src.urllib.request, "urlopen", fake)
+        made = _patch_opener(monkeypatch, b"x" * (src.MAX_BYTES + 5))
         with pytest.raises(src.CountsError, match="larger than"):
             src._https_get("https://example.com/x", "application/json")
-        assert seen["timeout"] == src.FETCH_TIMEOUT_SEC
+        assert made[0].timeout == src.FETCH_TIMEOUT_SEC
 
+    def test_a_response_within_the_cap_is_returned(self, monkeypatch):
+        _patch_opener(monkeypatch, b"hello")
+        assert src._https_get("https://example.com/x", "application/json") == b"hello"
+
+
+class TestGithubToken:
+    """GITHUB_TOKEN goes to api.github.com and nowhere else, and never follows a redirect."""
+
+    @pytest.mark.parametrize(
+        "url, sent",
+        [
+            ("https://api.github.com/repos/aveproject/ave/commits/main", True),
+            ("https://API.GITHUB.COM/repos/x", True),
+            ("https://raw.githubusercontent.com/aveproject/ave/main/x.json", False),
+            ("https://github.com/aveproject/ave", False),
+            ("https://evil-github.com/x", False),
+            ("https://notapi.github.com/x", False),
+            ("https://api.github.com.evil.example/x", False),
+            ("https://github.com.evil.example/x", False),
+            ("https://api.github.com@evil.example/x", False),
+            ("https://example.com/x", False),
+        ],
+    )
+    def test_which_hosts_receive_the_token(self, url, sent, monkeypatch):
+        monkeypatch.setenv("GITHUB_TOKEN", "ghp_secret_value")
+        made = _patch_opener(monkeypatch)
+        src._https_get(url, "application/json")
+        auth = made[0].request.get_header("Authorization")
+        assert (auth == "Bearer ghp_secret_value") is sent
+        assert sent or auth is None
+
+    def test_no_token_means_no_header_even_for_github(self, monkeypatch):
+        monkeypatch.delenv("GITHUB_TOKEN", raising=False)
+        made = _patch_opener(monkeypatch)
+        src._https_get("https://api.github.com/x", "application/json")
+        assert made[0].request.get_header("Authorization") is None
+        assert made[0].handlers == ()  # redirects behave as usual without a token
+
+    def test_an_authenticated_request_refuses_redirects(self, monkeypatch):
+        monkeypatch.setenv("GITHUB_TOKEN", "ghp_secret_value")
+        made = _patch_opener(monkeypatch)
+        src._https_get("https://api.github.com/x", "application/json")
+        assert made[0].handlers == (src._NoRedirect,)
+        assert (
+            src._NoRedirect().redirect_request(
+                None, None, 302, "Found", {}, "https://evil.example/"
+            )
+            is None
+        )
+
+    def test_a_redirect_from_the_api_is_an_error_not_a_second_request(self, monkeypatch):
+        monkeypatch.setenv("GITHUB_TOKEN", "ghp_secret_value")
+        redirect = urllib.error.HTTPError("https://api.github.com/x", 302, "Found", {}, None)
+        _patch_opener(monkeypatch, redirect)
+        with pytest.raises(src.CountsError, match="could not fetch"):
+            src._https_get("https://api.github.com/x", "application/json")
+
+    def test_the_token_never_appears_in_an_error(self, monkeypatch):
+        monkeypatch.setenv("GITHUB_TOKEN", "ghp_secret_value")
+        _patch_opener(monkeypatch, urllib.error.URLError("down"))
+        with pytest.raises(src.CountsError) as exc:
+            src._https_get("https://api.github.com/x", "application/json")
+        assert "ghp_secret_value" not in str(exc.value)
+
+
+class TestPinSource:
     def test_head_sha_must_look_like_a_commit(self, monkeypatch):
         monkeypatch.setattr(src, "_https_get", lambda *a, **k: b"<html>rate limited</html>")
         with pytest.raises(src.CountsError, match="did not return a commit sha"):
