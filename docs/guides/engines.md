@@ -44,6 +44,49 @@ severity. No engine ever raises - each skips silently if its dependency is missi
 
 ---
 
+## Which engines ran
+
+A core-only `pip install bawbel-scanner` runs the pattern engine and nothing else, and a scan
+that found nothing looks the same whether one engine ran or six. Every result says which
+engines ran and which could not:
+
+```
+Engines:      1 of 6 ran. Not run: yara (not_installed), semgrep (not_installed),
+llm (no_api_key), magika (not_installed), sandbox (disabled_by_config)
+```
+
+`engines_run` and `engines_degraded` are in the JSON output of each file. In SARIF each engine
+that did not run is a `warning` in `runs[].invocations[].toolExecutionNotifications`, counted
+across the files of the scan.
+
+| Reason | Meaning |
+|---|---|
+| `not_installed` | the optional package, CLI tool, or sandbox image is missing |
+| `no_api_key` | LLM engine: no provider key and no `BAWBEL_LLM_MODEL` |
+| `disabled_by_config` | turned off by an environment variable, or off by default (the sandbox) |
+| `docker_unavailable` | sandbox: Docker is not running |
+| `rules_missing` | the engine's rule file is not there |
+| `timeout` | the engine started and did not finish in time |
+| `api_error` | LLM engine: the provider call failed or returned nothing |
+| `engine_error` | the engine started and failed. `detail` holds the error code, for example `E012` |
+| `skipped_content_type` | Magika found a dangerous file type, so the text engines were skipped |
+
+`detail` is always an error code and never exception text.
+
+To make a scan fail when an engine is missing, name the engines you depend on:
+
+```bash
+bawbel scan ./skills/ --recursive --require-engines yara,semgrep
+# bawbel: required engine did not run: yara (not_installed)
+# exit code 3
+```
+
+Exit code 3 takes precedence over `--fail-on-severity`: findings from a scan that lacked a
+required engine cannot be trusted. Valid names are `pattern`, `yara`, `semgrep`, `llm`,
+`magika` and `sandbox`. An unknown name is a usage error.
+
+---
+
 
 ---
 

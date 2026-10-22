@@ -34,8 +34,9 @@ import os
 from typing import Optional
 
 from scanner.ave_meta import get_ave_meta
-from scanner.messages import Logs
-from scanner.models import Finding, Severity
+from scanner.core.engine_ledger import error_code, report_degraded, report_ran
+from scanner.messages import Errors, Logs
+from scanner.models import DegradedReason, Finding, Severity
 from scanner.utils import get_logger, parse_cvss, parse_severity, truncate_match
 
 log = get_logger(__name__)
@@ -141,6 +142,7 @@ def _call_llm(model: str, content: str) -> Optional[str]:
         litellm.suppress_debug_info = True
     except ImportError:
         log.warning("LLM engine: litellm not installed - " 'pip install "bawbel-scanner[llm]"')
+        report_degraded("llm", DegradedReason.NOT_INSTALLED)
         return None
 
     # Wrap content in security analysis framing.
@@ -169,6 +171,8 @@ def _call_llm(model: str, content: str) -> Optional[str]:
     except Exception as e:
         log.warning("LLM engine: call failed: model=%s error_type=%s", model, type(e).__name__)
         log.debug("LLM engine: call failed detail: model=%s detail=%s", model, str(e)[:200])
+        timed_out = "timeout" in type(e).__name__.lower()
+        report_degraded("llm", DegradedReason.TIMEOUT if timed_out else DegradedReason.API_ERROR)
         return None
 
 
@@ -185,10 +189,12 @@ def _parse_findings(raw: str) -> list[Finding]:
         items = json.loads(text)
     except json.JSONDecodeError as e:
         log.warning("LLM engine: JSON parse failed: error_type=%s", type(e).__name__)
+        report_degraded("llm", DegradedReason.ENGINE_ERROR, error_code(Errors.SEMGREP_PARSE_FAILED))
         return []
 
     if not isinstance(items, list):
         log.warning("LLM engine: expected JSON array, got %s", type(items).__name__)
+        report_degraded("llm", DegradedReason.ENGINE_ERROR, error_code(Errors.SEMGREP_PARSE_FAILED))
         return []
 
     for item in items:
@@ -260,6 +266,8 @@ def run_llm_scan(content: str) -> list[Finding]:
     model = _resolve_model()
     if not model:
         log.debug("LLM engine: no model configured - skipping Stage 2")
+        reason = DegradedReason.NO_API_KEY if LLM_ENABLED else DegradedReason.DISABLED_BY_CONFIG
+        report_degraded("llm", reason)
         return []
 
     # Truncate to cost limit
@@ -275,8 +283,12 @@ def run_llm_scan(content: str) -> list[Finding]:
 
     raw = _call_llm(model, truncated)
     if not raw:
+        report_degraded(
+            "llm", DegradedReason.API_ERROR
+        )  # keeps an earlier reason if _call_llm gave one
         return []
 
     findings = _parse_findings(raw)
+    report_ran("llm")  # ignored if _parse_findings reported the response unusable
     log.info("LLM engine: Stage 2 complete - model=%s findings=%d", model, len(findings))
     return findings

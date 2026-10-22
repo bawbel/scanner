@@ -7,7 +7,10 @@ and registering it in scanner.py. No other files need to change.
 Engine contract:
     def run_X_scan(file_path: str) -> list[Finding]:
         - Never raises — returns [] on any failure
-        - Skips silently if optional dependency not installed
+        - Returns [] if an optional dependency is not installed, and says so: it calls
+          report_degraded(engine, reason, code) from scanner.core.engine_ledger. It calls
+          report_ran(engine) when it ran. Both are no-ops outside a scan. The detail is an
+          error code, never exception text
         - Uses Timer() for elapsed time measurement
         - Uses Logs.ENGINE_* for all log messages
         - Uses _make_finding() for all Finding construction

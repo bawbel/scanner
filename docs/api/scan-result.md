@@ -18,6 +18,8 @@ instantiated directly.
 | `findings` | `list[Finding]` | Active findings, sorted by severity |
 | `suppressed_findings` | `list[Finding]` | Suppressed findings (audit trail) |
 | `toxic_flows` | `list[ToxicFlow]` | Detected attack chains |
+| `engines_run` | `list[str]` | Engines that ran, in run order: `pattern`, `yara`, `semgrep`, `llm`, `magika`, `sandbox` |
+| `engines_degraded` | `list[EngineDegradation]` | Engines that did not run: `engine`, `reason`, and `detail` (an error code or `None`). See [engines](../guides/engines.md#which-engines-ran) |
 | `scan_time_ms` | `int` | Total scan time in milliseconds |
 | `error` | `str \| None` | Error code if scan failed, `None` on success |
 
@@ -65,6 +67,8 @@ JSON-serialisable representation. Includes `findings`, `suppressed_findings`, an
     "error":              None,
     "risk_score":         9.4,
     "max_severity":       "CRITICAL",
+    "engines_run":        ["pattern", "yara"],
+    "engines_degraded":   [{"engine": "llm", "reason": "no_api_key", "detail": None}, ...],
     "findings":           [{...}, ...],
     "toxic_flows":        [{...}, ...],
 }

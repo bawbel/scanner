@@ -25,8 +25,9 @@ import tempfile
 from pathlib import Path
 from typing import Optional
 
-from scanner.messages import Logs
-from scanner.models import Finding, Severity
+from scanner.core.engine_ledger import error_code, report_degraded, report_ran
+from scanner.messages import Errors, Logs
+from scanner.models import DegradedReason, Finding, Severity
 from scanner.utils import Timer, get_logger, run_subprocess
 
 log = get_logger(__name__)
@@ -184,15 +185,18 @@ def run_sandbox_scan(file_path: str, stripped_content: Optional[str] = None) -> 
 
     if not SANDBOX_ENABLED:
         log.debug("Sandbox: disabled - set BAWBEL_SANDBOX_ENABLED=true")
+        report_degraded("sandbox", DegradedReason.DISABLED_BY_CONFIG)
         return findings
 
     if not is_docker_available():
         log.warning("Sandbox: Docker not running - Stage 3 skipped")
+        report_degraded("sandbox", DegradedReason.DOCKER_UNAVAILABLE)
         return findings
 
     image = _resolve_image()
     if image is None:
         log.warning("Sandbox: no image available - Stage 3 skipped")
+        report_degraded("sandbox", DegradedReason.NOT_INSTALLED)
         return findings
 
     log.debug(Logs.ENGINE_START, "sandbox", file_path)
@@ -247,14 +251,25 @@ def _run_container(file_path: str, image: str) -> list[Finding]:
     )
     if stdout is None:
         log.warning("Sandbox: container produced no output")
+        if err is None:
+            report_degraded("sandbox", DegradedReason.DOCKER_UNAVAILABLE)
+        else:
+            timed_out = error_code(err) == error_code(Errors.SEMGREP_TIMEOUT)
+            reason = DegradedReason.TIMEOUT if timed_out else DegradedReason.ENGINE_ERROR
+            report_degraded("sandbox", reason, error_code(err))
         return []
     if err:
         log.debug("Sandbox stderr: %s", err[:200])
     try:
-        return _parse_report(json.loads(stdout), file_path)
+        parsed = _parse_report(json.loads(stdout), file_path)
     except json.JSONDecodeError:
         log.warning("Sandbox: could not parse container JSON output")
+        report_degraded(
+            "sandbox", DegradedReason.ENGINE_ERROR, error_code(Errors.SEMGREP_PARSE_FAILED)
+        )
         return []
+    report_ran("sandbox")
+    return parsed
 
 
 def _parse_report(report: dict, file_path: str) -> list[Finding]:

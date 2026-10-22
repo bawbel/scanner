@@ -34,6 +34,7 @@ from scanner.config.default import (
     EXIT_CODE_FINDINGS,
     EXIT_CODE_CLEAN,
     EXIT_CODE_WARNING,
+    EXIT_CODE_ENGINE_MISSING,
 )
 
 __all__ = [
@@ -55,4 +56,5 @@ __all__ = [
     "EXIT_CODE_FINDINGS",
     "EXIT_CODE_CLEAN",
     "EXIT_CODE_WARNING",
+    "EXIT_CODE_ENGINE_MISSING",
 ]

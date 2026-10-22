@@ -42,7 +42,7 @@ bawbel ssc https://server    # scan MCP server without starting it
 
 | Command | Description |
 |---|---|
-| `bawbel scan <path>` | Scan a skill file or directory for AVE vulnerabilities. Supports `--recursive`, `--format text\|json\|sarif`, `--fail-on-severity`, `--no-ignore`, `--watch` |
+| `bawbel scan <path>` | Scan a skill file or directory for AVE vulnerabilities. Supports `--recursive`, `--format text\|json\|sarif`, `--fail-on-severity`, `--require-engines`, `--no-ignore`, `--watch` |
 | `bawbel report <path>` | Scan a component and show a full remediation guide with fix guidance per finding |
 | `bawbel creds <path>` | Focused scan: hardcoded credentials and secret exposure only |
 | `bawbel chain <path>` | Focused scan: unsafe agent delegation chains only |
