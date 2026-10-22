@@ -10,6 +10,7 @@ from scanner.scanner import scan
 from scanner.core.dedup import deduplicate
 from scanner.models import Finding, ScanResult, Severity, SEVERITY_SCORES
 from scanner.cli import cli
+from scanner.messages import Info
 
 
 # ── Fixtures ──────────────────────────────────────────────────────────────────
@@ -647,7 +648,7 @@ class TestCLINewCommands:
         runner = CliRunner()
         result = runner.invoke(cli, ["report", path])
         assert result.exit_code == 0
-        assert "No vulnerabilities" in result.output
+        assert Info.CLEAN_COMPONENT in result.output
 
     def test_report_malicious_file(self):
         runner = CliRunner()
