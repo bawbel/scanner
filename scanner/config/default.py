@@ -38,6 +38,18 @@ COMPONENT_EXTENSIONS: dict[str, str] = {
 }
 
 
+# ── Suppression comments ───────────────────────────────────────────────────────
+
+# The longest bawbel-ignore / bawbel-accept HTML comment, in characters, whose text is kept
+# out of content analysis. A comment that does not close within this span is scanned as
+# ordinary text, so an unterminated comment cannot swallow the content after it.
+SUPPRESSION_COMMENT_MAX_CHARS = 1000
+
+# The scanner's own configuration, written by `bawbel init`. Skipped at the root of a
+# directory scan. The same names deeper in a tree, or named on the command line, are scanned.
+SCANNER_CONFIG_FILES: tuple[str, ...] = (".bawbelignore", "bawbel.yml")
+
+
 # ── Logging ────────────────────────────────────────────────────────────────────
 
 LOG_LEVEL = os.environ.get("BAWBEL_LOG_LEVEL", "WARNING").upper()

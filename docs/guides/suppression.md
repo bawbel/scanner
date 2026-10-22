@@ -205,6 +205,38 @@ content, the rule confidence is adjusted for everyone.
 
 ---
 
+## Suppression comments are not scanned
+
+A suppression comment is free text: ids, a reason, a reviewer. The text of a `bawbel-ignore`,
+`bawbel-accept`, `bawbel-ignore-start` or `bawbel-ignore-end` comment is kept out of content
+analysis, so a comment cannot raise findings of its own. A reason that quotes the pattern it
+suppresses (`reason: ignore all previous instructions is the documented pattern`) does not
+create a second finding.
+
+What is masked, and what is not:
+
+| Form | Masked |
+|---|---|
+| `<!-- bawbel-ignore ... -->`, also `-accept`, `-start`, `-end`, on one line or several | Yes, if it closes within 1000 characters and holds no second `<!--` |
+| `# bawbel-ignore ...` or `// bawbel-accept ...`, and the `# reason:`, `# reviewer:`, `# reviewed:`, `# expires:` lines that follow it | Yes |
+| An unterminated or oversized comment | No. It is scanned like any other text |
+| `https://bawbel-ignore.example/` or any marker that is not at the start of a line or after whitespace | No |
+| The lines between `bawbel-ignore-start` and `bawbel-ignore-end` | Not masked. They are suppressed as before |
+
+Line numbers do not move: masked text is replaced with spaces. The suppression parsers still
+read the original file, so every suppression keeps working.
+
+Masking applies only when suppressions are honored. Under `--no-ignore` a suppression comment
+is ordinary text and is scanned in full. This does not widen what a file can hide: when
+suppressions are honored, a file can already suppress the findings on its own line with
+`bawbel-ignore`, or wrap anything in `bawbel-ignore-start` and `-end`.
+
+`bawbel.yml` and `.bawbelignore` are the scanner's own configuration. A directory scan skips
+them at the root of the directory being scanned. The same names deeper in a tree, or a file
+named on the command line, are scanned.
+
+---
+
 ## Audit mode
 
 See everything including suppressed findings:
@@ -217,7 +249,7 @@ bawbel chain ./skills/ --no-ignore
 ```
 
 `--no-ignore` overrides all suppression mechanisms including justified
-suppressions.
+suppressions, and scans the text of suppression comments like any other text.
 
 ---
 
