@@ -20,6 +20,16 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - `action.yml` at the repo root. The GitHub Action is `bawbel/integrations@v1`. Existing
   tags, such as `bawbel/scanner@v1.3.0`, still carry their copy (#92).
 
+### Fixed
+
+- The pre-commit hook told users to read `https://bawbel.io/docs/suppression`, which returns
+  404. It now points at `docs/guides/suppression.md` in this repository. The documentation
+  URLs the CLI prints or carries now live in one module, `scanner/docs_urls.py`, and a test
+  checks that each one that names a file in this repository names a file that exists. The
+  `conform` remediation link `https://spec.modelcontextprotocol.io/specification/` did not
+  connect; it is now `https://modelcontextprotocol.io/specification`. A weekly workflow
+  fetches the external URLs and fails when one stops resolving (#133).
+
 ---
 
 ## [1.3.0] - 2026-06-28

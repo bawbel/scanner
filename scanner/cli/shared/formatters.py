@@ -9,6 +9,7 @@ import json
 from scanner import __version__
 from scanner.models import ScanResult
 from scanner.cli.shared.display import sev_value
+from scanner.docs_urls import AVE_STANDARD, WEBSITE
 from scanner.owasp_mcp_map import get_owasp_mcp
 
 
@@ -72,7 +73,7 @@ def print_sarif(results: list[ScanResult]) -> None:
                         "name": f.rule_id.replace("-", " ").title(),
                         "shortDescription": {"text": f.title},
                         "fullDescription": {"text": f.description},
-                        "helpUri": "https://github.com/bawbel/ave",
+                        "helpUri": AVE_STANDARD,
                         "properties": {
                             "tags": f.owasp,
                             "precision": "high",
@@ -120,7 +121,7 @@ def print_sarif(results: list[ScanResult]) -> None:
                     "driver": {
                         "name": "bawbel-scanner",
                         "version": __version__,
-                        "informationUri": "https://bawbel.io",
+                        "informationUri": WEBSITE,
                         "rules": rules,
                     }
                 },
