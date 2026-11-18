@@ -13,6 +13,7 @@ from rich import box
 from rich.panel import Panel
 from rich.table import Table
 
+from scanner.messages import Info
 from scanner.scanner import scan
 from scanner.cli.shared import (
     console,
@@ -114,9 +115,8 @@ def _render_report(result) -> None:
     if result.is_clean:
         console.print(
             Panel(
-                "[bold #1DB894]\u2713  No vulnerabilities found[/]\n\n"
-                "[dim]This component passed all AVE checks.\n"
-                "It is safe to install and use.[/]",
+                f"[bold #1DB894]\u2713  {Info.CLEAN_COMPONENT}[/]\n\n"
+                f"[dim]{Info.CLEAN_DESCRIPTION}[/]",
                 title="[bold #1DB894]Security Report[/]",
                 border_style="#1DB894",
                 padding=(1, 2),
@@ -170,10 +170,11 @@ def _render_report(result) -> None:
                 f"{code} - {OWASP_MCP_DESCRIPTIONS.get(code, code)}" for code in f.owasp_mcp
             )
             table.add_row("OWASP MCP", mcp_str)
-        if f.piranha_url:
+        record_url = f.ave_url or f.piranha_url
+        if record_url:
             table.add_row(
-                "PiranhaDB",
-                f"[link={f.piranha_url}]{f.piranha_url}[/link]",
+                "AVE record",
+                f"[link={record_url}]{record_url}[/link]",
             )
 
         console.print(table)
