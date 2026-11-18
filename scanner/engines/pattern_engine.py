@@ -23,7 +23,7 @@ import re
 from scanner.ave_meta import get_ave_meta
 from scanner.messages import Logs
 from scanner.models import Finding, Severity
-from scanner.utils import get_logger
+from scanner.utils import ave_record_url, get_logger
 
 log = get_logger(__name__)
 
@@ -1080,7 +1080,7 @@ def _make_pattern_finding(
     from scanner.utils import truncate_match  # noqa: PLC0415
 
     ave_id = rule.get("ave_id")
-    piranha_url = f"https://api.piranha.bawbel.io/records/{ave_id}" if ave_id else None
+    record_url = ave_record_url(ave_id)
     meta = get_ave_meta(ave_id, "pattern")
 
     return Finding(
@@ -1095,7 +1095,8 @@ def _make_pattern_finding(
         engine="pattern",
         owasp=rule.get("owasp", []),
         owasp_mcp=rule.get("owasp_mcp", []),
-        piranha_url=piranha_url,
+        piranha_url=record_url,
+        ave_url=record_url,
         confidence=meta.confidence_baseline,
         evidence_kind=meta.evidence_kind,
         detection_stage=meta.detection_stage,

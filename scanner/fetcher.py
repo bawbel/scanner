@@ -14,8 +14,9 @@ import tempfile
 from pathlib import Path
 from typing import Optional
 
+from scanner.config import HTTP_TIMEOUT_SEC
 from scanner.messages import Errors
-from scanner.utils import get_logger
+from scanner.utils import get_logger, user_agent
 
 log = get_logger(__name__)
 
@@ -27,7 +28,7 @@ SERVER_CARD_PATHS = [
     ".well-known/mcp-server-card/server.json",
 ]
 SERVER_CARD_PATH = SERVER_CARD_PATHS[0]  # kept for build_server_card_url()
-FETCH_TIMEOUT = 10  # seconds
+FETCH_TIMEOUT = HTTP_TIMEOUT_SEC  # seconds; set in scanner/config (BAWBEL_HTTP_TIMEOUT_SEC)
 
 
 # ── HTTP fetch ────────────────────────────────────────────────────────────────
@@ -56,7 +57,7 @@ def fetch_url(url: str) -> tuple[Optional[dict], Optional[str]]:
 
         req = urllib.request.Request(
             url,
-            headers={"User-Agent": "bawbel-scanner/1.0 (github.com/bawbel/scanner)"},
+            headers={"User-Agent": user_agent()},
         )
         with urllib.request.urlopen(req, timeout=FETCH_TIMEOUT) as resp:  # nosec B310 # noqa: S310
             raw = resp.read().decode("utf-8", errors="replace")
