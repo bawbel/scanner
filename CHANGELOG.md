@@ -25,6 +25,12 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   A Semgrep timeout was dropped without a log line and is now reported. New flag
   `--require-engines yara,semgrep` exits 3 if a named engine did not run (#124).
 
+- `scripts/sync_record_counts.py` derives the record, rule, and chain counts in README.md from
+  the AVE corpus and the scanner's rule files. Each count sits in a
+  `<!-- count:NAME -->` marker, the corpus is pinned by commit in the README, and a
+  `Record Counts` CI job runs `--check`. `--update-ref` moves the pin (#120).
+  The corpus is named by the SHA-256 of the exact bytes read, the identifier AVE-CONSUMPTION R3 asks for.
+
 ### Changed
 
 - The User-Agent on outbound requests is built from the package version (it said
@@ -61,6 +67,12 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   `scanner.config.AVE_PROJECT_URL`, where they linked `github.com/bawbel/ave`, which
   redirects there. A weekly workflow fetches the external URLs and fails when one stops
   resolving (#133).
+
+- A suppression comment could raise findings of its own: a `bawbel-ignore` reason that quoted
+  the pattern it suppressed created a second, unsuppressed finding, and a block comment's text
+  was listed as a suppressed finding. The text of `bawbel-ignore` and `bawbel-accept` comments
+  is now kept out of content analysis when suppressions are honored. `--no-ignore` still scans
+  it. `bawbel.yml` and `.bawbelignore` at the root of a directory scan are skipped (#122).
 
 ---
 

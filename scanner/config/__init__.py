@@ -20,6 +20,9 @@ from scanner.config.default import (
     MAX_SCAN_TIMEOUT_SEC,
     # Component detection
     COMPONENT_EXTENSIONS,
+    # Suppression comments
+    SUPPRESSION_COMMENT_MAX_CHARS,
+    SCANNER_CONFIG_FILES,
     # Logging
     LOG_LEVEL,
     # External endpoints
@@ -55,6 +58,8 @@ __all__ = [
     "MAX_MATCH_LENGTH",
     "MAX_SCAN_TIMEOUT_SEC",
     "COMPONENT_EXTENSIONS",
+    "SUPPRESSION_COMMENT_MAX_CHARS",
+    "SCANNER_CONFIG_FILES",
     "LOG_LEVEL",
     "AVE_API_URL",
     "AVE_PROJECT_URL",
