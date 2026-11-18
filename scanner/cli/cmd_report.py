@@ -26,6 +26,7 @@ from scanner.cli.shared import (
 )
 from scanner.cli.shared.constants import OWASP_DESCRIPTIONS, REMEDIATION_GUIDE
 from scanner.cli.shared.utils import collect_files
+from scanner.docs_urls import AVE_STANDARD, display_text
 from scanner.utils import resolve_path
 
 
@@ -100,11 +101,7 @@ def _render_report(result) -> None:
     name = Path(result.file_path).name
     console.print(f"[dim]Report for:[/]  [bold white]{name}[/]")
     console.print(f"[dim]Type:[/]        [bold white]{result.component_type}[/]")
-    console.print(
-        "[dim]AVE Standard:[/] "
-        "[link=https://github.com/bawbel/ave]"
-        "github.com/bawbel/ave[/link]"
-    )
+    console.print(f"[dim]AVE Standard:[/] [link={AVE_STANDARD}]{display_text(AVE_STANDARD)}[/link]")
     console.print()
 
     if result.has_error:

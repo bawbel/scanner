@@ -7,6 +7,7 @@ Prints the scanner version and detection engine status.
 import click
 
 from scanner.cli.shared import console, print_banner
+from scanner.docs_urls import AVE_STANDARD, DOCS_HOME, display_text
 
 
 @click.command("version")
@@ -106,9 +107,7 @@ def version_cmd() -> None:
 
     console.print()
     console.print(
-        "[dim]AVE Standard:  "
-        "[link=https://github.com/bawbel/ave]"
-        "github.com/bawbel/ave[/link][/]"
+        f"[dim]AVE Standard:  [link={AVE_STANDARD}]{display_text(AVE_STANDARD)}[/link][/]"
     )
-    console.print("[dim]Documentation: [link=https://bawbel.io/docs]bawbel.io/docs[/link][/]")
+    console.print(f"[dim]Documentation: [link={DOCS_HOME}]{display_text(DOCS_HOME)}[/link][/]")
     console.print()

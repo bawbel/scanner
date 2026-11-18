@@ -1,0 +1,40 @@
+name: Documentation links
+
+# Fetches every URL in scanner/docs_urls.py (two of them come from scanner.config) and
+# fails when one does not resolve.
+# The offline check, that a URL pointing into this repository names a file that exists,
+# is tests/test_doc_links.py and runs in CI. This one needs the network, so it runs on a
+# schedule and when the URLs, the script or this workflow change, not on every push.
+
+on:
+  schedule:
+    - cron: "17 6 * * 1" # Mondays, 06:17 UTC
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - scanner/docs_urls.py
+      - scanner/config/default.py
+      - scripts/check_doc_links.py
+      - .github/workflows/doc-links.yml
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Documentation URLs resolve
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+
+      # docs_urls.py imports scanner.config, so the package must be importable.
+      - name: Install the package
+        run: pip install -e .
+
+      - name: Fetch every documentation URL
+        run: python scripts/check_doc_links.py
