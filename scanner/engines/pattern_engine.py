@@ -21,6 +21,7 @@ Rule authoring guide:
 import re
 
 from scanner.ave_meta import get_ave_meta
+from scanner.core.engine_ledger import report_ran
 from scanner.messages import Logs
 from scanner.models import Finding, Severity
 from scanner.utils import ave_record_url, get_logger
@@ -1149,5 +1150,6 @@ def run_pattern_scan(content: str) -> list[Finding]:
                     )
                     rule_matched_lines.add(line_num)
 
+    report_ran("pattern")
     log.debug("Pattern scan complete: findings=%d", len(findings))
     return findings

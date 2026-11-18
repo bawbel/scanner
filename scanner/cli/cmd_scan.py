@@ -20,8 +20,22 @@ from scanner.cli.shared import (
     print_sarif,
     worst_severity_score,
 )
-from scanner.cli.shared.utils import collect_files
+from scanner.cli.shared.utils import (
+    collect_files,
+    missing_required_engines,
+    parse_required_engines,
+)
+from scanner.config import EXIT_CODE_ENGINE_MISSING
 from scanner.utils import resolve_path
+
+
+def _engines_option(_ctx: click.Context, _param: click.Parameter, value: str) -> list[str]:
+    """Click callback: parse --require-engines, turning an unknown name into a usage error."""
+    try:
+        return parse_required_engines(value or "")
+    except ValueError as exc:
+        raise click.BadParameter(str(exc)) from exc
+
 
 # ── Watch helper ───────────────────────────────────────────────────────────────
 
@@ -130,6 +144,17 @@ def _run_watch(path: str, fmt: str, fail_on_severity: str, recursive: bool) -> N
     default=False,
     help="Ignore all bawbel-ignore suppressions - audit mode",
 )
+@click.option(
+    "--require-engines",
+    "require_engines",
+    default="",
+    callback=_engines_option,
+    metavar="ENGINES",
+    help=(
+        "Comma-separated engines that must run, for example yara,semgrep. "
+        f"Exit {EXIT_CODE_ENGINE_MISSING} if one did not."
+    ),
+)
 def scan_cmd(  # noqa: PLR0913
     path: str,
     fmt: str,
@@ -137,6 +162,7 @@ def scan_cmd(  # noqa: PLR0913
     recursive: bool,
     watch: bool,
     no_ignore: bool,
+    require_engines: list[str],
 ) -> None:
     """Scan an agentic AI component for AVE vulnerabilities."""
     if watch:
@@ -172,6 +198,14 @@ def scan_cmd(  # noqa: PLR0913
         print_json(results)
     elif fmt == "sarif":
         print_sarif(results)
+
+    # Fails closed: results from a scan that lacked a required engine cannot be trusted, so
+    # this takes precedence over the severity threshold.
+    missing = missing_required_engines(results, require_engines)
+    for engine, reason in missing:
+        click.echo(f"bawbel: required engine did not run: {engine} ({reason})", err=True)
+    if missing:
+        sys.exit(EXIT_CODE_ENGINE_MISSING)
 
     if fail_on_severity:
         threshold = SEVERITY_SCORES.get(fail_on_severity.upper(), 0)

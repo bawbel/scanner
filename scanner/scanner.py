@@ -27,7 +27,7 @@ from scanner.config.default import (
 from scanner.models.severity import SEVERITY_SCORES
 
 # Models
-from scanner.models import Finding, ScanResult, Severity
+from scanner.models import DegradedReason, Finding, ScanResult, Severity
 from scanner.models.severity import calc_aivss, severity_from_aivss, DEFAULT_AARF
 
 # Engines
@@ -41,6 +41,7 @@ from scanner.engines.sandbox_engine import (
 )
 
 # Core pure functions
+from scanner.core.engine_ledger import engine_ledger, report_degraded
 from scanner.core.preprocessor import strip_code_fences
 from scanner.core.dedup import deduplicate
 from scanner.core.fp_pipeline import run_fp_pipeline
@@ -180,7 +181,7 @@ def scan(file_path: str, no_ignore: bool = False) -> ScanResult:
         max_severity, scan_time_ms, and toxic_flows.
         ScanResult.is_clean == True only if no findings AND no error.
     """
-    with Timer() as t:
+    with Timer() as t, engine_ledger() as ledger:
 
         # ── Step 1: Resolve path ──────────────────────────────────────────────
         path, path_err = resolve_path(file_path)
@@ -227,6 +228,8 @@ def scan(file_path: str, no_ignore: bool = False) -> ScanResult:
                     "Magika: dangerous content type in %s - " "skipping text analysis engines",
                     path.name,
                 )
+                for skipped in ("pattern", "yara", "semgrep", "llm"):
+                    report_degraded(skipped, DegradedReason.SKIPPED_CONTENT_TYPE)
             else:
                 findings.extend(run_pattern_scan(stripped))
                 findings.extend(run_yara_scan(str(path), stripped))
@@ -254,10 +257,14 @@ def scan(file_path: str, no_ignore: bool = False) -> ScanResult:
                             "See docs/guides/engines.md for setup."
                         )
             else:
+                report_degraded("sandbox", DegradedReason.DOCKER_UNAVAILABLE)
                 global _warned_sandbox_no_docker
                 if not _warned_sandbox_no_docker:
                     _warned_sandbox_no_docker = True
                     log.warning("Sandbox engine: Docker not running - Stage 3 skipped")
+
+        else:
+            report_degraded("sandbox", DegradedReason.DISABLED_BY_CONFIG)
 
         # ── Step 6: Deduplicate and sort ──────────────────────────────────────
         findings = deduplicate(findings)
@@ -327,6 +334,8 @@ def scan(file_path: str, no_ignore: bool = False) -> ScanResult:
         scan_time_ms=t.elapsed_ms,
         toxic_flows=toxic_flows,
         accepted_findings=accepted_list,
+        engines_run=ledger.engines_run,
+        engines_degraded=ledger.engines_degraded,
     )
 
     log.info(

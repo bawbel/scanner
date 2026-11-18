@@ -16,6 +16,15 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   `BAWBEL_HTTP_TIMEOUT_SEC`. A value that is not an http(s) URL or a positive integer is
   ignored with a warning (#116).
 
+- Engine accounting. A core-only install runs one engine of six and used to print the same result
+  as a full install. `ScanResult` gains `engines_run` and `engines_degraded`, in the JSON output,
+  in SARIF (`runs[].invocations[].toolExecutionNotifications`), and as an `Engines:` line in the
+  text summary. Each degraded engine has a `reason` (`not_installed`, `no_api_key`,
+  `disabled_by_config`, `docker_unavailable`, `rules_missing`, `timeout`, `api_error`,
+  `engine_error`, `skipped_content_type`) and an error-code `detail`, never exception text.
+  A Semgrep timeout was dropped without a log line and is now reported. New flag
+  `--require-engines yara,semgrep` exits 3 if a named engine did not run (#124).
+
 ### Changed
 
 - The User-Agent on outbound requests is built from the package version (it said
