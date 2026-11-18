@@ -68,6 +68,12 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   redirects there. A weekly workflow fetches the external URLs and fails when one stops
   resolving (#133).
 
+- A suppression comment could raise findings of its own: a `bawbel-ignore` reason that quoted
+  the pattern it suppressed created a second, unsuppressed finding, and a block comment's text
+  was listed as a suppressed finding. The text of `bawbel-ignore` and `bawbel-accept` comments
+  is now kept out of content analysis when suppressions are honored. `--no-ignore` still scans
+  it. `bawbel.yml` and `.bawbelignore` at the root of a directory scan are skipped (#122).
+
 ---
 
 ## [1.3.0] - 2026-06-28
