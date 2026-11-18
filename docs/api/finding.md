@@ -24,7 +24,8 @@ Finding(
     engine="pattern",
     owasp=["ASI01", "ASI08"],
     owasp_mcp=["MCP04", "MCP06"],
-    piranha_url="https://api.piranha.bawbel.io/records/AVE-2026-00001",
+    piranha_url="https://api.aveproject.org/records/AVE-2026-00001",
+    ave_url="https://api.aveproject.org/records/AVE-2026-00001",
 )
 ```
 
@@ -49,7 +50,8 @@ Finding(
 | `engine` | `str` | `"pattern"` | Engine that produced this finding |
 | `owasp` | `list[str]` | `[]` | OWASP Top 10 for LLM Apps codes |
 | `owasp_mcp` | `list[str]` | `[]` | OWASP MCP Top 10 codes |
-| `piranha_url` | `str \| None` | `None` | PiranhaDB threat intel URL |
+| `piranha_url` | `str \| None` | `None` | Deprecated, removed in 2.0. Same value as `ave_url` |
+| `ave_url` | `str \| None` | `None` | AVE record URL, `https://api.aveproject.org/records/{ave_id}` |
 | `suppressed` | `bool` | `False` | True if suppressed by FP pipeline |
 | `suppression_reason` | `str \| None` | `None` | Why it was suppressed |
 | `confidence` | `float` | `1.0` | FP confidence score 0.0-1.0 |

@@ -22,6 +22,15 @@ from scanner.config.default import (
     COMPONENT_EXTENSIONS,
     # Logging
     LOG_LEVEL,
+    # External endpoints
+    AVE_API_URL,
+    AVE_PROJECT_URL,
+    AVE_RECORD_URL_TEMPLATE,
+    FP_SIGNAL_TIMEOUT_SEC,
+    FP_SIGNAL_URL,
+    HTTP_TIMEOUT_SEC,
+    MCP_REGISTRY_URL,
+    PROJECT_HOMEPAGE_URL,
     # Stage 2 LLM
     LLM_ENABLED,
     LLM_MODEL,
@@ -34,6 +43,7 @@ from scanner.config.default import (
     EXIT_CODE_FINDINGS,
     EXIT_CODE_CLEAN,
     EXIT_CODE_WARNING,
+    EXIT_CODE_ENGINE_MISSING,
 )
 
 __all__ = [
@@ -46,6 +56,14 @@ __all__ = [
     "MAX_SCAN_TIMEOUT_SEC",
     "COMPONENT_EXTENSIONS",
     "LOG_LEVEL",
+    "AVE_API_URL",
+    "AVE_PROJECT_URL",
+    "AVE_RECORD_URL_TEMPLATE",
+    "FP_SIGNAL_TIMEOUT_SEC",
+    "FP_SIGNAL_URL",
+    "HTTP_TIMEOUT_SEC",
+    "MCP_REGISTRY_URL",
+    "PROJECT_HOMEPAGE_URL",
     "LLM_ENABLED",
     "LLM_MODEL",
     "LLM_MAX_TOKENS",
@@ -55,4 +73,5 @@ __all__ = [
     "EXIT_CODE_FINDINGS",
     "EXIT_CODE_CLEAN",
     "EXIT_CODE_WARNING",
+    "EXIT_CODE_ENGINE_MISSING",
 ]

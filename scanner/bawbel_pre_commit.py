@@ -44,6 +44,7 @@ def main() -> int:
     # Import here so the hook fails fast with a clear message if not installed
     try:
         from scanner.scanner import scan, SEVERITY_SCORES
+        from scanner.docs_urls import SUPPRESSION_GUIDE
     except ImportError:
         print(
             "bawbel-scanner not installed.\n" 'Run: pip install "bawbel-scanner>=1.0.1"',
@@ -98,7 +99,7 @@ def main() -> int:
         print(
             "Run 'bawbel report <file>' for remediation steps.\n"
             "Add '<!-- bawbel-ignore: rule_id -->' to suppress false positives.\n"
-            "See: https://bawbel.io/docs/suppression"
+            f"See: {SUPPRESSION_GUIDE}"
         )
 
     if found:
