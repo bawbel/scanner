@@ -57,6 +57,8 @@ The most impactful contribution. Full guide in `docs/guides/writing-rules.md`.
 6. Write pytest tests - positive AND negative
 7. Run: python -m pytest tests/ -v
 8. Run: bandit -r scanner/ -f screen  (must be 0 issues)
+9. Run: python scripts/sync_record_counts.py  (the README's rule and coverage counts are
+   written by this script; CI fails if they are stale. Never edit those numbers by hand)
 ```
 
 ---
