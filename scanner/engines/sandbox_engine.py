@@ -28,7 +28,7 @@ from typing import Optional
 from scanner.core.engine_ledger import error_code, report_degraded, report_ran
 from scanner.messages import Errors, Logs
 from scanner.models import DegradedReason, Finding, Severity
-from scanner.utils import Timer, get_logger, run_subprocess
+from scanner.utils import Timer, ave_record_url, get_logger, run_subprocess
 
 log = get_logger(__name__)
 
@@ -281,7 +281,7 @@ def _parse_report(report: dict, file_path: str) -> list[Finding]:
         line = event.get("line")
         desc, ave_id, sev, aivss_score = _match_network_ioc(dst, reason)
         if desc:
-            piranha_url = f"https://api.piranha.bawbel.io/records/{ave_id}" if ave_id else None
+            record_url = ave_record_url(ave_id)
             findings.append(
                 Finding(
                     rule_id=f"sandbox-net-{ave_id.replace('-', '').lower()}",
@@ -298,7 +298,8 @@ def _parse_report(report: dict, file_path: str) -> list[Finding]:
                     engine="sandbox",
                     owasp=["ASI01", "ASI08"],
                     owasp_mcp=["MCP04", "MCP06"],
-                    piranha_url=piranha_url,
+                    piranha_url=record_url,
+                    ave_url=record_url,
                 )
             )
 
@@ -309,7 +310,7 @@ def _parse_report(report: dict, file_path: str) -> list[Finding]:
         line = event.get("line")
         desc, ave_id, sev, aivss_score = _match_fs_ioc(path, op, reason)
         if desc:
-            piranha_url = f"https://api.piranha.bawbel.io/records/{ave_id}" if ave_id else None
+            record_url = ave_record_url(ave_id)
             findings.append(
                 Finding(
                     rule_id=f"sandbox-fs-{ave_id.replace('-', '').lower()}",
@@ -323,7 +324,8 @@ def _parse_report(report: dict, file_path: str) -> list[Finding]:
                     engine="sandbox",
                     owasp=["ASI07"],
                     owasp_mcp=["MCP05"],
-                    piranha_url=piranha_url,
+                    piranha_url=record_url,
+                    ave_url=record_url,
                 )
             )
 
@@ -333,7 +335,7 @@ def _parse_report(report: dict, file_path: str) -> list[Finding]:
         line = event.get("line")
         desc, ave_id, sev, aivss_score = _match_process_ioc(cmd, reason)
         if desc:
-            piranha_url = f"https://api.piranha.bawbel.io/records/{ave_id}" if ave_id else None
+            record_url = ave_record_url(ave_id)
             findings.append(
                 Finding(
                     rule_id=f"sandbox-proc-{ave_id.replace('-', '').lower()}",
@@ -347,7 +349,8 @@ def _parse_report(report: dict, file_path: str) -> list[Finding]:
                     engine="sandbox",
                     owasp=["ASI07"],
                     owasp_mcp=["MCP05"],
-                    piranha_url=piranha_url,
+                    piranha_url=record_url,
+                    ave_url=record_url,
                 )
             )
 
@@ -372,7 +375,8 @@ def _parse_report(report: dict, file_path: str) -> list[Finding]:
                 engine="sandbox",
                 owasp=["ASI01"],
                 owasp_mcp=["MCP04"],
-                piranha_url="https://api.piranha.bawbel.io/records/AVE-2026-00001",
+                piranha_url=ave_record_url("AVE-2026-00001"),
+                ave_url=ave_record_url("AVE-2026-00001"),
             )
         )
 

@@ -22,7 +22,8 @@ from rich.table import Table
 from scanner.conformance import score_conformance, CheckStatus, CheckCategory
 from scanner.cli.shared import console, print_banner
 from scanner.messages import Errors
-from scanner.utils import get_logger
+from scanner.config import HTTP_TIMEOUT_SEC, MCP_REGISTRY_URL
+from scanner.utils import get_logger, user_agent
 
 log = get_logger(__name__)
 
@@ -83,11 +84,11 @@ def _load_from_registry(server_name: str) -> tuple[dict | None, str | None]:
         import urllib.parse
 
         slug = urllib.parse.quote(server_name, safe="")
-        url = f"https://registry.modelcontextprotocol.io/v0/servers/{slug}"
+        url = f"{MCP_REGISTRY_URL}/v0/servers/{slug}"
         req = urllib.request.Request(
-            url, headers={"Accept": "application/json", "User-Agent": "bawbel-scanner/1.0"}
+            url, headers={"Accept": "application/json", "User-Agent": user_agent()}
         )
-        with urllib.request.urlopen(req, timeout=10) as r:  # nosec B310  # noqa: S310
+        with urllib.request.urlopen(req, timeout=HTTP_TIMEOUT_SEC) as r:  # nosec B310  # noqa: S310
             data = json.loads(r.read())
             return data.get("server", data), None
     except Exception as e:  # nosec B110 — broad catch intentional, error_type logged

@@ -19,6 +19,7 @@ from scanner.messages import Errors, Logs
 from scanner.models import DegradedReason, Finding, Severity
 from scanner.utils import (
     Timer,
+    ave_record_url,
     get_logger,
     parse_cvss,
     parse_json_safe,
@@ -180,7 +181,7 @@ def run_semgrep_scan(file_path: str, stripped_content: Optional[str] = None) -> 
             match_text = _match_from_file(file_path, line_no) if line_no else ""
 
             ave_id = meta.get("ave_id") or None
-            piranha_url = f"https://api.piranha.bawbel.io/records/{ave_id}" if ave_id else None
+            record_url = ave_record_url(ave_id)
             ave_meta = get_ave_meta(ave_id, "semgrep")
 
             findings.append(
@@ -196,7 +197,8 @@ def run_semgrep_scan(file_path: str, stripped_content: Optional[str] = None) -> 
                     engine="semgrep",
                     owasp=meta.get("owasp_mapping", []),
                     owasp_mcp=meta.get("owasp_mcp", []),
-                    piranha_url=piranha_url,
+                    piranha_url=record_url,
+                    ave_url=record_url,
                     confidence=ave_meta.confidence_baseline,
                     evidence_kind=ave_meta.evidence_kind,
                     detection_stage=ave_meta.detection_stage,

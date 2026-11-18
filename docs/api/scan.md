@@ -119,7 +119,8 @@ One detected vulnerability. Immutable after creation.
 | `engine` | `str` | `"pattern"` | `"pattern"`, `"yara"`, `"semgrep"`, `"llm"`, `"sandbox"`, `"magika"` |
 | `owasp` | `list[str]` | `[]` | OWASP Top 10 for LLM Apps codes e.g. `["ASI01", "ASI08"]` |
 | `owasp_mcp` | `list[str]` | `[]` | OWASP MCP Top 10 codes e.g. `["MCP04", "MCP06"]` |
-| `piranha_url` | `str \| None` | `None` | PiranhaDB threat intel URL |
+| `piranha_url` | `str \| None` | `None` | Deprecated, removed in 2.0. Same value as `ave_url` |
+| `ave_url` | `str \| None` | `None` | AVE record URL, `https://api.aveproject.org/records/{ave_id}` |
 | `suppressed` | `bool` | `False` | True if this finding was suppressed |
 | `suppression_reason` | `str \| None` | `None` | Why it was suppressed |
 | `confidence` | `float` | `1.0` | FP confidence score 0.0-1.0 |
@@ -146,7 +147,7 @@ for f in result.findings:
     print(f.engine)          # "pattern"
     print(f.owasp)           # ["ASI01", "ASI08"]
     print(f.owasp_mcp)       # ["MCP04", "MCP06"]
-    print(f.piranha_url)     # "https://api.piranha.bawbel.io/records/AVE-2026-00001"
+    print(f.ave_url)         # "https://api.aveproject.org/records/AVE-2026-00001"
 
     d = f.to_aivss_dict()
     print(d["aivss_score"])    # 8.0
