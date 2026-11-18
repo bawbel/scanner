@@ -27,7 +27,7 @@ from pathlib import Path
 from scanner.ave_meta import get_ave_meta
 from scanner.messages import Logs
 from scanner.models import Finding, Severity
-from scanner.utils import Timer, get_logger
+from scanner.utils import Timer, ave_record_url, get_logger
 
 log = get_logger(__name__)
 
@@ -134,7 +134,8 @@ def run_magika_scan(file_path: str) -> list[Finding]:
                         engine="magika",
                         owasp=["ASI07"],
                         owasp_mcp=["MCP04"],
-                        piranha_url="https://api.piranha.bawbel.io/records/AVE-2026-00024",
+                        piranha_url=ave_record_url("AVE-2026-00024"),
+                        ave_url=ave_record_url("AVE-2026-00024"),
                         confidence=_m.confidence_baseline,
                         evidence_kind=_m.evidence_kind,
                         detection_stage=_m.detection_stage,
@@ -178,7 +179,8 @@ def run_magika_scan(file_path: str) -> list[Finding]:
                         engine="magika",
                         owasp=["ASI07"],
                         owasp_mcp=["MCP04"],
-                        piranha_url="https://api.piranha.bawbel.io/records/AVE-2026-00024",
+                        piranha_url=ave_record_url("AVE-2026-00024"),
+                        ave_url=ave_record_url("AVE-2026-00024"),
                         confidence=_m2.confidence_baseline,
                         evidence_kind=_m2.evidence_kind,
                         detection_stage=_m2.detection_stage,

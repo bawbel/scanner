@@ -26,7 +26,7 @@ from scanner.cli.shared import (
 )
 from scanner.cli.shared.constants import OWASP_DESCRIPTIONS, REMEDIATION_GUIDE
 from scanner.cli.shared.utils import collect_files
-from scanner.docs_urls import AVE_STANDARD
+from scanner.docs_urls import AVE_STANDARD, display_text
 from scanner.utils import resolve_path
 
 
@@ -101,7 +101,7 @@ def _render_report(result) -> None:
     name = Path(result.file_path).name
     console.print(f"[dim]Report for:[/]  [bold white]{name}[/]")
     console.print(f"[dim]Type:[/]        [bold white]{result.component_type}[/]")
-    console.print(f"[dim]AVE Standard:[/] [link={AVE_STANDARD}]github.com/bawbel/ave[/link]")
+    console.print(f"[dim]AVE Standard:[/] [link={AVE_STANDARD}]{display_text(AVE_STANDARD)}[/link]")
     console.print()
 
     if result.has_error:
@@ -167,10 +167,11 @@ def _render_report(result) -> None:
                 f"{code} - {OWASP_MCP_DESCRIPTIONS.get(code, code)}" for code in f.owasp_mcp
             )
             table.add_row("OWASP MCP", mcp_str)
-        if f.piranha_url:
+        record_url = f.ave_url or f.piranha_url
+        if record_url:
             table.add_row(
-                "PiranhaDB",
-                f"[link={f.piranha_url}]{f.piranha_url}[/link]",
+                "AVE record",
+                f"[link={record_url}]{record_url}[/link]",
             )
 
         console.print(table)

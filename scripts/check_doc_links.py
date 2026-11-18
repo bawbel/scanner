@@ -5,7 +5,9 @@ Fetch every documentation URL in scanner/docs_urls.py and fail when one does not
 Run weekly by .github/workflows/doc-links.yml, and on a pull request that changes the
 URLs. It needs the network. The offline check is tests/test_doc_links.py.
 
-Standard library only: it loads docs_urls.py by path, so it needs no install.
+The fetching uses the standard library only. docs_urls.py imports scanner.config, so the
+package's own dependencies must be installed (pip install -e .). The script puts the
+repository root first on sys.path, so it reads this checkout's copy.
 
 Exit 0 when every URL answers 2xx after redirects, 1 when at least one does not.
 
@@ -78,6 +80,8 @@ def check_url(
 
 def load_urls(path: Path = DOCS_URLS) -> dict[str, str]:
     """Load docs_urls.py by path and return its URL constants, keyed by name."""
+    if str(REPO_ROOT) not in sys.path:
+        sys.path.insert(0, str(REPO_ROOT))  # docs_urls.py imports scanner.config
     spec = importlib.util.spec_from_file_location("docs_urls", path)
     if spec is None or spec.loader is None:
         raise RuntimeError(f"cannot load {path.name}")

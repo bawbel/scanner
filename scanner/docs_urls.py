@@ -12,7 +12,15 @@ next promotion to ``main``, so point a constant only at a file already on ``main
 
 Not here: per-finding AVE record URLs and the PiranhaDB record URLs. Their shape
 is owned by the AVE consumption work, not by this module.
+
+WEBSITE and AVE_STANDARD are not written here. scanner.config owns those two values
+(PROJECT_HOMEPAGE_URL and AVE_PROJECT_URL, used by the SARIF output too), and this
+module names them so that the weekly link check covers them. The imports carry a
+leading underscore so that all_urls() lists each URL once.
 """
+
+from scanner.config import AVE_PROJECT_URL as _AVE_PROJECT_URL
+from scanner.config import PROJECT_HOMEPAGE_URL as _PROJECT_HOMEPAGE_URL
 
 _REPO_BLOB_MAIN = "https://github.com/bawbel/scanner/blob/main/"
 
@@ -23,14 +31,19 @@ SUPPRESSION_GUIDE = _REPO_BLOB_MAIN + "docs/guides/suppression.md"
 DOCS_HOME = "https://bawbel.io/docs"
 
 # Project home, written into SARIF output as the tool's informationUri.
-WEBSITE = "https://bawbel.io"
+WEBSITE = _PROJECT_HOMEPAGE_URL
 
-# The AVE standard, shown by `bawbel version` and `bawbel report` and used as the
-# SARIF helpUri. github.com/bawbel/ave redirects to github.com/aveproject/ave.
-AVE_STANDARD = "https://github.com/bawbel/ave"
+# The AVE standard, shown by `bawbel version` and `bawbel report`. It is also the SARIF
+# helpUri for a finding that has no record URL of its own.
+AVE_STANDARD = _AVE_PROJECT_URL
 
 # MCP specification, referenced by the conformance checks.
 MCP_SPECIFICATION = "https://modelcontextprotocol.io/specification"
+
+
+def display_text(url: str) -> str:
+    """Return a URL without its scheme and trailing slash, for the visible text of a link."""
+    return url.removeprefix("https://").rstrip("/")
 
 
 def all_urls() -> dict[str, str]:

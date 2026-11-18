@@ -7,10 +7,11 @@ directly to stdout (print) so they can be piped without buffering.
 
 import json
 from scanner import __version__
+from scanner.config import AVE_PROJECT_URL, PROJECT_HOMEPAGE_URL
 from scanner.models import ScanResult
 from scanner.cli.shared.display import sev_value
-from scanner.docs_urls import AVE_STANDARD, WEBSITE
 from scanner.owasp_mcp_map import get_owasp_mcp
+from scanner.utils import ave_record_url
 
 
 def print_json(results: list[ScanResult]) -> None:
@@ -31,6 +32,7 @@ def print_json(results: list[ScanResult]) -> None:
             "owasp": f.owasp,
             "owasp_mcp": f.owasp_mcp or get_owasp_mcp(f.ave_id),
             "piranha_url": f.piranha_url,
+            "ave_url": f.ave_url,
         }
         if suppressed:
             d["suppressed"] = True
@@ -73,7 +75,7 @@ def print_sarif(results: list[ScanResult]) -> None:
                         "name": f.rule_id.replace("-", " ").title(),
                         "shortDescription": {"text": f.title},
                         "fullDescription": {"text": f.description},
-                        "helpUri": AVE_STANDARD,
+                        "helpUri": ave_record_url(f.ave_id) or AVE_PROJECT_URL,
                         "properties": {
                             "tags": f.owasp,
                             "precision": "high",
@@ -105,6 +107,7 @@ def print_sarif(results: list[ScanResult]) -> None:
                         "aivss_score": f.aivss_score,
                         "owasp_mcp": f.owasp_mcp or get_owasp_mcp(f.ave_id),
                         "piranha_url": f.piranha_url,
+                        "ave_url": f.ave_url,
                     },
                 }
             )
@@ -121,7 +124,7 @@ def print_sarif(results: list[ScanResult]) -> None:
                     "driver": {
                         "name": "bawbel-scanner",
                         "version": __version__,
-                        "informationUri": WEBSITE,
+                        "informationUri": PROJECT_HOMEPAGE_URL,
                         "rules": rules,
                     }
                 },

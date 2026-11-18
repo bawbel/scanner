@@ -18,13 +18,14 @@ from pathlib import Path
 from click.testing import CliRunner
 from rich.console import Console
 
-from scanner import docs_urls
+from scanner import config, docs_urls
 from scanner.docs_urls import (
     AVE_STANDARD,
     DOCS_HOME,
     MCP_SPECIFICATION,
     SUPPRESSION_GUIDE,
     WEBSITE,
+    display_text,
 )
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -87,6 +88,43 @@ class TestDocsUrls:
         assert "bawbel-ignore" in guide.read_text(encoding="utf-8")
 
 
+class TestSingleSource:
+    """WEBSITE and AVE_STANDARD are scanner.config values, named here for the link check."""
+
+    def test_website_is_the_configured_project_homepage(self):
+        assert WEBSITE == config.PROJECT_HOMEPAGE_URL
+
+    def test_ave_standard_is_the_configured_ave_project_url(self):
+        assert AVE_STANDARD == config.AVE_PROJECT_URL
+
+    def test_every_url_is_listed_once(self):
+        values = list(docs_urls.all_urls().values())
+        assert len(values) == len(set(values))
+
+    def test_the_imported_config_names_are_not_listed_as_urls(self):
+        names = docs_urls.all_urls()
+        assert "AVE_PROJECT_URL" not in names
+        assert "PROJECT_HOMEPAGE_URL" not in names
+
+    def test_all_urls_lists_only_public_https_constants(self, monkeypatch):
+        # The link check fetches whatever all_urls() returns, so its filter is a contract.
+        monkeypatch.setattr(docs_urls, "ONLY_TEXT", "hello", raising=False)
+        monkeypatch.setattr(docs_urls, "PLAIN_HTTP", "http://example.invalid/", raising=False)
+        monkeypatch.setattr(docs_urls, "_PRIVATE", "https://example.invalid/p", raising=False)
+        monkeypatch.setattr(docs_urls, "lowercase", "https://example.invalid/l", raising=False)
+        monkeypatch.setattr(docs_urls, "NOT_TEXT", 7, raising=False)
+        monkeypatch.setattr(docs_urls, "PUBLIC", "https://example.invalid/ok", raising=False)
+        urls = docs_urls.all_urls()
+        assert urls["PUBLIC"] == "https://example.invalid/ok"
+        for hidden in ("ONLY_TEXT", "PLAIN_HTTP", "_PRIVATE", "lowercase", "NOT_TEXT"):
+            assert hidden not in urls
+
+    def test_display_text_drops_the_scheme_and_a_trailing_slash(self):
+        assert display_text("https://github.com/aveproject/ave") == "github.com/aveproject/ave"
+        assert display_text("https://bawbel.io/") == "bawbel.io"
+        assert display_text("https://bawbel.io/docs") == "bawbel.io/docs"
+
+
 class TestNoStrayUrls:
     def test_no_documentation_url_outside_docs_urls(self):
         assert stray_urls(PACKAGE) == []
@@ -123,6 +161,44 @@ class TestPrintedUrls:
         out = buffer.getvalue()
         assert DOCS_HOME in out
         assert AVE_STANDARD in out
+        assert "github.com/bawbel/ave" not in out
+
+    def test_version_shows_text_that_matches_each_link_target(self, monkeypatch):
+        from scanner.cli import cli
+        from scanner.cli import cmd_version
+
+        buffer = io.StringIO()
+        # No terminal: rich prints the visible text only, with no link escape sequence.
+        # A link target contains the label as a substring, so only this form can tell them apart.
+        plain = Console(file=buffer, force_terminal=False, width=200)
+        monkeypatch.setattr(cmd_version, "console", plain)
+        result = CliRunner().invoke(cli, ["version"])
+        assert result.exit_code == 0, result.output
+        lines = [line.strip() for line in buffer.getvalue().splitlines()]
+        assert f"AVE Standard:  {display_text(AVE_STANDARD)}" in lines
+        assert f"Documentation: {display_text(DOCS_HOME)}" in lines
+
+    def test_report_links_the_standard_with_matching_text(self, monkeypatch):
+        from scanner.cli import cmd_report
+        from scanner.scanner import scan
+
+        result = scan(str(MALICIOUS))
+        linked = io.StringIO()
+        monkeypatch.setattr(
+            cmd_report,
+            "console",
+            Console(file=linked, force_terminal=True, legacy_windows=False, width=200),
+        )
+        cmd_report._render_report(result)
+        assert AVE_STANDARD in linked.getvalue()
+
+        plain = io.StringIO()
+        monkeypatch.setattr(
+            cmd_report, "console", Console(file=plain, force_terminal=False, width=200)
+        )
+        cmd_report._render_report(result)
+        lines = [line.strip() for line in plain.getvalue().splitlines()]
+        assert f"AVE Standard: {display_text(AVE_STANDARD)}" in lines
 
     def test_sarif_uses_the_constants(self, capsys):
         from scanner.cli.shared.formatters import print_sarif
@@ -132,7 +208,8 @@ class TestPrintedUrls:
         driver = json.loads(capsys.readouterr().out)["runs"][0]["tool"]["driver"]
         assert driver["informationUri"] == WEBSITE
         assert driver["rules"]
-        assert all(rule["helpUri"] == AVE_STANDARD for rule in driver["rules"])
+        # helpUri is a per-finding record URL, with AVE_STANDARD as the fallback. Its
+        # shape is tested in tests/unit/test_ave_record_urls.py.
 
     def test_conformance_check_data_carries_the_specification_url(self):
         from scanner.conformance.checks import CHECKS_BY_ID
