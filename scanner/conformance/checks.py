@@ -15,13 +15,15 @@ Adding a new check:
     That's it - scorer.py picks it up automatically
 
 References:
-    https://spec.modelcontextprotocol.io/specification/
+    https://modelcontextprotocol.io/specification
     https://modelcontextprotocol.io/specification/draft/server/tools
     SEP-1649: .well-known/mcp/server-card.json
 """
 
 from dataclasses import dataclass
 from enum import Enum
+
+from scanner.docs_urls import MCP_SPECIFICATION
 
 
 class CheckCategory(str, Enum):
@@ -109,8 +111,7 @@ CONFORMANCE_CHECKS: list[ConformanceCheck] = [
             "HTTP+SSE was deprecated in the 2025-03-26 spec."
         ),
         remediation=(
-            "Migrate from 'http+sse' to 'streamable-http' transport. "
-            "See: https://spec.modelcontextprotocol.io/specification/"
+            f"Migrate from 'http+sse' to 'streamable-http' transport. See: {MCP_SPECIFICATION}"
         ),
     ),
     ConformanceCheck(

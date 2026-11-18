@@ -295,7 +295,7 @@ Logs.ENGINE_UNAVAILABLE      # "Engine unavailable (not installed): engine=%s"
 Logs.FINDING_DETECTED        # "Finding detected: rule_id=%s severity=%s engine=%s line=%s"
 
 # UI strings — shown in the terminal
-Info.CLEAN_COMPONENT         # "No vulnerabilities found"
+Info.CLEAN_COMPONENT         # "No findings from the engines that ran"
 Info.REPORT_COMING_SOON      # "Full A-BOM report generation coming in v0.2.0"
 ```
 

@@ -13,7 +13,8 @@ from rich.panel import Panel
 from rich.text import Text
 
 from scanner import __version__
-from scanner.models import ScanResult
+from scanner.messages import Info
+from scanner.models import ENGINES, ScanResult
 from scanner.scanner import SEVERITY_SCORES
 from scanner.cli.shared.constants import (
     OWASP_DESCRIPTIONS,
@@ -65,6 +66,17 @@ def print_banner() -> None:
 # ── Summary ────────────────────────────────────────────────────────────────────
 
 
+def describe_engines(result: ScanResult) -> str:
+    """'4 of 6 ran. Not run: llm (no_api_key), sandbox (disabled_by_config)', or '' if unknown."""
+    if not result.engines_run and not result.engines_degraded:
+        return ""
+    text = f"{len(result.engines_run)} of {len(ENGINES)} ran"
+    if result.engines_degraded:
+        not_run = ", ".join(f"{d.engine} ({d.reason})" for d in result.engines_degraded)
+        text += f". Not run: {not_run}"
+    return text
+
+
 def print_summary(result: ScanResult) -> None:
     console.print("[dim]" + "-" * 58 + "[/]")
     console.print("[bold white]SUMMARY[/]")
@@ -77,7 +89,7 @@ def print_summary(result: ScanResult) -> None:
             f"Risk score:   [{color}]" f"{result.risk_score:.1f} / 10  {sev_value(max_sev)}[/]"
         )
     else:
-        console.print("Risk score:   [bold #1DB894]0.0 / 10  CLEAN[/]")
+        console.print(f"Risk score:   [bold #1DB894]{Info.CLEAN_RISK_SCORE}[/]")
 
     console.print(f"Findings:     [bold]{len(result.findings)}[/]")
 
@@ -87,6 +99,9 @@ def print_summary(result: ScanResult) -> None:
             f"Suppressed:   [dim]{n}" " (run with [bold]--no-ignore[/bold] to see all)[/]"
         )
     console.print(f"Scan time:    [dim]{result.scan_time_ms}ms[/]")
+    engines = describe_engines(result)
+    if engines:
+        console.print(f"Engines:      [dim]{engines}[/]")
     console.print()
 
 
@@ -127,8 +142,8 @@ def build_scan_renderables(
     items.append(Text(""))
 
     if result.is_clean:
-        items.append(Text("✓  No vulnerabilities found", style="bold #1DB894"))
-        items.append(Text("This component passed all AVE checks.", style="dim"))
+        items.append(Text(f"✓  {Info.CLEAN_COMPONENT}", style="bold #1DB894"))
+        items.append(Text(Info.CLEAN_DESCRIPTION, style="dim"))
     else:
         items.append(Text("FINDINGS", style="bold white"))
         for f in result.findings:
@@ -245,7 +260,7 @@ def build_scan_renderables(
             )
         )
     else:
-        items.append(Text("Risk score:   0.0 / 10  CLEAN", style="bold #1DB894"))
+        items.append(Text(f"Risk score:   {Info.CLEAN_RISK_SCORE}", style="bold #1DB894"))
 
     items.append(
         Text.assemble(
@@ -277,6 +292,10 @@ def build_scan_renderables(
             (f"{result.scan_time_ms}ms", "dim"),
         )
     )
+
+    engines = describe_engines(result)
+    if engines:
+        items.append(Text.assemble(("Engines:      ", ""), (engines, "dim")))
 
     if show_report_hint and not result.is_clean:
         items.append(Text(""))

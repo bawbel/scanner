@@ -57,18 +57,18 @@ Detection Engines:
 bawbel scan ./my-skill.md
 ```
 
-**Clean component:**
+**No findings:**
 ```
-Bawbel Scanner v0.1.0  ·  github.com/bawbel/scanner
+Bawbel Scanner v1.3.0  ·  github.com/bawbel/scanner
 
 Scanning:  my-skill.md
 Type:      skill
 
-✓  No vulnerabilities found
-   This component passed all AVE checks.
+✓  No findings from the engines that ran
+No rule matched. This is not proof that the component is safe.
 
 SUMMARY
-Risk score:   0.0 / 10  CLEAN
+Risk score:   0.0 / 10  (no findings, not a safety verdict)
 Findings:     0
 Scan time:    3ms
 ```

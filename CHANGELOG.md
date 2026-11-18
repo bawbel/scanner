@@ -6,12 +6,61 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- `ave_url` on every finding (JSON, SARIF, `scan()`): the AVE record at
+  https://api.aveproject.org/records/{ave_id}, built from `AVE_RECORD_URL_TEMPLATE` (#116).
+
+- Outbound HTTP settings in one place (`scanner/config`), each overridable from the
+  environment and validated: `BAWBEL_AVE_API_URL`, `BAWBEL_MCP_REGISTRY_URL`,
+  `BAWBEL_HTTP_TIMEOUT_SEC`. A value that is not an http(s) URL or a positive integer is
+  ignored with a warning (#116).
+
+- Engine accounting. A core-only install runs one engine of six and used to print the same result
+  as a full install. `ScanResult` gains `engines_run` and `engines_degraded`, in the JSON output,
+  in SARIF (`runs[].invocations[].toolExecutionNotifications`), and as an `Engines:` line in the
+  text summary. Each degraded engine has a `reason` (`not_installed`, `no_api_key`,
+  `disabled_by_config`, `docker_unavailable`, `rules_missing`, `timeout`, `api_error`,
+  `engine_error`, `skipped_content_type`) and an error-code `detail`, never exception text.
+  A Semgrep timeout was dropped without a log line and is now reported. New flag
+  `--require-engines yara,semgrep` exits 3 if a named engine did not run (#124).
+
+### Changed
+
+- The User-Agent on outbound requests is built from the package version (it said
+  1.0 or 1.2.0). SARIF rule `helpUri` links each rule's AVE record (#116).
+- `piranha_url` now carries the same `api.aveproject.org` value as `ave_url`.
+  `api.piranha.bawbel.io` no longer resolves (#116).
+- `BAWBEL_PIRANHA_URL` has no default: the opt-in false-positive signal sends nothing
+  unless it is set (#116).
+- Output when nothing matched no longer gives a verdict. `scan` and `report` printed
+  "No vulnerabilities found", "Risk score: 0.0 / 10  CLEAN", and "This component passed
+  all AVE checks" (`report` added "It is safe to install and use"). They now print "No
+  findings from the engines that ran", "No rule matched. This is not proof that the
+  component is safe.", and "Risk score: 0.0 / 10  (no findings, not a safety verdict)".
+  The strings live in `messages.Info`. JSON, SARIF, and exit codes are unchanged (#118).
+
+### Deprecated
+
+- `piranha_url`. Use `ave_url`. Removed in 2.0 (#116).
+
 ### Removed
 
 - `action.yml` at the repo root. The GitHub Action is `bawbel/integrations@v1`. Existing
   tags, such as `bawbel/scanner@v1.3.0`, still carry their copy (#92).
 
 ### Fixed
+
+- The pre-commit hook told users to read `https://bawbel.io/docs/suppression`, which returns
+  404. It now points at `docs/guides/suppression.md` in this repository. The documentation
+  URLs the CLI prints or carries now live in one module, `scanner/docs_urls.py`, and a test
+  checks that each one that names a file in this repository names a file that exists. The
+  `conform` remediation link `https://spec.modelcontextprotocol.io/specification/` did not
+  connect; it is now `https://modelcontextprotocol.io/specification`. `bawbel version` and
+  `bawbel report` now link the AVE standard at `github.com/aveproject/ave`, the value of
+  `scanner.config.AVE_PROJECT_URL`, where they linked `github.com/bawbel/ave`, which
+  redirects there. A weekly workflow fetches the external URLs and fails when one stops
+  resolving (#133).
 
 - A suppression comment could raise findings of its own: a `bawbel-ignore` reason that quoted
   the pattern it suppressed created a second, unsuppressed finding, and a block comment's text

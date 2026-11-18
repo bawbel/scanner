@@ -25,9 +25,10 @@ import os
 from pathlib import Path
 
 from scanner.ave_meta import get_ave_meta
+from scanner.core.engine_ledger import report_degraded, report_ran
 from scanner.messages import Logs
-from scanner.models import Finding, Severity
-from scanner.utils import Timer, get_logger
+from scanner.models import DegradedReason, Finding, Severity
+from scanner.utils import Timer, ave_record_url, get_logger
 
 log = get_logger(__name__)
 
@@ -77,12 +78,14 @@ def run_magika_scan(file_path: str) -> list[Finding]:
         List of Findings - empty if no mismatch or magika not installed.
     """
     if not MAGIKA_ENABLED:
+        report_degraded("magika", DegradedReason.DISABLED_BY_CONFIG)
         return []
 
     try:
         from magika import Magika  # optional dependency  # noqa: PLC0415
     except ImportError:
         log.debug("Magika not installed - Stage 0 skipped (pip install magika)")
+        report_degraded("magika", DegradedReason.NOT_INSTALLED)
         return []
 
     findings: list[Finding] = []
@@ -94,6 +97,7 @@ def run_magika_scan(file_path: str) -> list[Finding]:
         try:
             m = Magika()
             result = m.identify_path(path)
+            report_ran("magika")
             content_type = result.output.label.lower()
             confidence = result.score
 
@@ -134,7 +138,8 @@ def run_magika_scan(file_path: str) -> list[Finding]:
                         engine="magika",
                         owasp=["ASI07"],
                         owasp_mcp=["MCP04"],
-                        piranha_url="https://api.piranha.bawbel.io/records/AVE-2026-00024",
+                        piranha_url=ave_record_url("AVE-2026-00024"),
+                        ave_url=ave_record_url("AVE-2026-00024"),
                         confidence=_m.confidence_baseline,
                         evidence_kind=_m.evidence_kind,
                         detection_stage=_m.detection_stage,
@@ -178,7 +183,8 @@ def run_magika_scan(file_path: str) -> list[Finding]:
                         engine="magika",
                         owasp=["ASI07"],
                         owasp_mcp=["MCP04"],
-                        piranha_url="https://api.piranha.bawbel.io/records/AVE-2026-00024",
+                        piranha_url=ave_record_url("AVE-2026-00024"),
+                        ave_url=ave_record_url("AVE-2026-00024"),
                         confidence=_m2.confidence_baseline,
                         evidence_kind=_m2.evidence_kind,
                         detection_stage=_m2.detection_stage,
@@ -192,6 +198,7 @@ def run_magika_scan(file_path: str) -> list[Finding]:
                 path.name,
                 type(e).__name__,
             )
+            report_degraded("magika", DegradedReason.ENGINE_ERROR)
 
     log.debug(Logs.ENGINE_COMPLETE, "magika", len(findings), t.elapsed_ms)
     return findings

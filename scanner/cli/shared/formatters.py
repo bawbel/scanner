@@ -7,9 +7,11 @@ directly to stdout (print) so they can be piped without buffering.
 
 import json
 from scanner import __version__
+from scanner.config import AVE_PROJECT_URL, PROJECT_HOMEPAGE_URL
 from scanner.models import ScanResult
 from scanner.cli.shared.display import sev_value
 from scanner.owasp_mcp_map import get_owasp_mcp
+from scanner.utils import ave_record_url
 
 
 def print_json(results: list[ScanResult]) -> None:
@@ -30,6 +32,7 @@ def print_json(results: list[ScanResult]) -> None:
             "owasp": f.owasp,
             "owasp_mcp": f.owasp_mcp or get_owasp_mcp(f.ave_id),
             "piranha_url": f.piranha_url,
+            "ave_url": f.ave_url,
         }
         if suppressed:
             d["suppressed"] = True
@@ -46,6 +49,8 @@ def print_json(results: list[ScanResult]) -> None:
                 "max_severity": sev_value(r.max_severity) if r.max_severity else None,
                 "scan_time_ms": r.scan_time_ms,
                 "has_error": r.has_error,
+                "engines_run": list(r.engines_run),
+                "engines_degraded": [d.to_dict() for d in r.engines_degraded],
                 "findings": [_finding_dict(f) for f in r.findings],
                 "suppressed_findings": [
                     _finding_dict(f, suppressed=True) for f in r.suppressed_findings
@@ -54,6 +59,43 @@ def print_json(results: list[ScanResult]) -> None:
             }
         )
     print(json.dumps(output, indent=2, default=str))
+
+
+def _sarif_invocation(results: list[ScanResult]) -> dict:
+    """SARIF invocation: one warning notification per engine that did not run.
+
+    SARIF 2.1.0 puts these on runs[].invocations[].toolExecutionNotifications. One run covers
+    every file, so an engine is reported once, with how many files it did not run on.
+    """
+    not_run: dict[str, list] = {}
+    ran: set[str] = set()
+    for r in results:
+        ran.update(r.engines_run)
+        for d in r.engines_degraded:
+            not_run.setdefault(d.engine, []).append(d)
+    notifications = [
+        {
+            "level": "warning",
+            "descriptor": {"id": "bawbel-engine-degraded"},
+            "message": {
+                "text": (
+                    f"Engine {engine} did not run on {len(items)} of {len(results)} file(s): "
+                    f"{items[0].reason}"
+                )
+            },
+            "properties": {
+                "engine": engine,
+                "reason": items[0].reason,
+                "detail": items[0].detail,
+            },
+        }
+        for engine, items in not_run.items()
+    ]
+    return {
+        "executionSuccessful": all(r.error is None for r in results),
+        "toolExecutionNotifications": notifications,
+        "properties": {"enginesRun": sorted(ran)},
+    }
 
 
 def print_sarif(results: list[ScanResult]) -> None:
@@ -72,7 +114,7 @@ def print_sarif(results: list[ScanResult]) -> None:
                         "name": f.rule_id.replace("-", " ").title(),
                         "shortDescription": {"text": f.title},
                         "fullDescription": {"text": f.description},
-                        "helpUri": "https://github.com/bawbel/ave",
+                        "helpUri": ave_record_url(f.ave_id) or AVE_PROJECT_URL,
                         "properties": {
                             "tags": f.owasp,
                             "precision": "high",
@@ -104,6 +146,7 @@ def print_sarif(results: list[ScanResult]) -> None:
                         "aivss_score": f.aivss_score,
                         "owasp_mcp": f.owasp_mcp or get_owasp_mcp(f.ave_id),
                         "piranha_url": f.piranha_url,
+                        "ave_url": f.ave_url,
                     },
                 }
             )
@@ -120,10 +163,11 @@ def print_sarif(results: list[ScanResult]) -> None:
                     "driver": {
                         "name": "bawbel-scanner",
                         "version": __version__,
-                        "informationUri": "https://bawbel.io",
+                        "informationUri": PROJECT_HOMEPAGE_URL,
                         "rules": rules,
                     }
                 },
+                "invocations": [_sarif_invocation(results)],
                 "results": run_results,
             }
         ],
