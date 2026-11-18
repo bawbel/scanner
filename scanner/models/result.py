@@ -8,6 +8,7 @@ Returned by scanner.scan() - never instantiated directly by callers.
 from dataclasses import dataclass, field
 from typing import Optional
 
+from scanner.models.engine_status import EngineDegradation
 from scanner.models.finding import Finding
 from scanner.models.severity import SEVERITY_SCORES, Severity
 
@@ -37,6 +38,12 @@ class ScanResult:
     # AcceptedFinding objects - false positives and accepted risks
     # These are separate from suppressed_findings which are auto-suppressed by FP pipeline
     accepted_findings: list = field(default_factory=list)
+
+    # -- Engine accounting (v1.4.0) -----------------------------------------
+    # Which detection engines ran on this scan, and which could not and why. A scan that ran
+    # one engine of six prints the same findings as one that ran all six; these say which.
+    engines_run: list[str] = field(default_factory=list)
+    engines_degraded: list[EngineDegradation] = field(default_factory=list)
 
     # -- Error ---------------------------------------------------------------
     error: Optional[str] = None  # (stable) error code if scan failed, else None
@@ -93,6 +100,8 @@ class ScanResult:
             "error": self.error,
             "risk_score": self.risk_score,
             "max_severity": self.max_severity.value if self.max_severity else None,
+            "engines_run": list(self.engines_run),
+            "engines_degraded": [d.to_dict() for d in self.engines_degraded],
             "findings": [
                 {
                     "rule_id": f.rule_id,
