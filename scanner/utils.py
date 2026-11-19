@@ -29,6 +29,7 @@ import time
 from pathlib import Path
 from typing import Optional
 
+from scanner.config import AVE_RECORD_URL_TEMPLATE
 from scanner.messages import Errors, Logs
 
 # ── Logger ────────────────────────────────────────────────────────────────────
@@ -394,6 +395,34 @@ class TextSanitiser:
             return fallback
 
 
+# ── AveLinks ──────────────────────────────────────────────────────────────────
+
+
+class AveLinks:
+    """Links to AVE records, built from AVE_RECORD_URL_TEMPLATE."""
+
+    @staticmethod
+    def record_url(ave_id: Optional[str]) -> Optional[str]:
+        """Return the AVE record URL for ave_id, or None when there is no ID."""
+        if not ave_id:
+            return None
+        return AVE_RECORD_URL_TEMPLATE.format(ave_id=ave_id)
+
+
+# ── HttpIdentity ──────────────────────────────────────────────────────────────
+
+
+class HttpIdentity:
+    """The identity the scanner sends on outbound HTTP requests."""
+
+    @staticmethod
+    def user_agent() -> str:
+        """User-Agent built from the package version, so it never goes stale."""
+        from scanner import __version__  # local: scanner/__init__ imports modules using this
+
+        return f"bawbel-scanner/{__version__} (+https://github.com/bawbel/scanner)"
+
+
 # ── Timer ─────────────────────────────────────────────────────────────────────
 
 
@@ -473,3 +502,13 @@ def parse_cvss(raw: object, fallback: float = 5.0) -> float:
 def truncate_match(text: Optional[str], max_len: int) -> Optional[str]:
     """Alias for TextSanitiser.truncate(text, max_len)."""
     return TextSanitiser.truncate(text, max_len)
+
+
+def ave_record_url(ave_id: Optional[str]) -> Optional[str]:
+    """Alias for AveLinks.record_url(ave_id)."""
+    return AveLinks.record_url(ave_id)
+
+
+def user_agent() -> str:
+    """Alias for HttpIdentity.user_agent()."""
+    return HttpIdentity.user_agent()
