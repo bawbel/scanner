@@ -116,8 +116,7 @@ LABEL org.opencontainers.image.title="Bawbel Scanner" \
       org.opencontainers.image.licenses="Apache-2.0" \
       org.opencontainers.image.vendor="Bawbel" \
       org.opencontainers.image.documentation="https://bawbel.io/docs" \
-      bawbel.aivss.spec="0.8" \
-      bawbel.ave.records="51"
+      bawbel.aivss.spec="0.8"
 
 WORKDIR /app
 

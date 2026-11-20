@@ -17,8 +17,8 @@
      scripts/sync_record_counts.py from the AVE corpus and the scanner's rule files. Do not
      edit a number between count markers by hand: run the script. CI runs it with --check.
      To pick up newly published records: python scripts/sync_record_counts.py --update-ref -->
-<!-- counts:corpus ref=6b9f1748c6ceedc1787af7a114361a216d3017d1 -->
-<!-- count:badge -->[![AVE Records](https://img.shields.io/badge/AVE_Records-87-green.svg)](https://aveproject.org)<!-- /count -->
+<!-- counts:corpus ref=f0a112f158d08bec0611c7548da6b2728d695ffe -->
+<!-- count:badge -->[![AVE Records](https://img.shields.io/badge/AVE_Records-89-green.svg)](https://aveproject.org)<!-- /count -->
 [![MCP Registry](https://img.shields.io/badge/MCP_Registry-listed-purple.svg)](https://registry.modelcontextprotocol.io)
 
 <!-- [![Star History Chart](https://api.star-history.com/svg?repos=bawbel/scanner&type=Date)](https://star-history.com/#bawbel/scanner&Date) -->
@@ -66,7 +66,7 @@ bawbel ssc https://server    # scan MCP server without starting it
 |---|---|---|---|---|
 | Starts MCP servers during a scan | Never | Never | Yes (stdio servers) | ? |
 | Runs scanned skill content | Only in the optional Docker sandbox stage, off by default | Never | ? | ? |
-| Open vulnerability database | Yes (AVE, <!-- count:published -->87<!-- /count --> records, public API) | No (internal rule IDs) | No (internal rule IDs) | ? |
+| Open vulnerability database | Yes (AVE, <!-- count:published -->89<!-- /count --> records, public API) | No (internal rule IDs) | No (internal rule IDs) | ? |
 | OWASP AIVSS v0.8 scores | Yes | No (custom 0-100 risk score) | No | ? |
 | Compound attack chain detection | Yes (<!-- count:chains -->12<!-- /count --> AVE capability chains) | Yes (TT1-TT5 taint flows + AST8 chain) | Yes (chain count not published) | ? |
 | MCP spec conformance grading (A+ to F) | Yes | No | No | ? |
@@ -500,16 +500,16 @@ AVE-2026-00046  MCP Tool Hook Hijacking                         AIVSS 9.2  CRITI
 
 | | |
 |---|---|
-| Records published | <!-- count:published -->87<!-- /count --> (<!-- count:id_first -->AVE-2026-00001<!-- /count --> to <!-- count:id_last -->AVE-2026-00087<!-- /count -->) |
+| Records published | <!-- count:published -->89<!-- /count --> (<!-- count:id_first -->AVE-2026-00001<!-- /count --> to <!-- count:id_last -->AVE-2026-00089<!-- /count -->) |
 | Records with a detection rule in this scanner | <!-- count:detected -->43<!-- /count --> (<!-- count:detected_static -->42<!-- /count --> by pattern, YARA, or Semgrep rules; <!-- count:magika_only_ids -->AVE-2026-00024<!-- /count --> by Magika) |
 | Records with scanner metadata only, no rule | <!-- count:metadata_only -->8<!-- /count --> (<!-- count:metadata_only_ids -->AVE-2026-00041 to 00045, 00049 to 00051<!-- /count -->) |
-| Schema | <!-- count:schema_version -->1.1.0<!-- /count -->, validates at [aveproject.org/schema.html](https://aveproject.org/schema.html) |
+| Schema | <!-- count:schema_version -->1.3.0<!-- /count -->, validates at [aveproject.org/schema.html](https://aveproject.org/schema.html) |
 | AIVSS | v<!-- count:aivss_spec -->0.8<!-- /count -->, every record scored |
 | Crosswalks | OWASP MCP Top 10, MITRE ATLAS, NIST AI RMF, OWASP AST10 |
 
-<!-- count:uncovered -->44<!-- /count --> of the <!-- count:published -->87<!-- /count --> published records have no detection rule in this scanner. <!-- count:uncovered_static -->27<!-- /count --> of them are
+<!-- count:uncovered -->46<!-- /count --> of the <!-- count:published -->89<!-- /count --> published records have no detection rule in this scanner. <!-- count:uncovered_static -->27<!-- /count --> of them are
 `static_detection` records that a rule could catch and are the scanner's backlog. The
-other <!-- count:uncovered_runtime -->17<!-- /count --> are runtime-stage records (<!-- count:runtime_observed -->15<!-- /count --> `runtime_observed`, <!-- count:runtime_drift_detected -->2<!-- /count --> `runtime_drift_detected`):
+other <!-- count:uncovered_runtime -->19<!-- /count --> are runtime-stage records (<!-- count:runtime_observed -->17<!-- /count --> `runtime_observed`, <!-- count:runtime_drift_detected -->2<!-- /count --> `runtime_drift_detected`):
 they describe behavior that only shows up while an agent runs, so static analysis of a
 file cannot detect them by design. The record-by-record list, and the commands that
 produce every count in this section, are in
@@ -645,7 +645,7 @@ bawbel scan ./skills/ --format sarif   # GitHub Security / GHAS
 
 | | |
 |---|---|
-| [aveproject.org](https://aveproject.org) | AVE: Agentic Vulnerability Enumeration standard (<!-- count:published -->87<!-- /count --> records, schema, crosswalks) |
+| [aveproject.org](https://aveproject.org) | AVE: Agentic Vulnerability Enumeration standard (<!-- count:published -->89<!-- /count --> records, schema, crosswalks) |
 | [api.aveproject.org](https://api.aveproject.org) | AVE records API, one JSON record per ID |
 | [aivss.owasp.org](https://aivss.owasp.org) | OWASP AIVSS v0.8 scoring standard |
 | [bawbel.io/docs](https://bawbel.io/docs) | Full documentation |
