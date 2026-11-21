@@ -45,6 +45,11 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   findings from the engines that ran", "No rule matched. This is not proof that the
   component is safe.", and "Risk score: 0.0 / 10  (no findings, not a safety verdict)".
   The strings live in `messages.Info`. JSON, SARIF, and exit codes are unchanged (#118).
+- Documentation no longer states how many rules or engines there are, except where the count is
+  generated. The README's Pattern row now uses the `pattern_rules` marker that
+  `scripts/sync_record_counts.py` already computes, so `--check` guards it. The engines guide, the
+  getting-started guide and the docs index gave rule and engine counts that did not match the
+  code, and `LANGUAGE.md` and the README gave correct ones typed by hand (#145).
 
 ### Deprecated
 

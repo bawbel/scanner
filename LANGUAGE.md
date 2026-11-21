@@ -155,9 +155,9 @@ Formula: `((cvss_base + aars) / 2) * thm * mitigation_factor`
 
 ## Detection engines
 
-**PatternEngine** — regex, 40 rules, always active
-**YARAEngine** — binary/behavioral, 39 rules
-**SemgrepEngine** — structural, 41 rules
+**PatternEngine** - regex, always active
+**YARAEngine** - binary/behavioral
+**SemgrepEngine** - structural
 **LLMEngine** — semantic, optional
 **SandboxEngine** — Docker behavioral, optional
 **MagikaEngine** — ML file-type, optional

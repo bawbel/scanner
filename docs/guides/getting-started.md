@@ -14,7 +14,7 @@ Optional (for fuller detection):
 ## Installation
 
 ```bash
-# Basic install - 15 pattern rules, always works, no extra deps
+# Basic install - the pattern engine, always works, no extra deps
 pip install bawbel-scanner
 
 # With YARA support (Stage 1b)
@@ -43,7 +43,7 @@ Bawbel Scanner v0.1.0  ·  github.com/bawbel/scanner
 Version:  0.1.0
 
 Detection Engines:
-  ✓  Pattern     15 rules  ·  stdlib only  ·  always active
+  ✓  Pattern     stdlib only  ·  always active
   ✗  YARA        not installed  ·  pip install "bawbel-scanner[yara]"
   ✗  Semgrep     not installed  ·  pip install "bawbel-scanner[semgrep]"
   ✗  LLM         no API key  ·  set ANTHROPIC_API_KEY to enable Stage 2
@@ -228,7 +228,7 @@ GitHub, findings appear as code scanning alerts on your repository.
 
 ## Detection Coverage
 
-15 built-in pattern rules cover these attack classes:
+The built-in pattern rules cover these attack classes:
 
 | Attack class | Rule ID |
 |---|---|

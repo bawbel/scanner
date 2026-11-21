@@ -130,7 +130,7 @@ How a scan flows from your file to an AIVSS-scored finding:
 
 ### Detection stages
 
-Six engines run across the pipeline. Results merge before toxic flow analysis:
+The engines run across the pipeline. Results merge before toxic flow analysis:
 
 ```
   Stage 0    Magika engine
@@ -524,7 +524,7 @@ implementer guide and record index.
 
 | Engine | What it does | Install |
 |---|---|---|
-| Pattern | 40 regex rules mapped to AVE records | Always on |
+| Pattern | <!-- count:pattern_rules -->40<!-- /count --> regex rules mapped to AVE records | Always on |
 | YARA | <!-- count:yara_rules -->39<!-- /count --> binary and behavioral YARA rules | `[yara]` |
 | Semgrep | <!-- count:semgrep_rules -->41<!-- /count --> structural Semgrep rules | `[semgrep]` |
 | LLM | Semantic analysis of intent and context | `[llm]` |
