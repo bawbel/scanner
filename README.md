@@ -520,6 +520,20 @@ implementer guide and record index.
 
 ---
 
+## What it does not catch
+
+A scan with no findings means no rule matched in the engines that ran. It is not a review of
+the component. Rules match the text of a file, so a phrasing that no rule describes is not
+flagged, and behavior that only shows up while an agent runs cannot be seen in a file at all.
+The `Engines:` line of every result, or `engines_run` and `engines_degraded` in the JSON,
+says which engines ran.
+
+[docs/LIMITATIONS.md](docs/LIMITATIONS.md) lists the known misses. Each one is pinned by a test
+in `tests/test_known_misses.py` that fails when a rule starts catching it, so the list cannot
+go stale unnoticed.
+
+---
+
 ## Detection engines
 
 | Engine | What it does | Install |
