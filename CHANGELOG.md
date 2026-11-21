@@ -31,6 +31,11 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   `Record Counts` CI job runs `--check`. `--update-ref` moves the pin (#120).
   The corpus is named by the SHA-256 of the exact bytes read, the identifier AVE-CONSUMPTION R3 asks for.
 
+- `docs/LIMITATIONS.md` and a README section "What it does not catch": how to read a result
+  with no findings, what static analysis cannot do, and the known misses. Each known miss is
+  pinned by a strict `xfail` in `tests/test_known_misses.py`, which fails the suite when a rule
+  starts catching it, so the document must change in the same pull request (#143).
+
 ### Changed
 
 - The User-Agent on outbound requests is built from the package version (it said
