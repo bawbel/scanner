@@ -24,6 +24,7 @@ vulnerabilities mapped to the [AVE standard](https://github.com/bawbel/ave).
 | [Credentials and Delegation](guides/creds-and-chain.md) | bawbel creds and bawbel chain focused scans |
 | [False Positive Reduction](guides/false-positive-reduction.md) | 8-point strategy - code fences, confidence scoring, LLM filter |
 | [Detection Engines](guides/engines.md) | The detection engines explained - purpose, how it works, what it detects, how to use |
+| [Limitations](LIMITATIONS.md) | What the scanner does not catch, how to read "No findings", and the known misses pinned by tests |
 | [Adding an Engine](guides/adding-engine.md) | Add a new detection stage |
 | [MCP Server Scanning](guides/mcp-server-scanning.md) | Scan MCP server cards, conformance scoring |
 
