@@ -175,7 +175,7 @@ bawbel accept AVE-2026-00048 ./orchestrator.md --line 14 \
 
 ## Difference from bawbel scan
 
-`bawbel scan` runs all 40+ rules. `bawbel creds` and `bawbel chain` are
+`bawbel scan` runs all rules. `bawbel creds` and `bawbel chain` are
 filtered views of the same scan pipeline.
 
 ```bash
