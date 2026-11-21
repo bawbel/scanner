@@ -24,6 +24,11 @@ Capability taxonomy:
     ui-inject            injects via rendered UI elements
     scope-expand         accesses undeclared resources or capabilities
 
+Bawbel-derived data (AVE-CONSUMPTION R7). These tags are Bawbel's own reading of what each
+record can do in a chain. They are not an AVE field, they are keyed by AVE id, and they are
+never written back into a record. An AVE id with no entry here is unmapped: get_capabilities()
+returns an empty set for it and does not raise, and the scanner does not guess a tag.
+
 Adding a new AVE record:
     1. Identify the capability(ies) it represents
     2. Add the AVE ID to AVE_CAPABILITIES below

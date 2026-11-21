@@ -12,7 +12,9 @@ sentences, so the prose stays as written. The corpus is pinned by commit in one 
     <!-- counts:corpus ref=<40 hex> -->
 
 so `--check` only fails when a rule file or the README changes, not whenever AVE publishes a
-record. `--update-ref` moves the pin to the head of the AVE main branch.
+record. `--update-ref` moves the pin to the head of the AVE main branch. The scanner's vendored
+AVE snapshot is made from the same pin, so after `--update-ref` run
+`python scripts/sync_ave_snapshot.py` too, or CI fails on its `--check`.
 
     python scripts/sync_record_counts.py                  # rewrite the README
     python scripts/sync_record_counts.py --check          # exit 1 if a count is stale
@@ -62,7 +64,6 @@ YARA_RULES_FILE = "scanner/rules/yara/ave_rules.yar"
 SEMGREP_RULES_FILE = "scanner/rules/semgrep/ave_rules.yaml"
 MAGIKA_ENGINE_FILE = "scanner/engines/magika_engine.py"
 FLOWS_FILE = "scanner/core/toxic_flows/flows.py"
-AVE_META_FILE = "scanner/ave_meta.py"
 
 AVE_ID = r"AVE-\d{4}-\d{5}"
 AVE_ID_RE = re.compile(rf"^{AVE_ID}$")
@@ -78,6 +79,10 @@ BADGE = (
 
 class CountsError(Exception):
     """Something the script needs could not be read, or is not shaped as expected."""
+
+
+class FetchError(CountsError):
+    """The network or the host could not be reached. Callers that can wait may skip on this."""
 
 
 # ── Reading the corpus ────────────────────────────────────────────────────────
@@ -110,8 +115,14 @@ def _https_get(url: str, accept: str) -> bytes:
         # B310/S310: the scheme is checked above, so only https is opened.
         with opener.open(request, timeout=timeout) as resp:  # nosec B310  # noqa: S310
             body = resp.read(MAX_BYTES + 1)
-    except OSError as exc:  # URLError, HTTPError, and TimeoutError are all OSError
-        raise CountsError(f"could not fetch {url}: {exc}") from exc
+    except urllib.error.HTTPError as exc:
+        # The host answered. A server fault (5xx) or a rate limit (429) is worth trying again
+        # later, so it is a FetchError. Any other status is a fault in the request: a pin that
+        # names a commit that does not exist is a 404, and waiting does not fix it.
+        error_class = FetchError if exc.code >= 500 or exc.code == 429 else CountsError
+        raise error_class(f"could not fetch {url}: {exc}") from exc
+    except OSError as exc:  # URLError and TimeoutError: the host could not be reached
+        raise FetchError(f"could not fetch {url}: {exc}") from exc
     if len(body) > MAX_BYTES:
         raise CountsError(f"{url} is larger than {MAX_BYTES} bytes")
     return body
@@ -175,23 +186,6 @@ def _parse(source: str, relative: str) -> ast.Module:
         return ast.parse(source)
     except SyntaxError as exc:
         raise CountsError(f"{relative} does not parse: {exc.msg}") from exc
-
-
-def _assigned_value(source: str, name: str, relative: str) -> ast.expr:
-    """The value of the last module-level assignment to `name`, found by parsing."""
-    value = None
-    for node in _parse(source, relative).body:
-        if isinstance(node, ast.AnnAssign):
-            names = [getattr(node.target, "id", None)]
-        elif isinstance(node, ast.Assign):
-            names = [getattr(t, "id", None) for t in node.targets]
-        else:
-            continue
-        if name in names:
-            value = node.value
-    if value is None:
-        raise CountsError(f"{name} not found in {relative}")
-    return value
 
 
 def _list_elements(source: str, name: str, relative: str) -> list[ast.expr]:
@@ -300,14 +294,6 @@ def chain_count(root: Path) -> int:
     return len(flows)
 
 
-def metadata_ids(root: Path) -> set[str]:
-    """The AVE ids that have an entry in the scanner's AVE_META table."""
-    value = _assigned_value(_read(AVE_META_FILE, root), "AVE_META", AVE_META_FILE)
-    if not isinstance(value, ast.Dict):
-        raise CountsError(f"AVE_META in {AVE_META_FILE} is not a dict literal")
-    return {k.value for k in value.keys if isinstance(k, ast.Constant) and isinstance(k.value, str)}
-
-
 # ── Measuring ─────────────────────────────────────────────────────────────────
 
 
@@ -337,7 +323,7 @@ def format_id_ranges(ids: set[str] | list[str]) -> str:
 def measure(records: list[dict[str, Any]], root: Path = ROOT) -> tuple[dict[str, str], list[str]]:
     """Every count the README can carry, as strings, and any warnings.
 
-    Warnings: rules or metadata that cite an ave_id the corpus does not publish.
+    Warnings: rules that cite an ave_id the corpus does not publish.
     """
     published = {r["ave_id"] for r in records}
     pattern_n, pattern_ids = pattern_rules(root)
@@ -345,13 +331,11 @@ def measure(records: list[dict[str, Any]], root: Path = ROOT) -> tuple[dict[str,
     semgrep_n, semgrep_ids = semgrep_rules(root)
     static = pattern_ids | yara_ids | semgrep_ids
     cited = static | magika_ids(root)
-    meta = metadata_ids(root)
 
     warnings = []
-    for label, ids in (("rules", cited), ("AVE_META", meta)):
-        unknown = sorted(ids - published)
-        if unknown:
-            warnings.append(f"{label} cite ids the corpus does not publish: {', '.join(unknown)}")
+    unknown = sorted(cited - published)
+    if unknown:
+        warnings.append(f"rules cite ids the corpus does not publish: {', '.join(unknown)}")
 
     detected = cited & published
     uncovered = published - detected
@@ -361,7 +345,6 @@ def measure(records: list[dict[str, Any]], root: Path = ROOT) -> tuple[dict[str,
     aivss_specs = sorted(
         {str((r.get("aivss") or {}).get("spec_version")) for r in records if r.get("aivss")}
     )
-    metadata_only = (meta & published) - detected
 
     values = {
         "published": str(len(published)),
@@ -370,8 +353,6 @@ def measure(records: list[dict[str, Any]], root: Path = ROOT) -> tuple[dict[str,
         "detected": str(len(detected)),
         "detected_static": str(len(static & published)),
         "magika_only_ids": format_id_ranges((cited - static) & published),
-        "metadata_only": str(len(metadata_only)),
-        "metadata_only_ids": format_id_ranges(metadata_only),
         "uncovered": str(len(uncovered)),
         "uncovered_static": str(by_stage.count("static_detection")),
         "uncovered_runtime": str(sum(1 for s in by_stage if s.startswith("runtime"))),
@@ -467,6 +448,9 @@ def run(args: argparse.Namespace) -> int:
     print(
         f"{readme.name}: {len(changes)} count(s) updated" + (", pin moved" if pin_changed else "")
     )
+    if pin_changed:
+        # scanner/_ave_snapshot.py is made from this pin and is stale until it is regenerated.
+        print("next: python scripts/sync_ave_snapshot.py  (the AVE snapshot reads the same pin)")
     return 0
 
 

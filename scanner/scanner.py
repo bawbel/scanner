@@ -49,8 +49,8 @@ from scanner.core.fp_pipeline import run_fp_pipeline
 # Toxic flow analysis
 from scanner.core.toxic_flows import detect_toxic_flows
 
-# AVE evidence metadata
-from scanner.ave_meta import get_ave_meta
+# AVE evidence metadata and the OWASP MCP crosswalk, both from the vendored AVE snapshot
+from scanner.ave_meta import get_ave_meta, get_owasp_mcp, in_snapshot
 
 # Infrastructure
 from scanner.messages import Logs
@@ -152,6 +152,20 @@ def _make_finding(
         detection_stage=meta.detection_stage,
         detection_layer=meta.detection_layer,
     )
+
+
+def _apply_ave_crosswalk(findings: list[Finding]) -> None:
+    """
+    Set owasp_mcp on each finding to the value AVE publishes for its record.
+
+    A pattern rule carries an owasp_mcp of its own, typed by hand, and it can disagree with AVE
+    (issue #148). For a record the AVE snapshot holds, AVE's value replaces the engine's, so the
+    text view, JSON, SARIF and report all print the same mapping. A finding with no AVE id, or an
+    id the snapshot does not hold, keeps what its engine set: the scanner does not guess.
+    """
+    for f in findings:
+        if in_snapshot(f.ave_id):
+            f.owasp_mcp = get_owasp_mcp(f.ave_id)
 
 
 # ── Main public API ───────────────────────────────────────────────────────────
@@ -269,6 +283,9 @@ def scan(file_path: str, no_ignore: bool = False) -> ScanResult:
 
         else:
             report_degraded("sandbox", DegradedReason.DISABLED_BY_CONFIG)
+
+        # ── Step 5b: OWASP MCP crosswalk from the AVE snapshot ────────────────
+        _apply_ave_crosswalk(findings)
 
         # ── Step 6: Deduplicate and sort ──────────────────────────────────────
         findings = deduplicate(findings)
