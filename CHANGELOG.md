@@ -36,6 +36,11 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   pinned by a strict `xfail` in `tests/test_known_misses.py`, which fails the suite when a rule
   starts catching it, so the document must change in the same pull request (#143).
 
+- `scanner/py.typed`, the `Typing :: Typed` classifier, and a non-blocking `Type Check` CI job that
+  runs mypy. Code that imports `scanner` and is checked with mypy no longer gets "module is
+  installed, but missing library stubs or py.typed marker". The package's own annotations now
+  reach consumers, and mypy reports findings in them that the CI job does not yet fail on (#156).
+
 ### Changed
 
 - The User-Agent on outbound requests is built from the package version (it said
