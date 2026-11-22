@@ -90,6 +90,29 @@ Provider API keys - set whichever you use:
 | `MISTRAL_API_KEY` | `mistral/mistral-small` |
 | `GROQ_API_KEY` | `groq/llama3-8b-8192` |
 
+### LLM usage in the JSON output
+
+Each LLM call that the provider reported token counts for adds one entry to
+`metadata.inference_usage` in the JSON output of the file. This covers Stage 2 and the
+false-positive filter (FP-4).
+
+| Field | Meaning |
+|---|---|
+| `provider` | the provider as LiteLLM resolves it, or `null` if it could not |
+| `model` | the model name |
+| `prompt_tokens`, `completion_tokens` | the counts the provider reported |
+| `latency_ms` | measured by the scanner around the call |
+| `model_source` | `response` if the provider named the model, `request` if the name is the one asked for |
+| `usage_source` | `provider_response`: the counts are never estimated |
+
+Each of these is held by a test in `tests/unit/test_inference_usage.py`:
+
+- A call whose provider reported no token counts, or only one of the two, has no entry. With no
+  LLM call the list is empty, and the key is still present.
+- There is no cost field. A cost is a price table applied to token counts, which is an estimate.
+- An entry holds the seven fields above and nothing else: no API key, no prompt text, no file content.
+- The list is in the JSON output and not in SARIF.
+
 Stage 2 activates as soon as `litellm` is installed and a key (or model) is set:
 
 ```bash

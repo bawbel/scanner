@@ -60,6 +60,13 @@ A Finding filtered by the FP pipeline or inline directive.
 Has `suppression_reason`. Lives in `ScanResult.suppressed_findings`.
 Suppressed ≠ deleted. The evidence still exists.
 
+**InferenceUsage**
+One LLM call (Stage 2 or FP-4) whose provider reported token counts.
+Fields: `provider`, `model`, `prompt_tokens`, `completion_tokens`, `latency_ms`,
+`model_source`, `usage_source`.
+Lives in `ScanResult.inference_usage`. Never estimated: a call with no reported usage has no
+InferenceUsage. Holds no API key, prompt text, or file content.
+
 ---
 
 ## Evidence metadata (PFEM model — Issues #69-72)
