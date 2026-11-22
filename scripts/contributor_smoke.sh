@@ -38,7 +38,7 @@ trap cleanup EXIT
 step() {
   local name="$1"
   shift
-  printf '%-64s' "$name"
+  printf '%-74s' "$name"
   if "$@" >"$LOG" 2>&1; then
     echo ok
   else
@@ -54,7 +54,7 @@ step() {
 expect_exit() {
   local want="$1" name="$2" got=0
   shift 2
-  printf '%-64s' "$name"
+  printf '%-74s' "$name"
   "$@" >"$LOG" 2>&1 || got=$?
   if [ "$got" -eq "$want" ]; then
     echo ok
@@ -125,6 +125,33 @@ PY
 
 step "add the guide's rule, fixtures and test to the clone" apply_guide
 
+# The script hard-codes where the rule goes, so a guide that told people to edit a file that does
+# not exist would otherwise pass. Every file path the guide names must exist in the clone now.
+check_guide_paths() {
+  python - "$GUIDE" <<'PY'
+import pathlib
+import re
+import sys
+
+guide = pathlib.Path(sys.argv[1])
+text = guide.read_text(encoding="utf-8")
+# Leave out the example blocks: their contents are what the guide adds, not what it refers to.
+text = re.sub(r"<!--\s*smoke:.*?-->\s*\n```[^\n]*\n.*?\n```", "", text, flags=re.S)
+named = set(re.findall(r"(?<![\w./-])((?:\.\./)*[A-Za-z0-9_][\w.-]*(?:/[\w.-]+)+\.(?:py|md|sh|ya?ml|toml|json))\b", text))
+missing = []
+for path in sorted(named):
+    base = guide.parent if path.startswith("../") else pathlib.Path(".")
+    if not (base / path).exists():
+        missing.append(path)
+if not named:
+    sys.exit("found no file path in the guide, so this check is not looking at anything")
+if missing:
+    sys.exit("the guide names files that do not exist: " + ", ".join(missing))
+print(f"{len(named)} file paths named, all exist")
+PY
+}
+step "every file the guide names exists" check_guide_paths
+
 # The test file the guide names, and the rule id it adds, are read back from the clone.
 TEST_FILE="$(git ls-files --others --exclude-standard -- 'tests/unit/engines/*.py' | head -n 1)"
 RULE_ID="$(git diff -U0 -- scanner/engines/pattern_engine.py | sed -n 's/^+ *"rule_id": "\(.*\)",/\1/p' | head -n 1)"
@@ -144,7 +171,7 @@ step "the rest of the suite is unaffected" python -m pytest -p no:cacheprovider 
 
 # The README states the rule count and a script writes it, so adding a rule makes it stale.
 if [ "${SMOKE_SKIP_COUNTS:-0}" = "1" ]; then
-  printf '%-64s%s\n' "the README counts go stale, then sync_record_counts fixes them" "SKIPPED (offline)"
+  printf '%-74s%s\n' "the README counts go stale, then sync_record_counts fixes them" "SKIPPED (offline)"
   COUNTS_SKIPPED=1
 else
   expect_exit 1 "the README count is stale after adding a rule (the guide says so)" python scripts/sync_record_counts.py --check
