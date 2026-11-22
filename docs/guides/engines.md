@@ -239,7 +239,7 @@ Suppressed:  3  (run with --no-ignore to see all)
 
 ## Stage 1a - Pattern Engine
 
-**File:** `scanner/engines/pattern.py`
+**File:** `scanner/engines/pattern_engine.py`
 **Always active:** yes - no dependencies, no install
 
 ### Purpose
@@ -325,7 +325,7 @@ FINDINGS
 
 ### How to add a rule
 
-Edit `PATTERN_RULES` in `scanner/engines/pattern.py`. No other file changes needed.
+Edit `PATTERN_RULES_V2` in `scanner/engines/pattern_engine.py`. The full steps, with fixtures and a test, are in [Adding a Rule](adding-a-rule.md).
 See [Writing Rules](writing-rules.md) for the full guide.
 
 ---
