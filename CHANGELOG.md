@@ -37,7 +37,8 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   starts catching it, so the document must change in the same pull request (#143).
 
 - A `test-platforms` CI job: the core install and the same test markers on macOS and Windows, for
-  each Python version `test` uses. macOS blocks. Windows is reported and does not block. The README
+  each Python version `test` uses. A macOS failure fails the run. A Windows failure does not, so
+  Windows is reported only. The README
   has a `Supported platforms` table written from the results, which lists an extra only where a job
   runs it (#165).
 

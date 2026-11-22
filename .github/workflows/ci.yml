@@ -70,9 +70,9 @@ jobs:
           path: htmlcov/
 
   # ── Other platforms (core install) ─────────────────────────────────────────
-  # The same core install and markers as `test`, on macOS and Windows (issue #165). macOS blocks.
-  # Windows is reported and does not block (continue-on-error). What each shows is written in the
-  # README "Supported platforms" table. A job that does not block decides nothing about support.
+  # The same core install and markers as `test`, on macOS and Windows (issue #165). A macOS failure
+  # fails the run. A Windows failure does not (continue-on-error), so Windows is reported only. What each shows is written in the
+  # README "Supported platforms" table. A job that does not fail the run decides nothing about support.
   test-platforms:
     name: Test (Python ${{ matrix.python-version }}, ${{ matrix.os }})
     runs-on: ${{ matrix.os }}
