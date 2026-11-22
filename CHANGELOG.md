@@ -36,6 +36,11 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   pinned by a strict `xfail` in `tests/test_known_misses.py`, which fails the suite when a rule
   starts catching it, so the document must change in the same pull request (#143).
 
+- A `test-platforms` CI job: the core install and the same test markers on macOS and Windows, for
+  each Python version `test` uses. macOS blocks. Windows is reported and does not block. The README
+  has a `Supported platforms` table written from the results, which lists an extra only where a job
+  runs it (#165).
+
 ### Changed
 
 - The User-Agent on outbound requests is built from the package version (it said
