@@ -111,12 +111,16 @@ def test_detects_example_rule():
 
 
 def test_no_fp_example_rule_clean():
-    result = scan(str(FIXTURES / "clean" / "example-rule-clean.md"))
+    # The repository's .bawbelignore hides every finding under tests/fixtures/skills/clean/, so a
+    # normal scan of this file could never fail. no_ignore=True shows what the rule really matched.
+    result = scan(str(FIXTURES / "clean" / "example-rule-clean.md"), no_ignore=True)
     assert "bawbel-example-rule" not in [f.rule_id for f in result.findings]
 ```
 
-The second test checks that your rule stays quiet, not that the file is clean of every finding. Other
-engines may have views of their own.
+The second test passes `no_ignore=True` on purpose. `.bawbelignore` suppresses everything under
+`tests/fixtures/skills/clean/`, so without it a finding there lands in `suppressed_findings` and the
+test could never fail, however broad your pattern was. It also checks that your rule stays quiet, not
+that the file is free of every finding, because other engines may have views of their own.
 
 ## 4. Run it
 
@@ -125,6 +129,7 @@ python -m pytest tests/unit/engines/test_example_rule.py -v      # your test
 python -m pytest tests/test_scanner.py -k golden -v              # the golden fixture still passes
 python -m pytest -q -m "not integration and not slow"            # nothing else broke
 bawbel scan tests/fixtures/skills/malicious/example-rule.md      # see the finding yourself
+bawbel scan tests/fixtures/skills/clean/example-rule-clean.md --no-ignore   # and that it is quiet here
 ```
 
 ## 5. Update the README counts

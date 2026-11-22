@@ -161,11 +161,11 @@ NEGATIVE="$(git ls-files --others --exclude-standard -- 'tests/fixtures/skills/c
   || { echo "could not find what the guide added" >&2; exit 1; }
 
 fires() { bawbel scan "$POSITIVE" --format json | python -c 'import json,sys; ids=[f["rule_id"] for r in json.load(sys.stdin) for f in r["findings"]]; sys.exit(0 if sys.argv[1] in ids else 1)' "$RULE_ID"; }
-quiet() { bawbel scan "$NEGATIVE" --format json | python -c 'import json,sys; ids=[f["rule_id"] for r in json.load(sys.stdin) for f in r["findings"]]; sys.exit(1 if sys.argv[1] in ids else 0)' "$RULE_ID"; }
+quiet() { bawbel scan "$NEGATIVE" --no-ignore --format json | python -c 'import json,sys; ids=[f["rule_id"] for r in json.load(sys.stdin) for f in r["findings"]]; sys.exit(1 if sys.argv[1] in ids else 0)' "$RULE_ID"; }
 
 step "the new rule's tests pass" python -m pytest -p no:cacheprovider -q "$TEST_FILE"
 step "bawbel scan finds the rule in the positive fixture" fires
-step "bawbel scan does not find it in the negative fixture" quiet
+step "bawbel scan --no-ignore does not find it in the negative fixture" quiet
 step "the golden fixture still passes" python -m pytest -p no:cacheprovider -q tests/test_scanner.py -k golden
 step "the rest of the suite is unaffected" python -m pytest -p no:cacheprovider -q -m "not integration and not slow"
 
