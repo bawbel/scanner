@@ -68,7 +68,9 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   00018, 00023, 00025, 00028, 00030, 00037 to 00038 and 00040 to 00045, so the text view prints a
   different mapping for those records. Pattern rules also carried an `owasp_mcp` of their own,
   which JSON, SARIF and `report` printed in preference to the crosswalk. For a record the snapshot
-  holds, AVE's value now replaces it. The pull request lists every changed mapping (#148).
+  holds, AVE's value now replaces it. `bawbel report` also prints an OWASP MCP row for YARA and
+  Semgrep findings, which it left out before because those rules carry no value of their own.
+  The pull request lists every changed mapping (#148).
 
 ### Deprecated
 
