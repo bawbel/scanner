@@ -43,6 +43,9 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   usage has no entry, and there is no cost field. An entry holds no API key, prompt text or file
   content. It is not in SARIF (#150).
 
+- `docs/VERIFYING-RELEASES.md`: how to check a release file against the signed build provenance
+  PyPI holds for it, with `pypi-attestations`, what a pass means and what it does not (#154).
+
 - `scripts/contributor_smoke.sh` and a weekly `Contributor Smoke` workflow. They run the
   add-a-rule guide in a clean clone, taking the rule, fixtures and test from the guide's own blocks,
   and fail when a step in the guide stops working (#158).
