@@ -43,6 +43,9 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   usage has no entry, and there is no cost field. An entry holds no API key, prompt text or file
   content. It is not in SARIF (#150).
 
+- `docs/VERIFYING-RELEASES.md`: how to check a release file against the signed build provenance
+  PyPI holds for it, with `pypi-attestations`, what a pass means and what it does not (#154).
+
 ### Changed
 
 - The User-Agent on outbound requests is built from the package version (it said
