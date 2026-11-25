@@ -17,6 +17,7 @@ from scanner.cli.shared.constants import (  # noqa: F401
 from scanner.cli.shared.display import (  # noqa: F401
     console,
     print_banner,
+    print_not_scanned,
     print_scan_result,
     print_summary,
     sev_color,

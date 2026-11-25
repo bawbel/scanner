@@ -17,12 +17,18 @@ false-positive pipeline lowers the confidence of a pattern match on such a line 
 has no profile for, and suppresses it, which would make these cases depend on that pipeline as
 well as on file enumeration. The report in docs/reports/ENUMERATION-132.md measures that.
 
-Each case is xfail(strict=True): the suite stays green while the gap exists and FAILS the moment
-a scan starts attaching a finding to that file. That failure means the report and, if present,
-docs/LIMITATIONS.md must change in the same pull request. The assertion is "a finding attached to
-this file, from any engine or rule", so it does not prefer one way of closing the gap over
-another: flagging the file's presence, running the text engines on it, and analysing it would
-all satisfy it. The maintainer's choice decides which cases stay.
+The eight source-file cases are xfail(strict=True): the suite stays green while the gap exists
+and FAILS the moment a scan starts attaching a finding to that file. The two precompiled-bytecode
+cases are no longer expected failures (issue 182): a directory scan now reads the header of a
+`.pyc` file and flags one that Python loads without checking its source, or that has no source
+beside it. That is a finding about the header. The contents are not analysed, so the sentence
+inside the bytecode is still not read, and the test says so by asserting which rules fired.
+
+For a source-file case, that failure means the report and, if present, docs/LIMITATIONS.md must
+change in the same pull request. The assertion is "a finding attached to this file, from any
+engine or rule", so it does not prefer one way of closing the gap over another: flagging the
+file's presence, running the text engines on it, and analysing it would all satisfy it. The
+maintainer's choice decides which cases stay.
 
 The anchor case, the same sentence in a `.md` file, goes through the same scan, so a broken scan
 cannot make a miss look expected.
@@ -153,7 +159,11 @@ def scanned(tmp_path_factory):
         raise ScanDidNotRun(f"exit {proc.returncode}, stdout is not JSON") from exc
     by_path: dict[str, dict] = {}
     for result in data:
-        if result.get("has_error") or "pattern" not in result.get("engines_run", []):
+        # A .pyc result comes from the header check, not from the text engines, so no engine ran.
+        is_bytecode = Path(result["file_path"]).suffix == ".pyc"
+        if result.get("has_error") or (
+            not is_bytecode and "pattern" not in result.get("engines_run", [])
+        ):
             raise ScanDidNotRun(f"exit {proc.returncode}, the pattern engine did not run")
         by_path[Path(result["file_path"]).relative_to(skill.resolve()).as_posix()] = result
     return paths, by_path
@@ -173,7 +183,7 @@ def test_the_same_sentence_in_markdown_is_flagged(scanned):
     assert result["findings"], "the sentence was scanned and nothing flagged it"
 
 
-@pytest.mark.parametrize("case", [*SOURCE_FILES, *BYTECODE_FILES])
+@pytest.mark.parametrize("case", SOURCE_FILES)
 @pytest.mark.xfail(
     strict=True,
     raises=AssertionError,
@@ -186,3 +196,24 @@ def test_the_sentence_in_another_file_type_is_flagged(scanned, case):
     result = by_path.get(path)
     assert result is not None, f"{path} was not scanned. Scanned: {sorted(by_path)}"
     assert result["findings"], f"{path} was scanned and nothing flagged it"
+
+
+# What the header check says about each file built above. Both have their source removed, so both
+# have no matching source. Only the first is hash based with checking off.
+EXPECTED_BYTECODE_RULES = {
+    "pyc-unchecked-hash": {"bawbel-pyc-unchecked-hash", "bawbel-pyc-no-source"},
+    "pyc-timestamp": {"bawbel-pyc-no-source"},
+}
+
+
+@pytest.mark.parametrize("case", BYTECODE_FILES)
+def test_a_precompiled_bytecode_file_gets_a_header_finding(scanned, case):
+    """Issue 182. The finding is about the header and the missing source, not about the contents."""
+    paths, by_path = scanned
+    path = paths[case]
+    result = by_path.get(path)
+    assert result is not None, f"{path} was not scanned. Scanned: {sorted(by_path)}"
+    assert {f["rule_id"] for f in result["findings"]} == EXPECTED_BYTECODE_RULES[case]
+    assert {f["ave_id"] for f in result["findings"]} == {"AVE-2026-00075"}
+    # Not the pattern, YARA or Semgrep engine: the sentence inside the bytecode was not analysed.
+    assert {f["engine"] for f in result["findings"]} == {"bytecode"}

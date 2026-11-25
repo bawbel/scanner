@@ -67,6 +67,13 @@ Fields: `provider`, `model`, `prompt_tokens`, `completion_tokens`, `latency_ms`,
 Lives in `ScanResult.inference_usage`. Never estimated: a call with no reported usage has no
 InferenceUsage. Holds no API key, prompt text, or file content.
 
+**Coverage**
+What a directory scan read and did not read: files scanned, files skipped by extension
+(executable-type files named), files ignored (counted, never listed).
+Lives in `ScanResult.coverage`, the same object on each result of one directory scan, `None` for
+a single file and for `scan()` itself. Set by `bawbel scan`, from `scanner/cli/shared/coverage.py`.
+Not a verdict: it says what was not read, not what the unread files contain.
+
 ---
 
 ## Evidence metadata (PFEM model — Issues #69-72)

@@ -4,6 +4,39 @@ Report only. Nothing in this pull request changes what the scanner reads, prints
 It concerns public issue 132 and was measured on `origin/develop` at commit `e1cb2c5` on 2026-11-25.
 Choosing among options A, B and C below is the maintainer's decision, and none is implemented here.
 
+## Update: the narrow option is implemented (issue 182)
+
+The maintainer chose a refined option A and the skipped-files fields. Both are in the change that
+closes issue 182. Sections 1 to 4 and 6 below describe `origin/develop` before it and are not
+rewritten. What differs from the specification in section 5:
+
+- `coverage` also holds `executable_files` (named, up to 50, with `executable_files_omitted`),
+  `files_ignored` and `ignored_by_reason` (counted, never listed), `skipped_by_reason`
+  (`extension_not_scanned`, `not_recursive`) and `bytecode_headers_checked`. Extensions beyond 50
+  are folded into `(other)`. The text line is `Not scanned: 3 .py, 1 .pyc  (a result with no
+  findings covers only the files that were read)`.
+- Ignored means counted apart: files matched by `.bawbelignore`, the scanner's own configuration
+  at the root, and files inside `.git`, `node_modules` or a directory holding `pyvenv.cfg`. This
+  changes what is counted, not what is scanned. A text file inside `node_modules` is still scanned.
+- Two rules read the header of a `.pyc` file: `bawbel-pyc-unchecked-hash` and
+  `bawbel-pyc-no-source`, both citing AVE-2026-00075. The header layout was checked first by
+  compiling with each `py_compile` mode on Python 3.12.13: the flags (bytes 4 to 7) are 0 for
+  `TIMESTAMP`, 3 for `CHECKED_HASH` and 1 for `UNCHECKED_HASH`. The flags exist from magic
+  number 3392 (Python 3.7a4). An unchecked-hash file ran stale code after its source changed.
+  A file in `__pycache__` with no source is not imported, and a bare `mod.pyc` with no source is.
+- The two `.pyc` cases of the test in section 7 pass now and assert the header rules. The eight
+  source-file cases are still strict `xfail`.
+- Measured: of 4129 `.pyc` files under `/usr/lib/python3` and `/usr/lib/python3.12` on an Ubuntu
+  host, none is unchecked hash and 2 have no source (stale caches of `lsb_release.py`, which is
+  no longer on that machine). Of 1414 more in two pip-installed trees, none is flagged. Reading a
+  header took 0.10 to 0.17 ms per file.
+- Walk cost on a synthetic tree of 200000 files (half below `node_modules`): the coverage walk
+  took 1910 ms, and `collect_files` took 2230 ms on the same tree. Without `--recursive`
+  `collect_files` took 27 ms and the coverage walk still took 1862 ms, because it counts the
+  files it did not enter.
+- Not done: running the text engines on source files (option B, opt-in and later), analysing
+  bytecode (option C), `.MD`, `.markdown` and `.toml`, and the Magika type keys.
+
 ## Summary
 
 - A directory scan reads only files whose extension is `.md`, `.json`, `.yaml`, `.yml` or `.txt`. The collector decides this before any engine runs, so for every other file type no engine sees the file. Measured on 16 cases, in a recursive directory scan the sentence below is flagged in the `.md` file and in none of the other 15.
