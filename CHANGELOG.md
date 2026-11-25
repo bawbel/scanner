@@ -77,6 +77,16 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- The Magika engine's dangerous-type list held four keys that are not labels of any supported
+  Magika version, so those types never matched. `python_pyc` is now `pythonbytecode`, `pe32` and
+  `pe64` are now `pebin`, and `jsp` is removed because Magika has no such label. With Magika installed, a Python bytecode file or a Windows executable handed to
+  `scan()` now gets `bawbel-content-type-dangerous`, and the text engines are skipped for it (#186).
+
+- A directory scan now lists `.MD` and other upper case names, and `.markdown` and `.toml`, in
+  `scan`, `chain`, `creds`, `report` and `--watch`. It matched `*.md`, `*.json`, `*.yaml`,
+  `*.yml` and `*.txt` case-sensitively. With Magika installed, a `.toml` file that Magika does not
+  label `toml` gets `bawbel-content-type-mismatch` (#186).
+
 - The pre-commit hook told users to read `https://bawbel.io/docs/suppression`, which returns
   404. It now points at `docs/guides/suppression.md` in this repository. The documentation
   URLs the CLI prints or carries now live in one module, `scanner/docs_urls.py`, and a test

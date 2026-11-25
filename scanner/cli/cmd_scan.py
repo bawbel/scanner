@@ -25,7 +25,7 @@ from scanner.cli.shared.utils import (
     missing_required_engines,
     parse_required_engines,
 )
-from scanner.config import EXIT_CODE_ENGINE_MISSING
+from scanner.config import EXIT_CODE_ENGINE_MISSING, SCANNED_EXTENSIONS
 from scanner.utils import resolve_path
 
 
@@ -59,7 +59,7 @@ def _run_watch(path: str, fmt: str, fail_on_severity: str, recursive: bool) -> N
         sys.exit(1)
     watch_dir = path_obj if path_obj.is_dir() else path_obj.parent
 
-    WATCHED_EXTS = {".md", ".yaml", ".yml", ".json", ".txt"}
+    WATCHED_EXTS = set(SCANNED_EXTENSIONS)
 
     def _do_scan(changed_path: str | None = None) -> None:
         target = changed_path or path
