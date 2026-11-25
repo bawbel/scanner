@@ -1,0 +1,1191 @@
+{
+ "corpus_sha256": "7d3284314f7ea19af096df2b20e9d715b628a398cf88391d97be90a1ae074e74",
+ "fixtures": [
+  {
+   "fixture": "ave-2026-00041-0",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00041",
+   "layer": "server_card",
+   "stage": "static_detection",
+   "index": 0
+  },
+  {
+   "fixture": "ave-2026-00041-1",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00041",
+   "layer": "server_card",
+   "stage": "static_detection",
+   "index": 1
+  },
+  {
+   "fixture": "ave-2026-00041-2",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00041",
+   "layer": "server_card",
+   "stage": "static_detection",
+   "index": 2
+  },
+  {
+   "fixture": "ave-2026-00041-3",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00041",
+   "layer": "server_card",
+   "stage": "static_detection",
+   "index": 3
+  },
+  {
+   "fixture": "ave-2026-00042-0",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00042",
+   "layer": "runtime",
+   "stage": "runtime_observed",
+   "index": 0
+  },
+  {
+   "fixture": "ave-2026-00042-1",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00042",
+   "layer": "runtime",
+   "stage": "runtime_observed",
+   "index": 1
+  },
+  {
+   "fixture": "ave-2026-00042-2",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00042",
+   "layer": "runtime",
+   "stage": "runtime_observed",
+   "index": 2
+  },
+  {
+   "fixture": "ave-2026-00042-3",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00042",
+   "layer": "runtime",
+   "stage": "runtime_observed",
+   "index": 3
+  },
+  {
+   "fixture": "ave-2026-00043-0",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00043",
+   "layer": "runtime",
+   "stage": "runtime_observed",
+   "index": 0
+  },
+  {
+   "fixture": "ave-2026-00043-1",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00043",
+   "layer": "runtime",
+   "stage": "runtime_observed",
+   "index": 1
+  },
+  {
+   "fixture": "ave-2026-00043-2",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00043",
+   "layer": "runtime",
+   "stage": "runtime_observed",
+   "index": 2
+  },
+  {
+   "fixture": "ave-2026-00043-3",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00043",
+   "layer": "runtime",
+   "stage": "runtime_observed",
+   "index": 3
+  },
+  {
+   "fixture": "ave-2026-00044-0",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00044",
+   "layer": "runtime",
+   "stage": "runtime_observed",
+   "index": 0
+  },
+  {
+   "fixture": "ave-2026-00044-1",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00044",
+   "layer": "runtime",
+   "stage": "runtime_observed",
+   "index": 1
+  },
+  {
+   "fixture": "ave-2026-00044-2",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00044",
+   "layer": "runtime",
+   "stage": "runtime_observed",
+   "index": 2
+  },
+  {
+   "fixture": "ave-2026-00044-3",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00044",
+   "layer": "runtime",
+   "stage": "runtime_observed",
+   "index": 3
+  },
+  {
+   "fixture": "ave-2026-00044-4",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00044",
+   "layer": "runtime",
+   "stage": "runtime_observed",
+   "index": 4
+  },
+  {
+   "fixture": "ave-2026-00045-0",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00045",
+   "layer": "content",
+   "stage": "static_detection",
+   "index": 0
+  },
+  {
+   "fixture": "ave-2026-00045-1",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00045",
+   "layer": "content",
+   "stage": "static_detection",
+   "index": 1
+  },
+  {
+   "fixture": "ave-2026-00045-2",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00045",
+   "layer": "content",
+   "stage": "static_detection",
+   "index": 2
+  },
+  {
+   "fixture": "ave-2026-00045-3",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00045",
+   "layer": "content",
+   "stage": "static_detection",
+   "index": 3
+  },
+  {
+   "fixture": "ave-2026-00046-0",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00046",
+   "layer": "server_card",
+   "stage": "static_detection",
+   "index": 0
+  },
+  {
+   "fixture": "ave-2026-00046-1",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00046",
+   "layer": "server_card",
+   "stage": "static_detection",
+   "index": 1
+  },
+  {
+   "fixture": "ave-2026-00046-2",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00046",
+   "layer": "server_card",
+   "stage": "static_detection",
+   "index": 2
+  },
+  {
+   "fixture": "ave-2026-00046-3",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00046",
+   "layer": "server_card",
+   "stage": "static_detection",
+   "index": 3
+  },
+  {
+   "fixture": "ave-2026-00046-4",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00046",
+   "layer": "server_card",
+   "stage": "static_detection",
+   "index": 4
+  },
+  {
+   "fixture": "ave-2026-00047-0",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00047",
+   "layer": "content",
+   "stage": "static_detection",
+   "index": 0
+  },
+  {
+   "fixture": "ave-2026-00047-1",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00047",
+   "layer": "content",
+   "stage": "static_detection",
+   "index": 1
+  },
+  {
+   "fixture": "ave-2026-00047-2",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00047",
+   "layer": "content",
+   "stage": "static_detection",
+   "index": 2
+  },
+  {
+   "fixture": "ave-2026-00047-3",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00047",
+   "layer": "content",
+   "stage": "static_detection",
+   "index": 3
+  },
+  {
+   "fixture": "ave-2026-00047-4",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00047",
+   "layer": "content",
+   "stage": "static_detection",
+   "index": 4
+  },
+  {
+   "fixture": "ave-2026-00048-0",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00048",
+   "layer": "content",
+   "stage": "static_detection",
+   "index": 0
+  },
+  {
+   "fixture": "ave-2026-00048-1",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00048",
+   "layer": "content",
+   "stage": "static_detection",
+   "index": 1
+  },
+  {
+   "fixture": "ave-2026-00048-2",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00048",
+   "layer": "content",
+   "stage": "static_detection",
+   "index": 2
+  },
+  {
+   "fixture": "ave-2026-00048-3",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00048",
+   "layer": "content",
+   "stage": "static_detection",
+   "index": 3
+  },
+  {
+   "fixture": "ave-2026-00048-4",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00048",
+   "layer": "content",
+   "stage": "static_detection",
+   "index": 4
+  },
+  {
+   "fixture": "ave-2026-00049-0",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00049",
+   "layer": "content",
+   "stage": "static_detection",
+   "index": 0
+  },
+  {
+   "fixture": "ave-2026-00049-1",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00049",
+   "layer": "content",
+   "stage": "static_detection",
+   "index": 1
+  },
+  {
+   "fixture": "ave-2026-00049-2",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00049",
+   "layer": "content",
+   "stage": "static_detection",
+   "index": 2
+  },
+  {
+   "fixture": "ave-2026-00049-3",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00049",
+   "layer": "content",
+   "stage": "static_detection",
+   "index": 3
+  },
+  {
+   "fixture": "ave-2026-00049-4",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00049",
+   "layer": "content",
+   "stage": "static_detection",
+   "index": 4
+  },
+  {
+   "fixture": "ave-2026-00050-0",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00050",
+   "layer": "runtime",
+   "stage": "runtime_observed",
+   "index": 0
+  },
+  {
+   "fixture": "ave-2026-00050-1",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00050",
+   "layer": "runtime",
+   "stage": "runtime_observed",
+   "index": 1
+  },
+  {
+   "fixture": "ave-2026-00050-2",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00050",
+   "layer": "runtime",
+   "stage": "runtime_observed",
+   "index": 2
+  },
+  {
+   "fixture": "ave-2026-00050-3",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00050",
+   "layer": "runtime",
+   "stage": "runtime_observed",
+   "index": 3
+  },
+  {
+   "fixture": "ave-2026-00050-4",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00050",
+   "layer": "runtime",
+   "stage": "runtime_observed",
+   "index": 4
+  },
+  {
+   "fixture": "ave-2026-00051-0",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00051",
+   "layer": "registry_metadata",
+   "stage": "static_detection",
+   "index": 0
+  },
+  {
+   "fixture": "ave-2026-00051-1",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00051",
+   "layer": "registry_metadata",
+   "stage": "static_detection",
+   "index": 1
+  },
+  {
+   "fixture": "ave-2026-00051-2",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00051",
+   "layer": "registry_metadata",
+   "stage": "static_detection",
+   "index": 2
+  },
+  {
+   "fixture": "ave-2026-00051-3",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00051",
+   "layer": "registry_metadata",
+   "stage": "static_detection",
+   "index": 3
+  },
+  {
+   "fixture": "ave-2026-00051-4",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00051",
+   "layer": "registry_metadata",
+   "stage": "static_detection",
+   "index": 4
+  },
+  {
+   "fixture": "ave-2026-00054-0",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00054",
+   "layer": "runtime",
+   "stage": "runtime_observed",
+   "index": 0
+  },
+  {
+   "fixture": "ave-2026-00054-1",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00054",
+   "layer": "runtime",
+   "stage": "runtime_observed",
+   "index": 1
+  },
+  {
+   "fixture": "ave-2026-00054-2",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00054",
+   "layer": "runtime",
+   "stage": "runtime_observed",
+   "index": 2
+  },
+  {
+   "fixture": "ave-2026-00055-0",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00055",
+   "layer": "registry_metadata",
+   "stage": "static_detection",
+   "index": 0
+  },
+  {
+   "fixture": "ave-2026-00055-1",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00055",
+   "layer": "registry_metadata",
+   "stage": "static_detection",
+   "index": 1
+  },
+  {
+   "fixture": "ave-2026-00055-2",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00055",
+   "layer": "registry_metadata",
+   "stage": "static_detection",
+   "index": 2
+  },
+  {
+   "fixture": "ave-2026-00056-0",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00056",
+   "layer": "runtime",
+   "stage": "runtime_observed",
+   "index": 0
+  },
+  {
+   "fixture": "ave-2026-00056-1",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00056",
+   "layer": "runtime",
+   "stage": "runtime_observed",
+   "index": 1
+  },
+  {
+   "fixture": "ave-2026-00056-2",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00056",
+   "layer": "runtime",
+   "stage": "runtime_observed",
+   "index": 2
+  },
+  {
+   "fixture": "ave-2026-00057-0",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00057",
+   "layer": "content",
+   "stage": "static_detection",
+   "index": 0
+  },
+  {
+   "fixture": "ave-2026-00057-1",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00057",
+   "layer": "content",
+   "stage": "static_detection",
+   "index": 1
+  },
+  {
+   "fixture": "ave-2026-00057-2",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00057",
+   "layer": "content",
+   "stage": "static_detection",
+   "index": 2
+  },
+  {
+   "fixture": "ave-2026-00057-3",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00057",
+   "layer": "content",
+   "stage": "static_detection",
+   "index": 3
+  },
+  {
+   "fixture": "ave-2026-00058-0",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00058",
+   "layer": "registry_metadata",
+   "stage": "static_detection",
+   "index": 0
+  },
+  {
+   "fixture": "ave-2026-00058-1",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00058",
+   "layer": "registry_metadata",
+   "stage": "static_detection",
+   "index": 1
+  },
+  {
+   "fixture": "ave-2026-00058-2",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00058",
+   "layer": "registry_metadata",
+   "stage": "static_detection",
+   "index": 2
+  },
+  {
+   "fixture": "ave-2026-00059-0",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00059",
+   "layer": "server_card",
+   "stage": "static_detection",
+   "index": 0
+  },
+  {
+   "fixture": "ave-2026-00059-1",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00059",
+   "layer": "server_card",
+   "stage": "static_detection",
+   "index": 1
+  },
+  {
+   "fixture": "ave-2026-00059-2",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00059",
+   "layer": "server_card",
+   "stage": "static_detection",
+   "index": 2
+  },
+  {
+   "fixture": "ave-2026-00059-3",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00059",
+   "layer": "server_card",
+   "stage": "static_detection",
+   "index": 3
+  },
+  {
+   "fixture": "ave-2026-00062-0",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00062",
+   "layer": "registry_metadata",
+   "stage": "static_detection",
+   "index": 0
+  },
+  {
+   "fixture": "ave-2026-00062-1",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00062",
+   "layer": "registry_metadata",
+   "stage": "static_detection",
+   "index": 1
+  },
+  {
+   "fixture": "ave-2026-00063-0",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00063",
+   "layer": "registry_metadata",
+   "stage": "static_detection",
+   "index": 0
+  },
+  {
+   "fixture": "ave-2026-00063-1",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00063",
+   "layer": "registry_metadata",
+   "stage": "static_detection",
+   "index": 1
+  },
+  {
+   "fixture": "ave-2026-00064-0",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00064",
+   "layer": "registry_metadata",
+   "stage": "static_detection",
+   "index": 0
+  },
+  {
+   "fixture": "ave-2026-00064-1",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00064",
+   "layer": "registry_metadata",
+   "stage": "static_detection",
+   "index": 1
+  },
+  {
+   "fixture": "ave-2026-00065-0",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00065",
+   "layer": "server_card",
+   "stage": "static_detection",
+   "index": 0
+  },
+  {
+   "fixture": "ave-2026-00065-1",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00065",
+   "layer": "server_card",
+   "stage": "static_detection",
+   "index": 1
+  },
+  {
+   "fixture": "ave-2026-00066-0",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00066",
+   "layer": "runtime",
+   "stage": "runtime_observed",
+   "index": 0
+  },
+  {
+   "fixture": "ave-2026-00066-1",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00066",
+   "layer": "runtime",
+   "stage": "runtime_observed",
+   "index": 1
+  },
+  {
+   "fixture": "ave-2026-00067-0",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00067",
+   "layer": "runtime",
+   "stage": "runtime_observed",
+   "index": 0
+  },
+  {
+   "fixture": "ave-2026-00067-1",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00067",
+   "layer": "runtime",
+   "stage": "runtime_observed",
+   "index": 1
+  },
+  {
+   "fixture": "ave-2026-00068-0",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00068",
+   "layer": "runtime",
+   "stage": "runtime_observed",
+   "index": 0
+  },
+  {
+   "fixture": "ave-2026-00068-1",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00068",
+   "layer": "runtime",
+   "stage": "runtime_observed",
+   "index": 1
+  },
+  {
+   "fixture": "ave-2026-00069-0",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00069",
+   "layer": "content",
+   "stage": "static_detection",
+   "index": 0
+  },
+  {
+   "fixture": "ave-2026-00069-1",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00069",
+   "layer": "content",
+   "stage": "static_detection",
+   "index": 1
+  },
+  {
+   "fixture": "ave-2026-00070-0",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00070",
+   "layer": "runtime",
+   "stage": "runtime_drift_detected",
+   "index": 0
+  },
+  {
+   "fixture": "ave-2026-00070-1",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00070",
+   "layer": "runtime",
+   "stage": "runtime_drift_detected",
+   "index": 1
+  },
+  {
+   "fixture": "ave-2026-00071-0",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00071",
+   "layer": "registry_metadata",
+   "stage": "static_detection",
+   "index": 0
+  },
+  {
+   "fixture": "ave-2026-00071-1",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00071",
+   "layer": "registry_metadata",
+   "stage": "static_detection",
+   "index": 1
+  },
+  {
+   "fixture": "ave-2026-00072-0",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00072",
+   "layer": "registry_metadata",
+   "stage": "static_detection",
+   "index": 0
+  },
+  {
+   "fixture": "ave-2026-00072-1",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00072",
+   "layer": "registry_metadata",
+   "stage": "static_detection",
+   "index": 1
+  },
+  {
+   "fixture": "ave-2026-00073-0",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00073",
+   "layer": "registry_metadata",
+   "stage": "static_detection",
+   "index": 0
+  },
+  {
+   "fixture": "ave-2026-00073-1",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00073",
+   "layer": "registry_metadata",
+   "stage": "static_detection",
+   "index": 1
+  },
+  {
+   "fixture": "ave-2026-00073-2",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00073",
+   "layer": "registry_metadata",
+   "stage": "static_detection",
+   "index": 2
+  },
+  {
+   "fixture": "ave-2026-00073-3",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00073",
+   "layer": "registry_metadata",
+   "stage": "static_detection",
+   "index": 3
+  },
+  {
+   "fixture": "ave-2026-00073-4",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00073",
+   "layer": "registry_metadata",
+   "stage": "static_detection",
+   "index": 4
+  },
+  {
+   "fixture": "ave-2026-00074-0",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00074",
+   "layer": "content",
+   "stage": "static_detection",
+   "index": 0
+  },
+  {
+   "fixture": "ave-2026-00074-1",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00074",
+   "layer": "content",
+   "stage": "static_detection",
+   "index": 1
+  },
+  {
+   "fixture": "ave-2026-00074-2",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00074",
+   "layer": "content",
+   "stage": "static_detection",
+   "index": 2
+  },
+  {
+   "fixture": "ave-2026-00074-3",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00074",
+   "layer": "content",
+   "stage": "static_detection",
+   "index": 3
+  },
+  {
+   "fixture": "ave-2026-00075-0",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00075",
+   "layer": "content",
+   "stage": "static_detection",
+   "index": 0
+  },
+  {
+   "fixture": "ave-2026-00075-1",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00075",
+   "layer": "content",
+   "stage": "static_detection",
+   "index": 1
+  },
+  {
+   "fixture": "ave-2026-00075-2",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00075",
+   "layer": "content",
+   "stage": "static_detection",
+   "index": 2
+  },
+  {
+   "fixture": "ave-2026-00076-0",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00076",
+   "layer": "registry_metadata",
+   "stage": "static_detection",
+   "index": 0
+  },
+  {
+   "fixture": "ave-2026-00076-1",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00076",
+   "layer": "registry_metadata",
+   "stage": "static_detection",
+   "index": 1
+  },
+  {
+   "fixture": "ave-2026-00076-2",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00076",
+   "layer": "registry_metadata",
+   "stage": "static_detection",
+   "index": 2
+  },
+  {
+   "fixture": "ave-2026-00077-0",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00077",
+   "layer": "registry_metadata",
+   "stage": "static_detection",
+   "index": 0
+  },
+  {
+   "fixture": "ave-2026-00077-1",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00077",
+   "layer": "registry_metadata",
+   "stage": "static_detection",
+   "index": 1
+  },
+  {
+   "fixture": "ave-2026-00077-2",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00077",
+   "layer": "registry_metadata",
+   "stage": "static_detection",
+   "index": 2
+  },
+  {
+   "fixture": "ave-2026-00078-0",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00078",
+   "layer": "runtime",
+   "stage": "runtime_observed",
+   "index": 0
+  },
+  {
+   "fixture": "ave-2026-00078-1",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00078",
+   "layer": "runtime",
+   "stage": "runtime_observed",
+   "index": 1
+  },
+  {
+   "fixture": "ave-2026-00078-2",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00078",
+   "layer": "runtime",
+   "stage": "runtime_observed",
+   "index": 2
+  },
+  {
+   "fixture": "ave-2026-00079-0",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00079",
+   "layer": "runtime",
+   "stage": "runtime_drift_detected",
+   "index": 0
+  },
+  {
+   "fixture": "ave-2026-00079-1",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00079",
+   "layer": "runtime",
+   "stage": "runtime_drift_detected",
+   "index": 1
+  },
+  {
+   "fixture": "ave-2026-00079-2",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00079",
+   "layer": "runtime",
+   "stage": "runtime_drift_detected",
+   "index": 2
+  },
+  {
+   "fixture": "ave-2026-00080-0",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00080",
+   "layer": "runtime",
+   "stage": "runtime_observed",
+   "index": 0
+  },
+  {
+   "fixture": "ave-2026-00080-1",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00080",
+   "layer": "runtime",
+   "stage": "runtime_observed",
+   "index": 1
+  },
+  {
+   "fixture": "ave-2026-00080-2",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00080",
+   "layer": "runtime",
+   "stage": "runtime_observed",
+   "index": 2
+  },
+  {
+   "fixture": "ave-2026-00081-0",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00081",
+   "layer": "runtime",
+   "stage": "runtime_observed",
+   "index": 0
+  },
+  {
+   "fixture": "ave-2026-00081-1",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00081",
+   "layer": "runtime",
+   "stage": "runtime_observed",
+   "index": 1
+  },
+  {
+   "fixture": "ave-2026-00081-2",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00081",
+   "layer": "runtime",
+   "stage": "runtime_observed",
+   "index": 2
+  },
+  {
+   "fixture": "ave-2026-00082-0",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00082",
+   "layer": "registry_metadata",
+   "stage": "static_detection",
+   "index": 0
+  },
+  {
+   "fixture": "ave-2026-00082-1",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00082",
+   "layer": "registry_metadata",
+   "stage": "static_detection",
+   "index": 1
+  },
+  {
+   "fixture": "ave-2026-00083-0",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00083",
+   "layer": "runtime",
+   "stage": "runtime_observed",
+   "index": 0
+  },
+  {
+   "fixture": "ave-2026-00083-1",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00083",
+   "layer": "runtime",
+   "stage": "runtime_observed",
+   "index": 1
+  },
+  {
+   "fixture": "ave-2026-00083-2",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00083",
+   "layer": "runtime",
+   "stage": "runtime_observed",
+   "index": 2
+  },
+  {
+   "fixture": "ave-2026-00084-0",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00084",
+   "layer": "registry_metadata",
+   "stage": "static_detection",
+   "index": 0
+  },
+  {
+   "fixture": "ave-2026-00084-1",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00084",
+   "layer": "registry_metadata",
+   "stage": "static_detection",
+   "index": 1
+  },
+  {
+   "fixture": "ave-2026-00084-2",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00084",
+   "layer": "registry_metadata",
+   "stage": "static_detection",
+   "index": 2
+  },
+  {
+   "fixture": "ave-2026-00085-0",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00085",
+   "layer": "content",
+   "stage": "static_detection",
+   "index": 0
+  },
+  {
+   "fixture": "ave-2026-00085-1",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00085",
+   "layer": "content",
+   "stage": "static_detection",
+   "index": 1
+  },
+  {
+   "fixture": "ave-2026-00085-2",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00085",
+   "layer": "content",
+   "stage": "static_detection",
+   "index": 2
+  },
+  {
+   "fixture": "ave-2026-00086-0",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00086",
+   "layer": "runtime",
+   "stage": "runtime_observed",
+   "index": 0
+  },
+  {
+   "fixture": "ave-2026-00086-1",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00086",
+   "layer": "runtime",
+   "stage": "runtime_observed",
+   "index": 1
+  },
+  {
+   "fixture": "ave-2026-00086-2",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00086",
+   "layer": "runtime",
+   "stage": "runtime_observed",
+   "index": 2
+  },
+  {
+   "fixture": "ave-2026-00087-0",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00087",
+   "layer": "runtime",
+   "stage": "runtime_observed",
+   "index": 0
+  },
+  {
+   "fixture": "ave-2026-00087-1",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00087",
+   "layer": "runtime",
+   "stage": "runtime_observed",
+   "index": 1
+  },
+  {
+   "fixture": "ave-2026-00087-2",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00087",
+   "layer": "runtime",
+   "stage": "runtime_observed",
+   "index": 2
+  },
+  {
+   "fixture": "ave-2026-00088-0",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00088",
+   "layer": "runtime",
+   "stage": "runtime_observed",
+   "index": 0
+  },
+  {
+   "fixture": "ave-2026-00088-1",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00088",
+   "layer": "runtime",
+   "stage": "runtime_observed",
+   "index": 1
+  },
+  {
+   "fixture": "ave-2026-00088-2",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00088",
+   "layer": "runtime",
+   "stage": "runtime_observed",
+   "index": 2
+  },
+  {
+   "fixture": "ave-2026-00088-3",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00088",
+   "layer": "runtime",
+   "stage": "runtime_observed",
+   "index": 3
+  },
+  {
+   "fixture": "ave-2026-00089-0",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00089",
+   "layer": "runtime",
+   "stage": "runtime_observed",
+   "index": 0
+  },
+  {
+   "fixture": "ave-2026-00089-1",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00089",
+   "layer": "runtime",
+   "stage": "runtime_observed",
+   "index": 1
+  },
+  {
+   "fixture": "ave-2026-00089-2",
+   "source": "ave-example",
+   "ave_id": "AVE-2026-00089",
+   "layer": "runtime",
+   "stage": "runtime_observed",
+   "index": 2
+  },
+  {
+   "fixture": "repo-golden-skill",
+   "source": "repo",
+   "path": "tests/fixtures/skills/malicious/malicious_skill.md"
+  },
+  {
+   "fixture": "repo-suppression-skill",
+   "source": "repo",
+   "path": "tests/fixtures/skills/clean/self_referential_suppression.md"
+  }
+ ]
+}
