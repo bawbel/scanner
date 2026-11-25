@@ -671,8 +671,8 @@ Each result in the JSON output carries a `recommendation`. SARIF carries one for
 
 | `recommendation` | Meaning |
 |---|---|
-| `ALLOW` | No findings and no toxic flows from the engines that ran |
-| `REVIEW` | Findings or toxic flows are present, and none is blocking |
+| `ALLOW` | No findings, no toxic flows, and no engine in `engines_degraded`: every engine ran |
+| `REVIEW` | Findings or toxic flows are present, and none is blocking. Also a result with no findings where an engine did not run |
 | `BLOCK` | A finding at or above the `--fail-on-severity` threshold (the test that gives exit `2`), or any CRITICAL toxic flow |
 | `null` | The scan of that file failed, or the command does not compute one (`bawbel creds`, `bawbel chain`). In SARIF, `null` if any file has none |
 
@@ -681,7 +681,8 @@ How to read it:
 - **The exit code collapses `ALLOW` and `REVIEW` into `0`.** A caller that needs to tell them apart reads `recommendation` from the JSON.
 - **With no `--fail-on-severity`, no finding is blocking.** The result is then `ALLOW`, `REVIEW`, or `BLOCK` from a CRITICAL toxic flow alone.
 - **A CRITICAL toxic flow gives `BLOCK` and does not change the exit code.** The exit code only tests findings against the threshold. A gate that must stop on a toxic flow reads `recommendation`.
-- **`ALLOW` is about the engines that ran, and only those.** It does not consider whether an engine did not run: `engines_degraded` and `--require-engines` say that. It says nothing about what no engine looked at.
+- **An engine that did not run turns `ALLOW` into `REVIEW`.** The reason does not matter: not installed, no API key, disabled by configuration, a timeout. `BLOCK` is never lowered by it. `engines_run` and `engines_degraded` in the same result say which engines did not run. A default install does not run every engine (the sandbox is off and the LLM engine has no key), so on a default install a result with no findings is `REVIEW`, not `ALLOW`.
+- **`ALLOW` still says nothing about what no engine looked at**, such as a file type a directory scan does not list.
 - Suppressed and accepted findings are not counted, as they are not for the exit code.
 
 ---

@@ -5,8 +5,9 @@ One value that says what a scan recommends, for a caller that builds a gate. It 
 from the lists the exit code and the risk score already use (`findings` and `toxic_flows`), so
 a suppressed or accepted finding changes it exactly as it changes them.
 
-    ALLOW   no findings and no toxic flows
-    REVIEW  findings or toxic flows present, none blocking
+    ALLOW   no findings, no toxic flows, and no engine in `engines_degraded`
+    REVIEW  findings or toxic flows present, none blocking; or nothing found but an engine did
+            not run
     BLOCK   a finding at or above the --fail-on-severity threshold, or a CRITICAL toxic flow
     None    the scan failed, or the command did not compute one
 
@@ -16,8 +17,13 @@ changed by it: it collapses ALLOW and REVIEW to 0, and a CRITICAL toxic flow alo
 recommendation BLOCK while the exit code stays 0. A caller that wants the distinction reads
 `recommendation` from the JSON output.
 
-ALLOW says nothing about what no engine looked at, and it does not consider whether an engine
-did not run (`engines_degraded` and `--require-engines` carry that).
+An engine that did not run turns what would be ALLOW into REVIEW, whatever the reason in
+`engines_degraded` (not installed, no API key, disabled by configuration, timed out). BLOCK is
+never lowered by it. ALLOW still says nothing about what no engine looked at, such as a file
+type the collector does not list.
+
+This module is internal. It is not exported from `scanner` or `scanner.core`, has no `__all__`,
+and is not part of the documented API. A consumer reads `recommendation` from the JSON output.
 
 Pure function, no I/O, never raises.
 """
@@ -50,10 +56,12 @@ def recommend(result, fail_on_severity: Optional[str] = None) -> Optional[str]:
     What: ALLOW, REVIEW or BLOCK for one ScanResult, or None if the scan failed.
     Why:  `--fail-on-severity` is a knob. A gate needs one value and a stated contract.
     How:  BLOCK if a finding scores at or above the threshold (the exit code 2 test) or a toxic
-          flow is CRITICAL. Otherwise REVIEW if anything is present, else ALLOW.
+          flow is CRITICAL. Otherwise REVIEW if anything is present or an engine did not run,
+          else ALLOW.
 
     Args:
-        result: a ScanResult (anything with .error, .findings and .toxic_flows).
+        result: a ScanResult (anything with .error, .findings and .toxic_flows; .engines_degraded
+            is read if present).
         fail_on_severity: "critical" | "high" | "medium" | "low", any case, or None. An
             unrecognised value is treated as no threshold.
     """
@@ -70,6 +78,8 @@ def recommend(result, fail_on_severity: Optional[str] = None) -> Optional[str]:
     if any(_value(getattr(tf, "severity", "")) == _CRITICAL for tf in result.toxic_flows):
         return BLOCK
     if result.findings or result.toxic_flows:
+        return REVIEW
+    if getattr(result, "engines_degraded", None):
         return REVIEW
     return ALLOW
 

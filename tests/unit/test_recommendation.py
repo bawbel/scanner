@@ -32,6 +32,7 @@ from scanner.core.recommendation import (
 )
 from scanner.core.toxic_flows.models import ToxicFlow
 from scanner.models import Finding, ScanResult, Severity
+from scanner.models.engine_status import DegradedReason, EngineDegradation
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 GOLDEN_INPUT = REPO_ROOT / "tests/fixtures/skills/malicious/malicious_skill.md"
@@ -84,13 +85,14 @@ def flow(severity: str) -> ToxicFlow:
     )
 
 
-def result(findings=(), flows=(), error=None) -> ScanResult:
+def result(findings=(), flows=(), error=None, degraded=()) -> ScanResult:
     return ScanResult(
         file_path="x.md",
         component_type="skill",
         findings=list(findings),
         toxic_flows=list(flows),
         error=error,
+        engines_degraded=[EngineDegradation(engine, reason) for engine, reason in degraded],
     )
 
 
@@ -128,6 +130,52 @@ def result(findings=(), flows=(), error=None) -> ScanResult:
 def test_recommendation_table(findings, flows, threshold, expected):
     r = result([finding(s) for s in findings], [flow(s) for s in flows])
     assert recommend(r, threshold) == expected
+
+
+DEGRADED_REASONS = [
+    v for k, v in vars(DegradedReason).items() if not k.startswith("_") and isinstance(v, str)
+]
+
+
+def test_the_reason_list_is_not_empty():
+    """Guard for the test below: it would pass for no reasons at all if this list were empty."""
+    assert "not_installed" in DEGRADED_REASONS and "disabled_by_config" in DEGRADED_REASONS
+    assert len(DEGRADED_REASONS) == len(set(DEGRADED_REASONS)) >= 9
+
+
+@pytest.mark.parametrize("reason", DEGRADED_REASONS)
+def test_an_engine_that_did_not_run_turns_allow_into_review(reason):
+    """Nothing found is ALLOW only if every engine ran. The reason for not running is not read."""
+    r = result(degraded=[("semgrep", reason)])
+    assert recommend(r, None) == REVIEW
+    assert recommend(r, "high") == REVIEW
+
+
+@pytest.mark.parametrize(
+    "findings,flows,threshold,expected",
+    [
+        # BLOCK is never lowered by a degraded engine
+        ([Severity.HIGH], [], "high", BLOCK),
+        ([], ["CRITICAL"], None, BLOCK),
+        # REVIEW stays REVIEW
+        ([Severity.LOW], [], None, REVIEW),
+        ([Severity.HIGH], [], "critical", REVIEW),
+    ],
+)
+def test_a_degraded_engine_never_changes_block_or_review(findings, flows, threshold, expected):
+    degraded = [("llm", DegradedReason.NO_API_KEY), ("sandbox", DegradedReason.DISABLED_BY_CONFIG)]
+    r = result([finding(s) for s in findings], [flow(s) for s in flows], degraded=degraded)
+    assert recommend(r, threshold) == expected
+
+
+def test_a_failed_scan_with_a_degraded_engine_still_has_no_recommendation():
+    r = result(error="E008", degraded=[("yara", DegradedReason.NOT_INSTALLED)])
+    assert recommend(r, None) is None
+
+
+def test_a_result_with_no_degraded_engines_and_nothing_found_is_allow():
+    assert recommend(result(), None) == ALLOW
+    assert recommend(result(degraded=[]), "high") == ALLOW
 
 
 def test_a_failed_scan_has_no_recommendation():
@@ -219,9 +267,14 @@ def json_results(proc):
 
 
 def test_json_carries_the_recommendation(files):
+    """The sandbox is off in these runs, so an engine did not run: a clean file is REVIEW."""
     proc = bawbel(files, "scan", ".", "--format", "json")
-    got = {name: r["recommendation"] for name, r in json_results(proc).items()}
-    assert got == {"ok.md": ALLOW, "bad.md": REVIEW}
+    results = json_results(proc)
+    got = {name: r["recommendation"] for name, r in results.items()}
+    assert got == {"ok.md": REVIEW, "bad.md": REVIEW}
+    clean = results["ok.md"]
+    assert clean["max_severity"] is None  # nothing was found
+    assert "sandbox" in [d["engine"] for d in clean["engines_degraded"]]
 
 
 def test_json_with_a_threshold(files):
@@ -253,7 +306,8 @@ def test_sarif_is_null_when_a_file_failed(files):
 
 def test_text_summary_has_a_line_for_each_value(files):
     ok = bawbel(files, "scan", "ok.md")
-    assert "Recommendation: ALLOW" in ok.stdout
+    assert "Recommendation: REVIEW" in ok.stdout  # nothing found, but the sandbox did not run
+    assert "an engine did not run" in ok.stdout
     review = bawbel(files, "scan", "bad.md")
     assert "Recommendation: REVIEW" in review.stdout
     block = bawbel(files, "scan", "bad.md", "--fail-on-severity", "high")
