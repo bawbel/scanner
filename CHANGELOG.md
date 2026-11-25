@@ -43,6 +43,9 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   usage has no entry, and there is no cost field. An entry holds no API key, prompt text or file
   content. It is not in SARIF (#150).
 
+- `docs/VERIFYING-RELEASES.md`: how to check a release file against the signed build provenance
+  PyPI holds for it, with `pypi-attestations`, what a pass means and what it does not (#154).
+
 - `docs/reports/ENUMERATION-132.md`: a report on the file types a directory scan never reads
   (anything but `.md`, `.json`, `.yaml`, `.yml`, `.txt`), measured per file type and per engine,
   with a specification for "files not scanned" fields and three costed options. It changes no
