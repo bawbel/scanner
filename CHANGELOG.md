@@ -43,6 +43,9 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   usage has no entry, and there is no cost field. An entry holds no API key, prompt text or file
   content. It is not in SARIF (#150).
 
+- `docs/VERIFYING-RELEASES.md`: how to check a release file against the signed build provenance
+  PyPI holds for it, with `pypi-attestations`, what a pass means and what it does not (#154).
+
 - `scripts/sync_ave_snapshot.py` and `scanner/_ave_snapshot.py`. The scanner now reads AVE data
   (evidence metadata and the OWASP MCP crosswalk) from a vendored snapshot of the published
   records, generated from the corpus commit the README already pins and stamped with
