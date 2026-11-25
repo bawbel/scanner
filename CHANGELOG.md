@@ -46,6 +46,12 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - `docs/VERIFYING-RELEASES.md`: how to check a release file against the signed build provenance
   PyPI holds for it, with `pypi-attestations`, what a pass means and what it does not (#154).
 
+- `docs/reports/ENUMERATION-132.md`: a report on the file types a directory scan never reads
+  (anything but `.md`, `.json`, `.yaml`, `.yml`, `.txt`), measured per file type and per engine,
+  with a specification for "files not scanned" fields and three costed options. It changes no
+  behaviour. `tests/test_unscanned_file_types.py` pins the gap as strict `xfail` cases that use
+  one harmless sentence and no payload (#177).
+
 ### Changed
 
 - The User-Agent on outbound requests is built from the package version (it said
