@@ -310,6 +310,8 @@ pip install "bawbel-scanner[all]"     # everything
 
 Requires Python 3.10+. No other system dependencies for core install.
 
+To check where a release came from, see [Verifying releases](docs/VERIFYING-RELEASES.md).
+
 ### Supported platforms
 
 What CI tests, by platform and extra, written from
