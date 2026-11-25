@@ -20,6 +20,7 @@ from contextvars import ContextVar
 from typing import Iterator, Optional
 
 from scanner.models.engine_status import ENGINES, EngineDegradation
+from scanner.models.inference_usage import InferenceUsage
 
 _ERROR_CODE = re.compile(r"^(E\d{3})\b")
 
@@ -39,6 +40,7 @@ class EngineLedger:
     def __init__(self) -> None:
         self._ran: set[str] = set()
         self._degraded: dict[str, EngineDegradation] = {}
+        self._inference: list[InferenceUsage] = []
 
     def ran(self, engine: str) -> None:
         if engine not in self._degraded:
@@ -47,6 +49,14 @@ class EngineLedger:
     def degraded(self, engine: str, reason: str, detail: Optional[str] = None) -> None:
         self._ran.discard(engine)
         self._degraded.setdefault(engine, EngineDegradation(engine, reason, detail))
+
+    def inference(self, usage: InferenceUsage) -> None:
+        self._inference.append(usage)
+
+    @property
+    def inference_usage(self) -> list[InferenceUsage]:
+        """The LLM calls of this scan that reported usage, in the order they were made."""
+        return list(self._inference)
 
     @property
     def engines_run(self) -> list[str]:
@@ -83,3 +93,10 @@ def report_degraded(engine: str, reason: str, detail: Optional[str] = None) -> N
     ledger = _current.get()
     if ledger is not None:
         ledger.degraded(engine, reason, detail)
+
+
+def report_inference(usage: InferenceUsage) -> None:
+    """Record one LLM call that reported usage. No-op outside a scan."""
+    ledger = _current.get()
+    if ledger is not None:
+        ledger.inference(usage)
