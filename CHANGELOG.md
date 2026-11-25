@@ -8,6 +8,12 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- `scripts/coverage_matrix.py`, `scripts/coverage_examples.py` and `scripts/coverage_render.py`, and
+  the matrix they generate at `docs/reports/COVERAGE-MATRIX.md`: one row per active record of the
+  pinned AVE corpus, with its layer, whether a file scanner can see its evidence, the rules that
+  cite it, the tests that name it and how many of its own `example_patterns` the rules flag. The
+  header names the corpus by the SHA-256 of its bytes. No rule changed (#188).
+
 - `ave_url` on every finding (JSON, SARIF, `scan()`): the AVE record at
   https://api.aveproject.org/records/{ave_id}, built from `AVE_RECORD_URL_TEMPLATE` (#116).
 
