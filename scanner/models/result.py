@@ -10,6 +10,7 @@ from typing import Optional
 
 from scanner.models.engine_status import EngineDegradation
 from scanner.models.finding import Finding
+from scanner.models.inference_usage import InferenceUsage
 from scanner.models.severity import SEVERITY_SCORES, Severity
 
 
@@ -44,6 +45,11 @@ class ScanResult:
     # one engine of six prints the same findings as one that ran all six; these say which.
     engines_run: list[str] = field(default_factory=list)
     engines_degraded: list[EngineDegradation] = field(default_factory=list)
+
+    # -- LLM inference usage (issue #150) ------------------------------------
+    # One entry per LLM call (Stage 2 and FP-4) whose provider reported token counts. Never
+    # estimated: a call with no reported usage has no entry. Empty when no LLM call was made.
+    inference_usage: list[InferenceUsage] = field(default_factory=list)
 
     # -- Error ---------------------------------------------------------------
     error: Optional[str] = None  # (stable) error code if scan failed, else None
@@ -108,6 +114,7 @@ class ScanResult:
             "recommendation": self.recommendation,
             "engines_run": list(self.engines_run),
             "engines_degraded": [d.to_dict() for d in self.engines_degraded],
+            "metadata": {"inference_usage": [u.to_dict() for u in self.inference_usage]},
             "findings": [
                 {
                     "rule_id": f.rule_id,

@@ -36,6 +36,13 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   pinned by a strict `xfail` in `tests/test_known_misses.py`, which fails the suite when a rule
   starts catching it, so the document must change in the same pull request (#143).
 
+- `metadata.inference_usage` in the JSON output of each file, and `ScanResult.inference_usage`: one
+  entry per LLM call, Stage 2 and the false-positive filter both, whose provider reported token
+  counts. Each has `provider`, `model`, `prompt_tokens`, `completion_tokens`, `latency_ms`,
+  `model_source` and `usage_source`. Token counts are never estimated, so a call with no reported
+  usage has no entry, and there is no cost field. An entry holds no API key, prompt text or file
+  content. It is not in SARIF (#150).
+
 - `recommendation` on every `bawbel scan` result: `ALLOW`, `REVIEW`, `BLOCK`, or `null`. In the
   JSON output (each result), in SARIF (`runs[].invocations[].properties.recommendation`, the worst
   across files) and as a `Recommendation:` line in the text summary. `BLOCK` is a finding at or

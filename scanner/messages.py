@@ -82,6 +82,10 @@ class Logs:
     ENGINE_ERROR = "Engine error: engine=%s path=%s error=%s"
     ENGINE_TIMEOUT = "Engine timeout: engine=%s path=%s timeout_sec=%d"
 
+    # LLM inference usage (issue #150)
+    INFERENCE_NOT_REPORTED = "LLM call reported no usage, so none is recorded: model=%s"
+    INFERENCE_NOT_RECORDED = "LLM usage could not be read: model=%s error_type=%s"
+
     # Rules
     RULES_LOADED = "Rules loaded: engine=%s path=%s rule_count=%d"
     RULES_MISSING = "Rules file missing: engine=%s path=%s"
