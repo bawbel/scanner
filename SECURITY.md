@@ -10,6 +10,13 @@
 
 ---
 
+## Verifying a release
+
+Releases on PyPI carry signed build provenance. [docs/VERIFYING-RELEASES.md](docs/VERIFYING-RELEASES.md)
+shows how to check a file against it, and what a pass does and does not mean.
+
+---
+
 ## Reporting a vulnerability in Bawbel Scanner
 
 **Do not open a public GitHub issue.** Report privately, using either:

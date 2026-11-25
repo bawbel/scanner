@@ -43,6 +43,9 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   usage has no entry, and there is no cost field. An entry holds no API key, prompt text or file
   content. It is not in SARIF (#150).
 
+- `docs/VERIFYING-RELEASES.md`: how to check a release file against the signed build provenance
+  PyPI holds for it, with `pypi-attestations`, what a pass means and what it does not (#154).
+
 - `recommendation` on every `bawbel scan` result: `ALLOW`, `REVIEW`, `BLOCK`, or `null`. In the
   JSON output (each result), in SARIF (`runs[].invocations[].properties.recommendation`, the worst
   across files) and as a `Recommendation:` line in the text summary. `BLOCK` is a finding at or
