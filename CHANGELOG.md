@@ -46,6 +46,10 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - `docs/VERIFYING-RELEASES.md`: how to check a release file against the signed build provenance
   PyPI holds for it, with `pypi-attestations`, what a pass means and what it does not (#154).
 
+- `scripts/contributor_smoke.sh` and a weekly `Contributor Smoke` workflow. They run the
+  add-a-rule guide in a clean clone, taking the rule, fixtures and test from the guide's own blocks,
+  and fail when a step in the guide stops working (#158).
+
 ### Changed
 
 - The User-Agent on outbound requests is built from the package version (it said
@@ -65,6 +69,12 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   `scripts/sync_record_counts.py` already computes, so `--check` guards it. The engines guide, the
   getting-started guide and the docs index gave rule and engine counts that did not match the
   code, and `LANGUAGE.md` and the README gave correct ones typed by hand (#145).
+
+- `docs/guides/adding-a-rule.md` is now a set of steps that can be run: the file to edit, the shape
+  of a rule, the fixtures, a test, the README count script, and the checks. It was a short outline
+  with no command in it. `CONTRIBUTING.md`, `docs/guides/engines.md` and
+  `docs/guides/writing-rules.md` told contributors to edit `scanner/engines/pattern.py`, which does
+  not exist. The file is `scanner/engines/pattern_engine.py` (#158).
 
 ### Deprecated
 

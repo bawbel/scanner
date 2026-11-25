@@ -8,7 +8,7 @@ Three rule types, each with different strengths. Add to any of them independentl
 
 | Rule type | Best for | File |
 |---|---|---|
-| Pattern | Simple phrase matching, single-line | `scanner/engines/pattern.py` |
+| Pattern | Simple phrase matching, single-line | `scanner/engines/pattern_engine.py` |
 | YARA | Multi-keyword combinations, binary content | `scanner/rules/yara/ave_rules.yar` |
 | Semgrep | Multi-line, proximity-aware, structural | `scanner/rules/semgrep/ave_rules.yaml` |
 
@@ -18,7 +18,7 @@ Start with Pattern. If you need multi-condition logic use YARA. If you need mult
 
 ## Pattern rules
 
-Edit `PATTERN_RULES` in `scanner/engines/pattern.py`.
+Edit `PATTERN_RULES_V2` in `scanner/engines/pattern_engine.py`. The full steps, with fixtures and a test, are in [Adding a Rule](adding-a-rule.md).
 
 ```python
 {

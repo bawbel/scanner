@@ -49,7 +49,8 @@ pre-commit install
 The most impactful contribution. Full guide in `docs/guides/writing-rules.md`.
 
 ```
-1. Add rule to PATTERN_RULES in scanner/engines/pattern.py
+1. Add rule to PATTERN_RULES_V2 in scanner/engines/pattern_engine.py
+   (step by step, with every step tested weekly: docs/guides/adding-a-rule.md)
 2. Map to the correct AVE record ID (github.com/aveproject/ave)
 3. Add AIVSS score from the AVE record
 4. Add positive test fixture (content that triggers the rule)

@@ -1,0 +1,36 @@
+name: Contributor Smoke
+
+# Runs the add-a-rule guide (docs/guides/adding-a-rule.md) in a clean clone, the way a contributor
+# would, and fails if a step in it stops working (issue #158). It runs once a week, on a change to
+# the guide or the script, and by hand.
+
+on:
+  schedule:
+    - cron: "23 5 * * 1" # Mondays, 05:23 UTC
+  workflow_dispatch:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - docs/guides/adding-a-rule.md
+      - scripts/contributor_smoke.sh
+      - .github/workflows/contributor-smoke.yml
+
+permissions:
+  contents: read
+
+jobs:
+  contributor-path:
+    name: Contributor path
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      # Needs the network: pip, and the AVE corpus the README pins.
+      - name: Run the add-a-rule guide in a clean clone
+        run: bash scripts/contributor_smoke.sh
