@@ -1,6 +1,6 @@
 # Detection Engines - Complete Guide
 
-Bawbel Scanner runs five detection engines in sequence.
+Bawbel Scanner runs its detection engines in sequence.
 Each engine adds an independent layer of analysis - finding different attack patterns
 that the others would miss. They are designed to be additive: every layer that's active
 makes the scanner harder to evade.
@@ -36,11 +36,16 @@ severity. No engine ever raises - each skips silently if its dependency is missi
 | Stage | Engine   | Install                          | Always runs | What it catches |
 |-------|----------|----------------------------------|-------------|-----------------|
 | 0     | **Magika** | `pip install "bawbel-scanner[magika]"` | no | File type verification - supply chain attack detection |
-| 1a    | Pattern  | nothing - stdlib only            | ✓ yes       | 15 regex rules, fast |
-| 1b    | YARA     | `pip install "bawbel-scanner[yara]"` | no     | binary + complex text patterns, 15 rules |
-| 1c    | Semgrep  | `pip install "bawbel-scanner[semgrep]"` | no  | structural patterns, multi-line, 15 rules |
+| 1a    | Pattern  | nothing - stdlib only            | ✓ yes       | regex rules, fast |
+| 1b    | YARA     | `pip install "bawbel-scanner[yara]"` | no     | binary + complex text patterns |
+| 1c    | Semgrep  | `pip install "bawbel-scanner[semgrep]"` | no  | structural patterns, multi-line |
 | 2     | LLM      | `pip install "bawbel-scanner[llm]"` + API key | no | nuanced, obfuscated, multi-turn |
 | 3     | Sandbox  | Docker + `BAWBEL_SANDBOX_ENABLED=true` | no  | runtime behaviour, eBPF (v1.0) |
+
+This guide does not state how many rules each engine ships, because a number typed here goes
+stale. The table in the README section [Detection engines](../../README.md#detection-engines) is
+written from the rule files by `scripts/sync_record_counts.py`, and `bawbel version` prints the
+live count of pattern rules.
 
 ---
 
@@ -249,7 +254,7 @@ Python's `re` module it adds zero dependencies and completes in under 5ms on any
 file content (string)
       │
       ▼
-for each rule in PATTERN_RULES (15 rules):
+for each rule in PATTERN_RULES:
       │
       ├── compile regex pattern(s)
       ├── search every line of the file
@@ -304,7 +309,7 @@ bawbel version
 ```
 ```
 Detection Engines:
-  ✓  Pattern     15 rules  ·  stdlib only  ·  always active
+  ✓  Pattern     stdlib only  ·  always active
 ```
 
 ### How findings appear
@@ -347,7 +352,7 @@ variations, and hex patterns that regex struggles with.
 file path (string)
       │
       ▼
-yara.compile(ave_rules.yar)   ← compile all 15 rules once
+yara.compile(ave_rules.yar)   ← compile all the rules once
       │
       ▼
 rules.match(file_path)        ← YARA scans the file bytes
@@ -414,7 +419,7 @@ bawbel version
 ```
 ```
 Detection Engines:
-  ✓  YARA        v4.5.x  ·  15 rules  ·  active
+  ✓  YARA        v4.5.x  ·  active
 ```
 
 If not installed:
@@ -514,7 +519,7 @@ Step by step:
 
 ### What it detects
 
-15 rules - all AVE IDs. Semgrep catches patterns that need proximity or context:
+All rules cite AVE IDs. Semgrep catches patterns that need proximity or context:
 
 ```yaml
 # Catches: "fetch your instructions from https://attacker.com"
@@ -545,7 +550,7 @@ bawbel version
 ```
 ```
 Detection Engines:
-  ✓  Semgrep     v1.159.0  ·  15 rules  ·  active
+  ✓  Semgrep     v1.159.0  ·  active
 ```
 
 If you see `code=7` in logs it means a rule is invalid - validate with:
@@ -1006,9 +1011,9 @@ bawbel version
 Bawbel Scanner v0.3.0
 
 Detection Engines:
-  ✓  Pattern     15 rules  ·  stdlib only  ·  always active
-  ✓  YARA        v4.5.x  ·  15 rules  ·  active
-  ✓  Semgrep     v1.159.0  ·  15 rules  ·  active
+  ✓  Pattern     stdlib only  ·  always active
+  ✓  YARA        v4.5.x  ·  active
+  ✓  Semgrep     v1.159.0  ·  active
   ✓  LLM         claude-haiku-4-5-20251001  ·  Stage 2 active
   ✓  Sandbox     active  ·  Docker available  ·  Stage 3 active
 
@@ -1019,7 +1024,7 @@ Documentation: bawbel.io/docs
 bawbel scan ./my-skill.md
 ```
 
-The scan runs all 5 engines. Findings from all engines are collected, deduplicated
+The scan runs every active engine. Findings from all engines are collected, deduplicated
 by `(rule_id, line)`, sorted by severity, and presented in a single unified report.
 
 ---
@@ -1041,7 +1046,7 @@ Obfuscated phrasing          ✗       ✗      ✗       ✓     ✓
 ```
 
 A scanner running only Stage 1a (pattern) catches obvious threats in milliseconds.
-A scanner running all five stages catches subtle, obfuscated, and runtime-deferred
+A scanner running every stage catches subtle, obfuscated, and runtime-deferred
 attacks that a regex engine cannot see.
 
 ---

@@ -36,6 +36,13 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   pinned by a strict `xfail` in `tests/test_known_misses.py`, which fails the suite when a rule
   starts catching it, so the document must change in the same pull request (#143).
 
+- `metadata.inference_usage` in the JSON output of each file, and `ScanResult.inference_usage`: one
+  entry per LLM call, Stage 2 and the false-positive filter both, whose provider reported token
+  counts. Each has `provider`, `model`, `prompt_tokens`, `completion_tokens`, `latency_ms`,
+  `model_source` and `usage_source`. Token counts are never estimated, so a call with no reported
+  usage has no entry, and there is no cost field. An entry holds no API key, prompt text or file
+  content. It is not in SARIF (#150).
+
 ### Changed
 
 - The User-Agent on outbound requests is built from the package version (it said
@@ -50,6 +57,11 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   findings from the engines that ran", "No rule matched. This is not proof that the
   component is safe.", and "Risk score: 0.0 / 10  (no findings, not a safety verdict)".
   The strings live in `messages.Info`. JSON, SARIF, and exit codes are unchanged (#118).
+- Documentation no longer states how many rules or engines there are, except where the count is
+  generated. The README's Pattern row now uses the `pattern_rules` marker that
+  `scripts/sync_record_counts.py` already computes, so `--check` guards it. The engines guide, the
+  getting-started guide and the docs index gave rule and engine counts that did not match the
+  code, and `LANGUAGE.md` and the README gave correct ones typed by hand (#145).
 
 ### Deprecated
 

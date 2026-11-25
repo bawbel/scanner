@@ -72,7 +72,7 @@ bawbel ssc https://server    # scan MCP server without starting it
 | MCP spec conformance grading (A+ to F) | Yes | No | No | ? |
 | Git-committed pin / rug pull detection | Yes | No | No | ? |
 | Suppression with expiry and audit trail | Yes (reason, reviewer, expiry) | Baseline (glob and fingerprint, no expiry) | Baseline (ignore flags, no expiry) | ? |
-| Per-scan LLM usage and cost telemetry | No (tracked in [#79](https://github.com/bawbel/scanner/issues/79)) | Yes (`metadata.inference_usage`) | No | ? |
+| Per-scan LLM usage and cost telemetry | Usage only: model, token counts and latency per call in `metadata.inference_usage`, no cost ([details](docs/guides/configuration.md#llm-usage-in-the-json-output)) | Yes (`metadata.inference_usage`) | No | ? |
 | SARIF 2.1.0 output | Yes | Yes | No | ? |
 | License | Apache 2.0 | Apache 2.0 | Apache 2.0 | Apache 2.0 |
 
@@ -130,7 +130,7 @@ How a scan flows from your file to an AIVSS-scored finding:
 
 ### Detection stages
 
-Six engines run across the pipeline. Results merge before toxic flow analysis:
+The engines run across the pipeline. Results merge before toxic flow analysis:
 
 ```
   Stage 0    Magika engine
@@ -538,7 +538,7 @@ go stale unnoticed.
 
 | Engine | What it does | Install |
 |---|---|---|
-| Pattern | 40 regex rules mapped to AVE records | Always on |
+| Pattern | <!-- count:pattern_rules -->40<!-- /count --> regex rules mapped to AVE records | Always on |
 | YARA | <!-- count:yara_rules -->39<!-- /count --> binary and behavioral YARA rules | `[yara]` |
 | Semgrep | <!-- count:semgrep_rules -->41<!-- /count --> structural Semgrep rules | `[semgrep]` |
 | LLM | Semantic analysis of intent and context | `[llm]` |
