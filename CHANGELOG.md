@@ -36,6 +36,12 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   pinned by a strict `xfail` in `tests/test_known_misses.py`, which fails the suite when a rule
   starts catching it, so the document must change in the same pull request (#143).
 
+- `docs/reports/ENUMERATION-132.md`: a report on the file types a directory scan never reads
+  (anything but `.md`, `.json`, `.yaml`, `.yml`, `.txt`), measured per file type and per engine,
+  with a specification for "files not scanned" fields and three costed options. It changes no
+  behaviour. `tests/test_unscanned_file_types.py` pins the gap as strict `xfail` cases that use
+  one harmless sentence and no payload (#177).
+
 ### Changed
 
 - The User-Agent on outbound requests is built from the package version (it said
