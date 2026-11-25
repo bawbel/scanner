@@ -8,6 +8,11 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- `docs/reports/IGNORE-GRANULARITY.md`: how each kind of ignore is scoped today, why a finding from
+  the YARA engine has no line (so an inline or block ignore does not apply to it), what reporting an
+  offset would cost, and the `AVE_ShellPipeInjection` rule measured on the released 1.3.0 and on
+  `develop`. It changes no behaviour (#192).
+
 - `ave_url` on every finding (JSON, SARIF, `scan()`): the AVE record at
   https://api.aveproject.org/records/{ave_id}, built from `AVE_RECORD_URL_TEMPLATE` (#116).
 
