@@ -54,6 +54,11 @@ class ScanResult:
     # -- Error ---------------------------------------------------------------
     error: Optional[str] = None  # (stable) error code if scan failed, else None
 
+    # -- Recommendation (issue #179) ------------------------------------------
+    # "ALLOW" | "REVIEW" | "BLOCK", or None. Set by `bawbel scan`, which knows the
+    # --fail-on-severity threshold; scan() leaves it None. See scanner/core/recommendation.py.
+    recommendation: Optional[str] = None
+
     # -- Computed properties (stable) ----------------------------------------
 
     @property
@@ -106,6 +111,7 @@ class ScanResult:
             "error": self.error,
             "risk_score": self.risk_score,
             "max_severity": self.max_severity.value if self.max_severity else None,
+            "recommendation": self.recommendation,
             "engines_run": list(self.engines_run),
             "engines_degraded": [d.to_dict() for d in self.engines_degraded],
             "metadata": {"inference_usage": [u.to_dict() for u in self.inference_usage]},

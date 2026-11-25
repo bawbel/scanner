@@ -110,6 +110,11 @@ class Info:
     CLEAN_COMPONENT = "No findings from the engines that ran"
     CLEAN_DESCRIPTION = "No rule matched. This is not proof that the component is safe."
     CLEAN_RISK_SCORE = "0.0 / 10  (no findings, not a safety verdict)"
+    # What each recommendation means, shown next to it. Not a verdict on the component.
+    RECOMMENDATION_LABEL = "Recommendation:"
+    RECOMMENDATION_ALLOW = "no findings, no toxic flows, and every engine ran"
+    RECOMMENDATION_REVIEW = "findings present, none blocking, or an engine did not run"
+    RECOMMENDATION_BLOCK = "a finding at or above the threshold, or a CRITICAL toxic flow"
     REPORT_COMING_SOON = "Full A-BOM report generation coming in v0.2.0"
     NO_FILES_FOUND = "No scannable files found in: {path}"
     ENGINE_SKIPPED_MISSING = "Engine skipped - not installed: {engine}"

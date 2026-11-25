@@ -26,6 +26,7 @@ from scanner.cli.shared.utils import (
     parse_required_engines,
 )
 from scanner.config import EXIT_CODE_ENGINE_MISSING
+from scanner.core.recommendation import recommend
 from scanner.utils import resolve_path
 
 
@@ -73,6 +74,7 @@ def _run_watch(path: str, fmt: str, fail_on_severity: str, recursive: bool) -> N
         results = []
         for f in files:
             result = scan(str(f))
+            result.recommendation = recommend(result, fail_on_severity)
             results.append(result)
             if fmt == "text":
                 print_scan_result(result, show_report_hint=False)
@@ -186,6 +188,7 @@ def scan_cmd(  # noqa: PLR0913
 
     for f in files:
         result = scan(str(f), no_ignore=no_ignore)
+        result.recommendation = recommend(result, fail_on_severity)
         results.append(result)
         if fmt == "text":
             print_scan_result(

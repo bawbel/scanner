@@ -145,6 +145,8 @@ Formula: `((cvss_base + aars) / 2) * thm * mitigation_factor`
 
 **RiskScore** — max AIVSS across all active Findings AND ToxicFlows.
 
+**Recommendation**: ALLOW | REVIEW | BLOCK, or None. Set by `bawbel scan` from the findings, the toxic flows and the `--fail-on-severity` threshold (scanner/core/recommendation.py). ALLOW needs no findings, no toxic flows and no engine in `engines_degraded`; an engine that did not run gives REVIEW. Not an exit code and not a verdict on the component: the exit code is unchanged and collapses ALLOW and REVIEW.
+
 **Confidence** — float 0.0–1.0. Certainty of the finding. NOT severity.
 
 ---

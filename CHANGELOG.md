@@ -46,6 +46,15 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - `docs/VERIFYING-RELEASES.md`: how to check a release file against the signed build provenance
   PyPI holds for it, with `pypi-attestations`, what a pass means and what it does not (#154).
 
+- `recommendation` on every `bawbel scan` result: `ALLOW`, `REVIEW`, `BLOCK`, or `null`. In the
+  JSON output (each result), in SARIF (`runs[].invocations[].properties.recommendation`, the worst
+  across files) and as a `Recommendation:` line in the text summary. `BLOCK` is a finding at or
+  above the `--fail-on-severity` threshold, the same test as exit code 2, or any CRITICAL toxic
+  flow. A result with no findings is `REVIEW`, not `ALLOW`, when an engine did not run
+  (`engines_degraded` is not empty), whatever the reason. **No exit code changed.** The README now
+  documents all four exit codes and what `recommendation` does and does not say, and tests run
+  each exit code through the command (#179).
+
 ### Changed
 
 - The User-Agent on outbound requests is built from the package version (it said

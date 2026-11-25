@@ -657,6 +657,38 @@ bawbel scan ./skills/ --format sarif   # GitHub Security / GHAS
 
 ---
 
+## Exit codes and the recommendation
+
+`bawbel scan` and `bawbel report` exit with:
+
+| Code | Meaning |
+|---|---|
+| `0` | The scan completed and no `--fail-on-severity` threshold was reached, or none was given. Findings alone do not change the exit code, and neither does a file in a directory scan that could not be scanned. An empty directory is also `0` |
+| `1` | `bawbel scan`: the path was rejected before scanning, for example a symlink. `bawbel report`: it found vulnerabilities |
+| `2` | `bawbel scan --fail-on-severity`: a finding at or above the threshold. The command-line parser also exits `2` for a usage error, such as a path that does not exist, so `2` on its own does not show that a threshold was reached |
+| `3` | `--require-engines`: a named engine did not run. Takes precedence over `2` |
+
+Each result in the JSON output carries a `recommendation`. SARIF carries one for the whole run in
+`runs[].invocations[].properties.recommendation`, and the text summary prints it as a line.
+
+| `recommendation` | Meaning |
+|---|---|
+| `ALLOW` | No findings, no toxic flows, and no engine in `engines_degraded`: every engine ran |
+| `REVIEW` | Findings or toxic flows are present, and none is blocking. Also a result with no findings where an engine did not run |
+| `BLOCK` | A finding at or above the `--fail-on-severity` threshold (the test that gives exit `2`), or any CRITICAL toxic flow |
+| `null` | The scan of that file failed, or the command does not compute one (`bawbel creds`, `bawbel chain`). In SARIF, `null` if any file has none |
+
+How to read it:
+
+- **The exit code collapses `ALLOW` and `REVIEW` into `0`.** A caller that needs to tell them apart reads `recommendation` from the JSON.
+- **With no `--fail-on-severity`, no finding is blocking.** The result is then `ALLOW`, `REVIEW`, or `BLOCK` from a CRITICAL toxic flow alone.
+- **A CRITICAL toxic flow gives `BLOCK` and does not change the exit code.** The exit code only tests findings against the threshold. A gate that must stop on a toxic flow reads `recommendation`.
+- **An engine that did not run turns `ALLOW` into `REVIEW`.** The reason does not matter: not installed, no API key, disabled by configuration, a timeout. `BLOCK` is never lowered by it. `engines_run` and `engines_degraded` in the same result say which engines did not run. A default install does not run every engine (the sandbox is off and the LLM engine has no key), so on a default install a result with no findings is `REVIEW`, not `ALLOW`.
+- **`ALLOW` still says nothing about what no engine looked at**, such as a file type a directory scan does not list.
+- Suppressed and accepted findings are not counted, as they are not for the exit code.
+
+---
+
 ## Related
 
 | | |

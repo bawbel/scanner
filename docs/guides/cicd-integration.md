@@ -161,6 +161,9 @@ echo "Exit: $?"
 | `0` | Clean scan or findings below threshold |
 | `1` | `bawbel report` found vulnerabilities |
 | `2` | `bawbel scan --fail-on-severity` threshold breached |
+| `3` | `--require-engines`: a named engine did not run |
+
+The JSON output also carries a `recommendation` (`ALLOW`, `REVIEW`, `BLOCK`). The README section "Exit codes and the recommendation" has the full table and says where the recommendation and the exit code differ.
 
 ---
 
