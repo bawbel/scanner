@@ -46,6 +46,12 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - `docs/VERIFYING-RELEASES.md`: how to check a release file against the signed build provenance
   PyPI holds for it, with `pypi-attestations`, what a pass means and what it does not (#154).
 
+- A `test-platforms` CI job: the core install and the same test markers on macOS and Windows, for
+  each Python version `test` uses. A macOS failure fails the run. A Windows failure does not, so
+  Windows is reported only. The README
+  has a `Supported platforms` table written from the results, which lists an extra only where a job
+  runs it (#165).
+
 ### Changed
 
 - The User-Agent on outbound requests is built from the package version (it said

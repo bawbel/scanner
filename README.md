@@ -312,6 +312,23 @@ Requires Python 3.10+. No other system dependencies for core install.
 
 To check where a release came from, see [Verifying releases](docs/VERIFYING-RELEASES.md).
 
+### Supported platforms
+
+What CI tests, by platform and extra, written from
+[this CI run](https://github.com/bawbel/scanner/actions/runs/44995171290). "Tested" means a job runs
+and passes. "Not tested" means no job runs there, so nothing is claimed. A job whose failure does not
+fail the CI run is a report, not a support claim.
+
+| Platform | Core | `[yara]` | `[semgrep]` |
+|---|---|---|---|
+| Ubuntu | Tested on Python 3.10, 3.11 and 3.12 (`Test`) | Installed by the `Bawbel Self-Scan` job, which scans this repository's agent-facing files. The test suite is not run with YARA installed | Tested on Python 3.10, 3.11 and 3.12 (`Integration Tests`, the full suite) |
+| macOS (Apple silicon runner) | Tested on Python 3.10, 3.11 and 3.12 (`Test (Python X, macos-latest)`). A failure fails the CI run | Not tested | Not tested |
+| Windows | Tested on Python 3.10, 3.11 and 3.12 (`Test (Python X, windows-latest)`). The job reports, and a failure does not fail the CI run | Not tested | Not tested |
+
+Core means `pip install bawbel-scanner`, tested with the markers `-m "not integration and not slow"`.
+The optional engines ship platform-specific wheels, which is why an extra is listed only where a job
+runs it. Whether Windows is supported has not been decided.
+
 **Docker**
 
 | Image | Engines | Best for |
