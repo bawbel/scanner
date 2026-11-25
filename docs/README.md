@@ -19,6 +19,7 @@ vulnerabilities mapped to the [AVE standard](https://github.com/bawbel/ave).
 | [CI/CD Integration](guides/cicd-integration.md) | GitHub Actions, GitLab, Jenkins, CircleCI |
 | [Docker](guides/docker.md) | Running via Docker and Docker Compose |
 | [Publishing](guides/publishing.md) | Publish to PyPI - step by step |
+| [Verifying Releases](VERIFYING-RELEASES.md) | Check a release against its signed build provenance |
 | [Writing Rules](guides/writing-rules.md) | All built-in rules, OWASP mapping, adding new rules |
 | [Suppression](guides/suppression.md) | All suppression mechanisms including justified suppression and accepted risks |
 | [Credentials and Delegation](guides/creds-and-chain.md) | bawbel creds and bawbel chain focused scans |
