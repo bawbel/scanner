@@ -18,10 +18,11 @@ from scanner.models import ENGINES, ScanResult
 from scanner.scanner import SEVERITY_SCORES
 from scanner.cli.shared.constants import (
     OWASP_DESCRIPTIONS,
+    OWASP_MCP_DESCRIPTIONS,
     SEVERITY_COLORS,
     SEVERITY_ICONS,
 )
-from scanner.owasp_mcp_map import get_owasp_mcp, OWASP_MCP_DESCRIPTIONS
+from scanner.ave_meta import get_owasp_mcp
 
 console = Console()
 

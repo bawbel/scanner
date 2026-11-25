@@ -142,9 +142,12 @@ bawbel-scanner/
 │   │                            get_logger(name) → logging.Logger
 │   │                            truncate_match(match, max_len=80) → str
 │   │
-│   ├── owasp_mcp_map.py         AVE ID → OWASP MCP Top 10 mapping
-│   │                            Maps findings to MCP01-MCP10 categories
-│   │                            Used by: Finding serialization, SARIF output
+│   ├── ave_meta.py              AVE data lookups, read from _ave_snapshot.py
+│   │                            Evidence metadata and the OWASP MCP mapping per AVE ID
+│   │                            Used by: engines/, scanner.py, text, JSON and SARIF output
+│   │
+│   ├── _ave_snapshot.py         GENERATED snapshot of the published AVE records
+│   │                            Written by scripts/sync_ave_snapshot.py, never by hand
 │   │
 │   ├── pinner.py                SHA-256 pin management
 │   │                            bawbel pin ./skills/ → .bawbel-pins.json
@@ -407,7 +410,7 @@ Layers can only depend downward — never upward.
 │  Engines  scanner/engines/                                       │
 │  Subprocess, network, file I/O allowed.                         │
 │  Calls core/ for pure logic. Reads models.py.                   │
-│  Uses: utils.py, messages.py, owasp_mcp_map.py                 │
+│  Uses: utils.py, messages.py, ave_meta.py                      │
 ├─────────────────────────────────────────────────────────────────┤
 │  Core  scanner/core/                                             │
 │  PURE. No I/O. No subprocess. No network. No print.             │
@@ -426,7 +429,7 @@ Layers can only depend downward — never upward.
 │  Support  (no layer dependencies — used by all layers)          │
 │  scanner/messages.py        Rich-formatted output (printing)    │
 │  scanner/utils.py           get_logger(), truncate_match()      │
-│  scanner/owasp_mcp_map.py   AVE → OWASP MCP mapping (pure)     │
+│  scanner/ave_meta.py        AVE data lookups (pure)            │
 │  scanner/pinner.py          SHA-256 pin management (file I/O)   │
 │  config/default.py          Constants (no scanner/ imports)     │
 │                                                                  │
@@ -443,7 +446,7 @@ cli → scanner.py → engines/ → core/ → models.py
                  → suppression/ → models.py
                  → messages.py
                  → utils.py
-                 → owasp_mcp_map.py
+                 → ave_meta.py
       pinner.py  → models.py  (standalone, called by cli)
 ```
 
@@ -464,7 +467,7 @@ Ask these questions in order:
 | Suppresses findings (inline, justified, glob)? | Suppression | `scanner/suppression/` |
 | Formats Rich output for the terminal? | Support | `scanner/messages.py` |
 | Shared utility with no domain logic? | Support | `scanner/utils.py` |
-| Maps AVE IDs to OWASP categories? | Support | `scanner/owasp_mcp_map.py` |
+| Looks up AVE data (evidence metadata, OWASP MCP mapping)? | Support | `scanner/ave_meta.py` |
 | Manages SHA-256 pins for rug-pull detection? | Support | `scanner/pinner.py` |
 | Project-wide constant or env var toggle? | Config | `config/default.py` |
 | Syncs external data at deploy time (not scan time)? | Operational | `scanner/sync_records.py` |

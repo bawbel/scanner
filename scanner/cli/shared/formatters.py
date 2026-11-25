@@ -10,7 +10,7 @@ from scanner import __version__
 from scanner.config import AVE_PROJECT_URL, PROJECT_HOMEPAGE_URL
 from scanner.models import ScanResult
 from scanner.cli.shared.display import sev_value
-from scanner.owasp_mcp_map import get_owasp_mcp
+from scanner.ave_meta import get_owasp_mcp
 from scanner.utils import ave_record_url
 
 

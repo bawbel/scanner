@@ -46,6 +46,13 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - `docs/VERIFYING-RELEASES.md`: how to check a release file against the signed build provenance
   PyPI holds for it, with `pypi-attestations`, what a pass means and what it does not (#154).
 
+- `scripts/sync_ave_snapshot.py` and `scanner/_ave_snapshot.py`. The scanner now reads AVE data
+  (evidence metadata and the OWASP MCP crosswalk) from a vendored snapshot of the published
+  records, generated from the corpus commit the README already pins and stamped with
+  `CORPUS_SHA256`, `SCHEMA_VERSION`, `RECORD_COUNT`, `SOURCE_URL` and `GENERATED_AT`. `--check`
+  fails when the file is stale or was edited by hand, and the `Record Counts` CI job runs it. If
+  the corpus cannot be fetched it skips the comparison with a warning and does not fail (#148).
+
 ### Changed
 
 - The User-Agent on outbound requests is built from the package version (it said
@@ -65,6 +72,15 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   `scripts/sync_record_counts.py` already computes, so `--check` guards it. The engines guide, the
   getting-started guide and the docs index gave rule and engine counts that did not match the
   code, and `LANGUAGE.md` and the README gave correct ones typed by hand (#145).
+- The OWASP MCP mapping the scanner prints is now the `owasp_mcp` value AVE publishes, on every
+  surface: text, JSON, SARIF and `report`. Field names are unchanged and values change. The
+  scanner's own crosswalk disagreed with AVE for AVE-2026-00002 to 00004, 00006, 00008 to 00016,
+  00018, 00023, 00025, 00028, 00030, 00037 to 00038 and 00040 to 00045, so the text view prints a
+  different mapping for those records. Pattern rules also carried an `owasp_mcp` of their own,
+  which JSON, SARIF and `report` printed in preference to the crosswalk. For a record the snapshot
+  holds, AVE's value now replaces it. `bawbel report` also prints an OWASP MCP row for YARA and
+  Semgrep findings, which it left out before because those rules carry no value of their own.
+  The pull request lists every changed mapping (#148).
 
 ### Deprecated
 
@@ -74,6 +90,12 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 - `action.yml` at the repo root. The GitHub Action is `bawbel/integrations@v1`. Existing
   tags, such as `bawbel/scanner@v1.3.0`, still carry their copy (#92).
+- `scanner/owasp_mcp_map.py`, the scanner's own OWASP MCP crosswalk, and the table typed by hand
+  in `scanner/ave_meta.py`. `get_owasp_mcp` is now `scanner.ave_meta.get_owasp_mcp`, and
+  `OWASP_MCP_DESCRIPTIONS` is in `scanner.cli.shared.constants`. `AVE_META` remains, built from
+  the snapshot. The README row "Records with scanner metadata only, no rule" and the
+  `metadata_only` counts behind it are gone, because every published record now has metadata
+  (#148).
 
 ### Fixed
 

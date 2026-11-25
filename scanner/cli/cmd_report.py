@@ -24,7 +24,11 @@ from scanner.cli.shared import (
     sev_color,
     sev_icon,
 )
-from scanner.cli.shared.constants import OWASP_DESCRIPTIONS, REMEDIATION_GUIDE
+from scanner.cli.shared.constants import (
+    OWASP_DESCRIPTIONS,
+    OWASP_MCP_DESCRIPTIONS,
+    REMEDIATION_GUIDE,
+)
 from scanner.cli.shared.utils import collect_files
 from scanner.docs_urls import AVE_STANDARD, display_text
 from scanner.utils import resolve_path
@@ -161,8 +165,6 @@ def _render_report(result) -> None:
             )
             table.add_row("OWASP", owasp_str)
         if f.owasp_mcp:
-            from scanner.owasp_mcp_map import OWASP_MCP_DESCRIPTIONS
-
             mcp_str = "\n".join(
                 f"{code} - {OWASP_MCP_DESCRIPTIONS.get(code, code)}" for code in f.owasp_mcp
             )

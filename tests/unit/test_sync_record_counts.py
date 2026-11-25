@@ -111,17 +111,6 @@ def tree(tmp_path: Path) -> Path:
         ]
         """,
     )
-    write(
-        src.AVE_META_FILE,
-        """
-        AVE_META: dict = {
-            "AVE-2026-00001": 1,
-            "AVE-2026-00002": 1,
-            "AVE-2026-00006": 1,
-            "AVE-2026-00008": 1,
-        }
-        """,
-    )
     return tmp_path
 
 
@@ -146,8 +135,8 @@ class TestMeasure:
         assert values["uncovered_runtime"] == "2"
         assert values["runtime_observed"] == "1"
         assert values["runtime_drift_detected"] == "1"
-        assert values["metadata_only"] == "2"  # 6 and 8 have metadata but no rule
-        assert values["metadata_only_ids"] == "AVE-2026-00006, 00008"
+        # The hand-copied AVE_META table is gone (issue #148), and so are the counts built on it.
+        assert "metadata_only" not in values and "metadata_only_ids" not in values
         assert values["schema_version"] == "1.1.0"
         assert values["aivss_spec"] == "0.8"
         assert (
@@ -176,7 +165,6 @@ class TestMeasure:
             (src.YARA_RULES_FILE, "// no rules here\n", "no rules found"),
             (src.SEMGREP_RULES_FILE, "rules:\n  - id: a\n  - id: b\n", "ave_id lines"),
             (src.FLOWS_FILE, "FLOW_DEFINITIONS = [make_flow()]\n", "not a FlowDef"),
-            (src.AVE_META_FILE, "AVE_META = load()\n", "not a dict literal"),
         ],
     )
     def test_an_unrecognized_layout_fails_closed(self, tree, relative, text, message):
@@ -227,11 +215,6 @@ class TestAgainstTheRealScanner:
         from scanner.core.toxic_flows.flows import FLOW_DEFINITIONS
 
         assert src.chain_count(ROOT) == len(FLOW_DEFINITIONS)
-
-    def test_metadata_ids_match_the_runtime_table(self):
-        from scanner.ave_meta import AVE_META
-
-        assert src.metadata_ids(ROOT) == set(AVE_META)
 
     def test_yara_rules_match_the_compiled_rules(self):
         yara = pytest.importorskip("yara")
@@ -441,6 +424,28 @@ class TestNetwork:
         with pytest.raises(src.CountsError, match="could not fetch"):
             src._https_get("https://example.com/x", "application/json")
 
+    @pytest.mark.parametrize(
+        "outcome",
+        [urllib.error.URLError("down"), TimeoutError("slow"), ConnectionResetError("reset")]
+        + [
+            urllib.error.HTTPError("https://example.com/x", c, "x", {}, None)
+            for c in (429, 500, 503)
+        ],
+    )
+    def test_an_unreachable_or_unwell_host_is_a_fetch_error(self, outcome, monkeypatch):
+        """A caller that can wait, such as sync_ave_snapshot.py --check, may skip on this."""
+        _patch_opener(monkeypatch, outcome)
+        with pytest.raises(src.FetchError, match="could not fetch"):
+            src._https_get("https://example.com/x", "application/json")
+
+    @pytest.mark.parametrize("code", [400, 401, 403, 404, 410])
+    def test_any_other_http_status_is_an_error_that_waiting_does_not_fix(self, code, monkeypatch):
+        """A pin that names a commit that does not exist is a 404. It must not read as 'offline'."""
+        _patch_opener(monkeypatch, urllib.error.HTTPError("https://e.com/x", code, "x", {}, None))
+        with pytest.raises(src.CountsError, match="could not fetch") as exc:
+            src._https_get("https://example.com/x", "application/json")
+        assert not isinstance(exc.value, src.FetchError)
+
     def test_a_timeout_is_set_and_an_oversized_body_is_refused(self, monkeypatch):
         made = _patch_opener(monkeypatch, b"x" * (src.MAX_BYTES + 5))
         with pytest.raises(src.CountsError, match="larger than"):
@@ -598,6 +603,18 @@ class TestMain:
         assert src.main(["--update-ref", "--corpus", str(corpus), "--readme", str(readme)]) == 0
         text = readme.read_text()
         assert src.pinned_ref(text) == NEW_PIN and ">8<" in text
+
+    def test_moving_the_pin_says_the_ave_snapshot_needs_regenerating(
+        self, workspace, monkeypatch, capsys
+    ):
+        """scanner/_ave_snapshot.py is made from this pin, so moving it makes the snapshot stale."""
+        readme, corpus = workspace
+        monkeypatch.setattr(src, "head_sha", lambda: NEW_PIN)
+        src.main(["--update-ref", "--corpus", str(corpus), "--readme", str(readme)])
+        assert "python scripts/sync_ave_snapshot.py" in capsys.readouterr().out
+        # A run that leaves the pin where it is does not say it.
+        src.main(["--corpus", str(corpus), "--readme", str(readme)])
+        assert "sync_ave_snapshot" not in capsys.readouterr().out
 
     def test_update_ref_cannot_be_combined_with_check(self, workspace):
         readme, corpus = workspace

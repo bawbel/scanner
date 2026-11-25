@@ -504,7 +504,6 @@ AVE-2026-00046  MCP Tool Hook Hijacking                         AIVSS 9.2  CRITI
 |---|---|
 | Records published | <!-- count:published -->89<!-- /count --> (<!-- count:id_first -->AVE-2026-00001<!-- /count --> to <!-- count:id_last -->AVE-2026-00089<!-- /count -->) |
 | Records with a detection rule in this scanner | <!-- count:detected -->43<!-- /count --> (<!-- count:detected_static -->42<!-- /count --> by pattern, YARA, or Semgrep rules; <!-- count:magika_only_ids -->AVE-2026-00024<!-- /count --> by Magika) |
-| Records with scanner metadata only, no rule | <!-- count:metadata_only -->8<!-- /count --> (<!-- count:metadata_only_ids -->AVE-2026-00041 to 00045, 00049 to 00051<!-- /count -->) |
 | Schema | <!-- count:schema_version -->1.3.0<!-- /count -->, validates at [aveproject.org/schema.html](https://aveproject.org/schema.html) |
 | AIVSS | v<!-- count:aivss_spec -->0.8<!-- /count -->, every record scored |
 | Crosswalks | OWASP MCP Top 10, MITRE ATLAS, NIST AI RMF, OWASP AST10 |

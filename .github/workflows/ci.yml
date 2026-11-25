@@ -174,3 +174,9 @@ jobs:
       # fails when a rule or the README changes, not when AVE publishes a record.
       - name: README counts match the corpus and the rule files
         run: python scripts/sync_record_counts.py --check
+
+      # Reads the same pin. Offline it checks scanner/_ave_snapshot.py was not edited by hand.
+      # Then it compares the file with the pinned corpus, and skips that comparison with a
+      # warning if the corpus cannot be fetched.
+      - name: AVE snapshot matches the pinned corpus
+        run: python scripts/sync_ave_snapshot.py --check

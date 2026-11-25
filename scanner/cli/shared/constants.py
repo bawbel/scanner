@@ -35,6 +35,22 @@ OWASP_DESCRIPTIONS: dict[str, str] = {
     "ASI10": "Sandbox Escape",
 }
 
+# Display names for the OWASP MCP Top 10 categories. These are names of an external list, not
+# AVE data. Which categories a record maps to comes from the AVE snapshot (scanner/ave_meta.py).
+# Reference: https://owasp.org/www-project-mcp-top-10/
+OWASP_MCP_DESCRIPTIONS: dict[str, str] = {
+    "MCP01": "Token Mismanagement & Secret Exposure",
+    "MCP02": "Privilege Escalation via Scope Creep",
+    "MCP03": "Tool Poisoning",
+    "MCP04": "Software Supply Chain Attacks",
+    "MCP05": "Command Injection & Execution",
+    "MCP06": "Intent Flow Subversion",
+    "MCP07": "Insufficient Authentication & Authorization",
+    "MCP08": "Lack of Audit & Telemetry",
+    "MCP09": "Shadow MCP Servers",
+    "MCP10": "Context Injection & Over-sharing",
+}
+
 REMEDIATION_GUIDE: dict[str, str] = {
     "bawbel-goal-override": (
         "Remove instructions that attempt to override agent goals. "
