@@ -6,8 +6,8 @@ Choosing among options A, B and C below is the maintainer's decision, and none i
 
 ## Summary
 
-- A directory scan reads only files whose extension is `.md`, `.json`, `.yaml`, `.yml` or `.txt`. The collector decides this before any engine runs, so for every other file type no engine sees the file. Measured on 17 file types: the sentence below is flagged in the `.md` file and in none of the others.
-- Handed the same files one at a time, `scan()` reads them, and the pattern, YARA and Semgrep engines match the sentence in all 17 of them, including inside a `.pyc`. So the gap is in file enumeration, not in what the text engines can match.
+- A directory scan reads only files whose extension is `.md`, `.json`, `.yaml`, `.yml` or `.txt`. The collector decides this before any engine runs, so for every other file type no engine sees the file. Measured on 16 cases, in a recursive directory scan the sentence below is flagged in the `.md` file and in none of the other 15.
+- Handed the same files one at a time, `scan()` reads them, and the pattern, YARA and Semgrep engines match the sentence in all 17 cases tried, including inside a `.pyc`. So the gap is in file enumeration, not in what the text engines can match.
 - The Magika engine would not close it as written. Its list of dangerous types uses the keys `python_pyc`, `pe32`, `pe64` and `jsp`. Magika 1.0.3 and 0.6.1 have no such labels, and the 0.5.1 config has no `python_pyc`, `pe32` or `pe64` (a `.pyc` is labelled `pythonbytecode`, a Windows executable `pebin`). So a `.pyc` handed to `scan()` gets no Magika finding either.
 - With Magika installed, a `.sh` or `.bat` file handed to `scan()` gets one HIGH finding ("disguised as skill file") and the text engines are skipped for it. That is a false-positive cost for options A and B on any skill that ships a shell script.
 - Output says nothing about files that were not read. A directory with 2 unread files prints the same summary as a directory with none. A specification for fields that say so is in section 5.
@@ -242,8 +242,8 @@ The assertion does not prefer an option: flagging presence, running text engines
 
 Scratch directories, throwaway containers, `origin/develop` exported with `git archive`. Python 3.12.13, yara-python 4.5.4, Semgrep 1.186.0, Magika 1.0.3 for the measurements, and 0.5.1 and 0.6.1 for the label names only. The measurement scripts are not committed. Each reported number comes from their output files:
 
-- harness 1 builds one directory per file type and records what `collect_files` lists and what `scan()` does when handed the file (17 types);
-- harness 2 calls each engine alone on the content `scan()` reads;
+- harness 1 builds one directory per file type and records what `collect_files` lists and what `scan()` does when handed the file (16 cases);
+- harness 2 calls each engine alone on the content `scan()` reads (17 cases: the same, plus a `.pyc` of realistic size);
 - harness 3 counts the files each option would touch in `scanner/`, `scripts/`, `tests/` and `docs/` and runs the existing engines on them (Semgrep excluded for time, timed separately in harness 2);
 - the prototype of B is a one-line change to the extension list in a scratch copy.
 
