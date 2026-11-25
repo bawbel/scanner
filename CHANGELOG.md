@@ -36,6 +36,13 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   pinned by a strict `xfail` in `tests/test_known_misses.py`, which fails the suite when a rule
   starts catching it, so the document must change in the same pull request (#143).
 
+- `recommendation` on every `bawbel scan` result: `ALLOW`, `REVIEW`, `BLOCK`, or `null`. In the
+  JSON output (each result), in SARIF (`runs[].invocations[].properties.recommendation`, the worst
+  across files) and as a `Recommendation:` line in the text summary. `BLOCK` is a finding at or
+  above the `--fail-on-severity` threshold, the same test as exit code 2, or any CRITICAL toxic
+  flow. **No exit code changed.** The README now documents all four exit codes and what
+  `recommendation` does and does not say, and tests run each exit code through the command (#179).
+
 ### Changed
 
 - The User-Agent on outbound requests is built from the package version (it said

@@ -10,6 +10,7 @@ from scanner import __version__
 from scanner.config import AVE_PROJECT_URL, PROJECT_HOMEPAGE_URL
 from scanner.models import ScanResult
 from scanner.cli.shared.display import sev_value
+from scanner.core.recommendation import worst_recommendation
 from scanner.owasp_mcp_map import get_owasp_mcp
 from scanner.utils import ave_record_url
 
@@ -47,6 +48,7 @@ def print_json(results: list[ScanResult]) -> None:
                 "component_type": r.component_type,
                 "risk_score": r.risk_score,
                 "max_severity": sev_value(r.max_severity) if r.max_severity else None,
+                "recommendation": r.recommendation,
                 "scan_time_ms": r.scan_time_ms,
                 "has_error": r.has_error,
                 "engines_run": list(r.engines_run),
@@ -94,7 +96,10 @@ def _sarif_invocation(results: list[ScanResult]) -> dict:
     return {
         "executionSuccessful": all(r.error is None for r in results),
         "toolExecutionNotifications": notifications,
-        "properties": {"enginesRun": sorted(ran)},
+        "properties": {
+            "enginesRun": sorted(ran),
+            "recommendation": worst_recommendation(r.recommendation for r in results),
+        },
     }
 
 

@@ -277,6 +277,17 @@ def build_scan_renderables(
             )
         )
 
+    if result.recommendation:
+        gloss = getattr(Info, f"RECOMMENDATION_{result.recommendation}", "")
+        style = {"BLOCK": "bold red", "REVIEW": "yellow"}.get(result.recommendation, "bold")
+        items.append(
+            Text.assemble(
+                (f"{Info.RECOMMENDATION_LABEL} ", ""),
+                (result.recommendation, style),
+                (f"  ({gloss})" if gloss else "", "dim"),
+            )
+        )
+
     if result.suppressed_findings:
         n = len(result.suppressed_findings)
         items.append(
