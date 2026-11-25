@@ -8,6 +8,13 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Two pattern rules, drafted for review. `bawbel-mcp-server-card-injection` (AVE-2026-00041)
+  flags a directive in a JSON `description` or `title` string: send something to a URL before or
+  after acting, hide the instructions, or call this tool first. `bawbel-obfuscated-payload`
+  (AVE-2026-00057) flags `eval` or `exec` applied to the output of a decode or deserialize call.
+  Each is tested against the examples of its record that it claims. Examples it does not claim
+  are listed in the tests as expected failures (#190).
+
 - `ave_url` on every finding (JSON, SARIF, `scan()`): the AVE record at
   https://api.aveproject.org/records/{ave_id}, built from `AVE_RECORD_URL_TEMPLATE` (#116).
 
