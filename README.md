@@ -72,7 +72,7 @@ bawbel ssc https://server    # scan MCP server without starting it
 | MCP spec conformance grading (A+ to F) | Yes | No | No | ? |
 | Git-committed pin / rug pull detection | Yes | No | No | ? |
 | Suppression with expiry and audit trail | Yes (reason, reviewer, expiry) | Baseline (glob and fingerprint, no expiry) | Baseline (ignore flags, no expiry) | ? |
-| Per-scan LLM usage and cost telemetry | No (tracked in [#79](https://github.com/bawbel/scanner/issues/79)) | Yes (`metadata.inference_usage`) | No | ? |
+| Per-scan LLM usage and cost telemetry | Usage only: model, token counts and latency per call in `metadata.inference_usage`, no cost ([details](docs/guides/configuration.md#llm-usage-in-the-json-output)) | Yes (`metadata.inference_usage`) | No | ? |
 | SARIF 2.1.0 output | Yes | Yes | No | ? |
 | License | Apache 2.0 | Apache 2.0 | Apache 2.0 | Apache 2.0 |
 

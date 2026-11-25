@@ -36,6 +36,13 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   pinned by a strict `xfail` in `tests/test_known_misses.py`, which fails the suite when a rule
   starts catching it, so the document must change in the same pull request (#143).
 
+- `metadata.inference_usage` in the JSON output of each file, and `ScanResult.inference_usage`: one
+  entry per LLM call, Stage 2 and the false-positive filter both, whose provider reported token
+  counts. Each has `provider`, `model`, `prompt_tokens`, `completion_tokens`, `latency_ms`,
+  `model_source` and `usage_source`. Token counts are never estimated, so a call with no reported
+  usage has no entry, and there is no cost field. An entry holds no API key, prompt text or file
+  content. It is not in SARIF (#150).
+
 - `scripts/sync_ave_snapshot.py` and `scanner/_ave_snapshot.py`. The scanner now reads AVE data
   (evidence metadata and the OWASP MCP crosswalk) from a vendored snapshot of the published
   records, generated from the corpus commit the README already pins and stamped with

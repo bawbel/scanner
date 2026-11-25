@@ -34,6 +34,7 @@ import logging as _logging
 import os
 from pathlib import Path
 
+from scanner.core.inference_usage import record_inference
 from scanner.models import Finding
 from scanner.utils import Timer, get_logger
 
@@ -236,15 +237,17 @@ def _call_llm(
             return None
 
     try:
-        response = litellm.completion(
-            model=model,
-            messages=[
-                {"role": "system", "content": _SYSTEM_PROMPT},
-                {"role": "user", "content": user_message},
-            ],
-            max_tokens=500,
-            timeout=int(os.environ.get("BAWBEL_LLM_TIMEOUT", "30")),
-        )
+        with Timer() as call_timer:
+            response = litellm.completion(
+                model=model,
+                messages=[
+                    {"role": "system", "content": _SYSTEM_PROMPT},
+                    {"role": "user", "content": user_message},
+                ],
+                max_tokens=500,
+                timeout=int(os.environ.get("BAWBEL_LLM_TIMEOUT", "30")),
+            )
+        record_inference(litellm, response, model, call_timer.elapsed_ms)
         raw = response.choices[0].message.content.strip()
 
         if raw.startswith("```"):

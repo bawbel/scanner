@@ -51,6 +51,7 @@ def print_json(results: list[ScanResult]) -> None:
                 "has_error": r.has_error,
                 "engines_run": list(r.engines_run),
                 "engines_degraded": [d.to_dict() for d in r.engines_degraded],
+                "metadata": {"inference_usage": [u.to_dict() for u in r.inference_usage]},
                 "findings": [_finding_dict(f) for f in r.findings],
                 "suppressed_findings": [
                     _finding_dict(f, suppressed=True) for f in r.suppressed_findings

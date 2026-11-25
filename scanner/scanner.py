@@ -357,6 +357,7 @@ def scan(file_path: str, no_ignore: bool = False) -> ScanResult:
         accepted_findings=accepted_list,
         engines_run=ledger.engines_run,
         engines_degraded=ledger.engines_degraded,
+        inference_usage=ledger.inference_usage,
     )
 
     log.info(
