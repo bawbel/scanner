@@ -15,10 +15,16 @@ from scanner.scanner import scan, SEVERITY_SCORES
 from scanner.cli.shared import (
     console,
     print_banner,
+    print_not_scanned,
     print_scan_result,
     print_json,
     print_sarif,
     worst_severity_score,
+)
+from scanner.cli.shared.coverage import (
+    add_bytecode_findings,
+    build_coverage,
+    bytecode_results,
 )
 from scanner.cli.shared.utils import (
     collect_files,
@@ -176,8 +182,19 @@ def scan_cmd(  # noqa: PLR0913
     files = collect_files(path_obj, recursive)
     scan_root = Path.cwd()
 
-    if not files:
+    # A directory scan says what it did not read (issue #182), and checks the header of any .pyc
+    # file. The contents of a .pyc file are not analysed.
+    coverage = None
+    bytecode = []
+    if path_obj.is_dir():
+        report = build_coverage(path_obj, recursive, files, no_ignore=no_ignore)
+        coverage = report.summary
+        bytecode = bytecode_results(report.pyc_paths)
+
+    if not files and not bytecode:
         console.print("[yellow]No scannable files found.[/]")
+        if fmt == "text":
+            print_not_scanned(coverage)
         sys.exit(0)
 
     results = []
@@ -186,6 +203,8 @@ def scan_cmd(  # noqa: PLR0913
 
     for f in files:
         result = scan(str(f), no_ignore=no_ignore)
+        if f.suffix.lower() == ".pyc":  # named on the command line: add the header findings
+            add_bytecode_findings(result, f, no_ignore=no_ignore)
         results.append(result)
         if fmt == "text":
             print_scan_result(
@@ -193,6 +212,16 @@ def scan_cmd(  # noqa: PLR0913
                 show_report_hint=(len(files) == 1),
                 scan_root=scan_root,
             )
+
+    for result in bytecode:
+        results.append(result)
+        if fmt == "text":
+            print_scan_result(result, show_report_hint=False, scan_root=scan_root)
+
+    for result in results:
+        result.coverage = coverage
+    if fmt == "text":
+        print_not_scanned(coverage)
 
     if fmt == "json":
         print_json(results)

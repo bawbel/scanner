@@ -52,6 +52,7 @@ def print_json(results: list[ScanResult]) -> None:
                 "engines_run": list(r.engines_run),
                 "engines_degraded": [d.to_dict() for d in r.engines_degraded],
                 "metadata": {"inference_usage": [u.to_dict() for u in r.inference_usage]},
+                "coverage": r.coverage,
                 "findings": [_finding_dict(f) for f in r.findings],
                 "suppressed_findings": [
                     _finding_dict(f, suppressed=True) for f in r.suppressed_findings
@@ -92,10 +93,28 @@ def _sarif_invocation(results: list[ScanResult]) -> dict:
         }
         for engine, items in not_run.items()
     ]
+    # Every result of a directory scan carries the same coverage object, and a single file has none.
+    coverage = next((r.coverage for r in results if r.coverage), None)
+    if coverage and coverage.get("files_skipped"):
+        by_extension = coverage["skipped_by_extension"]
+        listed = ", ".join(f"{ext} {count}" for ext, count in by_extension.items())
+        notifications.append(
+            {
+                "level": "warning",
+                "descriptor": {"id": "bawbel-files-skipped"},
+                "message": {
+                    "text": f"{coverage['files_skipped']} file(s) were not scanned: {listed}"
+                },
+                "properties": {
+                    "skippedByExtension": by_extension,
+                    "executableFiles": coverage["executable_files"],
+                },
+            }
+        )
     return {
         "executionSuccessful": all(r.error is None for r in results),
         "toolExecutionNotifications": notifications,
-        "properties": {"enginesRun": sorted(ran)},
+        "properties": {"enginesRun": sorted(ran), "coverage": coverage},
     }
 
 

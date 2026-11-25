@@ -7,6 +7,7 @@ place so a redesign only touches this file.
 """
 
 from pathlib import Path
+from typing import Optional
 
 from rich.console import Console, Group
 from rich.panel import Panel
@@ -75,6 +76,22 @@ def describe_engines(result: ScanResult) -> str:
         not_run = ", ".join(f"{d.engine} ({d.reason})" for d in result.engines_degraded)
         text += f". Not run: {not_run}"
     return text
+
+
+_NOT_SCANNED_MAX_TYPES = 6
+
+
+def print_not_scanned(coverage: Optional[dict]) -> None:
+    """One line saying which files a directory scan did not read. Nothing if none were skipped."""
+    if not coverage or not coverage.get("files_skipped"):
+        return
+    pairs = list(coverage["skipped_by_extension"].items())
+    items = ", ".join(f"{count} {ext}" for ext, count in pairs[:_NOT_SCANNED_MAX_TYPES])
+    if len(pairs) > _NOT_SCANNED_MAX_TYPES:
+        items += f", and {len(pairs) - _NOT_SCANNED_MAX_TYPES} more types"
+    # Text, not markup: an extension comes from a file name and may contain brackets.
+    console.print(Text(Info.NOT_SCANNED_LINE.format(items=items), style="yellow"))
+    console.print()
 
 
 def print_summary(result: ScanResult) -> None:

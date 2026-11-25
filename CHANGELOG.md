@@ -8,6 +8,19 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- `coverage` on each result of a directory scan (JSON; `null` for a single file), a
+  `bawbel-files-skipped` warning and a `coverage` property in SARIF, and a `Not scanned:` line in
+  the text output. A result with no findings no longer reads as covering the whole directory:
+  files are counted as scanned, skipped by extension (executable-type files named) or ignored
+  (`.bawbelignore`, the scanner's own configuration, `.git`, `node_modules`, virtual
+  environments). The JSON list is not wrapped. No exit code changed (#182).
+
+- Two rules for precompiled Python bytecode, citing AVE-2026-00075: `bawbel-pyc-unchecked-hash`
+  (the header says hash based with source checking off, so Python loads it without checking its
+  source) and `bawbel-pyc-no-source` (no matching source file beside it). They run on `.pyc`
+  files in a directory scan and on one named on the command line. They read the 16 byte header
+  only; the contents are not analysed (#182).
+
 - `ave_url` on every finding (JSON, SARIF, `scan()`): the AVE record at
   https://api.aveproject.org/records/{ave_id}, built from `AVE_RECORD_URL_TEMPLATE` (#116).
 
@@ -45,6 +58,12 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 - `docs/VERIFYING-RELEASES.md`: how to check a release file against the signed build provenance
   PyPI holds for it, with `pypi-attestations`, what a pass means and what it does not (#154).
+
+- `docs/reports/ENUMERATION-132.md`: a report on the file types a directory scan never reads
+  (anything but `.md`, `.json`, `.yaml`, `.yml`, `.txt`), measured per file type and per engine,
+  with a specification for "files not scanned" fields and three costed options. It changes no
+  behaviour. `tests/test_unscanned_file_types.py` pins the gap as strict `xfail` cases that use
+  one harmless sentence and no payload (#177).
 
 ### Changed
 

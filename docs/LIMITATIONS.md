@@ -27,6 +27,18 @@ result says which engines ran and which could not, and why:
 - SARIF output: one warning per engine that did not run, in
   `runs[].invocations[].toolExecutionNotifications`
 
+A directory scan also does not read every file. It reads `.md`, `.json`, `.yaml`, `.yml` and
+`.txt` files, and says which others it found:
+
+- Text output: the `Not scanned:` line, for example `Not scanned: 3 .py, 1 .pyc`
+- JSON output: `coverage` for each file of a directory scan, with the executable-type files named
+- SARIF output: `runs[].invocations[].properties.coverage` and a `bawbel-files-skipped` warning
+
+A `.pyc` file gets two header checks and nothing more. Its contents, and the contents of `.py`,
+`.js` and `.sh` files, are not read. See [What a directory scan
+covers](../README.md#what-a-directory-scan-covers) and
+[the enumeration report](reports/ENUMERATION-132.md).
+
 To make a CI job fail when an engine it depends on did not run, use
 `bawbel scan --require-engines yara,semgrep`. It exits 3 if a named engine did not run, and that
 takes precedence over the exit code for findings. See

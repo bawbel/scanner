@@ -77,6 +77,7 @@ class Logs:
 
     # Engine lifecycle
     ENGINE_UNAVAILABLE = "Engine unavailable (not installed): engine=%s"
+    BYTECODE_HEADER_UNREADABLE = "Bytecode check: header not read: file=%s error_type=%s"
     ENGINE_START = "Engine started: engine=%s path=%s"
     ENGINE_COMPLETE = "Engine complete: engine=%s findings=%d time_ms=%d"
     ENGINE_ERROR = "Engine error: engine=%s path=%s error=%s"
@@ -112,4 +113,23 @@ class Info:
     CLEAN_RISK_SCORE = "0.0 / 10  (no findings, not a safety verdict)"
     REPORT_COMING_SOON = "Full A-BOM report generation coming in v0.2.0"
     NO_FILES_FOUND = "No scannable files found in: {path}"
+    # What a directory scan did not read. A result with no findings covers only the files read.
+    NOT_SCANNED_LINE = (
+        "Not scanned: {items}  (a result with no findings covers only the files that were read)"
+    )
+    # The two precompiled-bytecode findings (AVE-2026-00075). Both say the contents were not
+    # analysed: only the header and the presence of a source file are checked.
+    PYC_UNCHECKED_TITLE = "Precompiled bytecode that Python loads without checking its source"
+    PYC_UNCHECKED_DESCRIPTION = (
+        "File {name!r} is precompiled Python bytecode whose header says hash-based with source "
+        "checking off (PEP 552 unchecked hash), so Python will load it without checking its "
+        "source. Contents not analysed. This does not show that the bytecode differs from any "
+        "source."
+    )
+    PYC_NO_SOURCE_TITLE = "Precompiled bytecode with no matching source file"
+    PYC_NO_SOURCE_DESCRIPTION = (
+        "File {name!r} is precompiled Python bytecode and {source!r} is not beside it. A normal "
+        "import writes a .pyc only for a source file it compiled. Contents not analysed. This "
+        "does not show that the bytecode is harmful."
+    )
     ENGINE_SKIPPED_MISSING = "Engine skipped - not installed: {engine}"

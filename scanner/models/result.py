@@ -51,6 +51,12 @@ class ScanResult:
     # estimated: a call with no reported usage has no entry. Empty when no LLM call was made.
     inference_usage: list[InferenceUsage] = field(default_factory=list)
 
+    # -- Coverage (issue #182) ------------------------------------------------
+    # What a directory scan read and did not read: scanned, skipped by extension, ignored. Set by
+    # `bawbel scan` on each result of a directory scan, the same object on every one. None for a
+    # single file and for scan() itself. See scanner/cli/shared/coverage.py.
+    coverage: Optional[dict] = None
+
     # -- Error ---------------------------------------------------------------
     error: Optional[str] = None  # (stable) error code if scan failed, else None
 
@@ -109,6 +115,7 @@ class ScanResult:
             "engines_run": list(self.engines_run),
             "engines_degraded": [d.to_dict() for d in self.engines_degraded],
             "metadata": {"inference_usage": [u.to_dict() for u in self.inference_usage]},
+            "coverage": self.coverage,
             "findings": [
                 {
                     "rule_id": f.rule_id,

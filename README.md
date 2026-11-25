@@ -536,6 +536,30 @@ go stale unnoticed.
 
 ---
 
+## What a directory scan covers
+
+`bawbel scan DIR` reads only `.md`, `.json`, `.yaml`, `.yml` and `.txt` files. The output says what
+it did not read, so a result with no findings is not taken for coverage of the whole directory:
+
+- **Text:** one line, for example `Not scanned: 3 .py, 1 .pyc`, printed only when files were skipped.
+- **JSON:** `coverage` on each result of a directory scan, and `null` for a single file. It holds
+  the files scanned, the files skipped by extension, and the executable-type files by name
+  (`.py`, `.pyc`, `.js`, `.mjs`, `.ts`, `.sh`, `.ps1`, `.bat`, `.rb`). Files matched by
+  `.bawbelignore`, the scanner's own configuration, and files inside `.git`, `node_modules` and
+  virtual environments are counted as ignored and are not listed. The JSON list keeps its shape.
+- **SARIF:** `runs[].invocations[].properties.coverage`, and a `bawbel-files-skipped` warning when
+  files were skipped.
+
+Two rules read the header of a `.pyc` file, in a directory scan or when one is named on the
+command line, and cite AVE-2026-00075. `bawbel-pyc-unchecked-hash` flags a file whose header says
+hash based with source checking off, so Python loads it without checking its source.
+`bawbel-pyc-no-source` flags one with no matching source file beside it. The contents are not
+analysed: a `.pyc` file with no finding was read as far as its header and no further. A `.py` or
+`.sh` file is not read at all, and the text engines are not run on any of them. The exit codes do
+not change, and `scan()` itself does not compute coverage.
+
+---
+
 ## Detection engines
 
 | Engine | What it does | Install |

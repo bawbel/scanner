@@ -55,6 +55,41 @@ SUPPRESSION_COMMENT_MAX_CHARS = 1000
 # directory scan. The same names deeper in a tree, or named on the command line, are scanned.
 SCANNER_CONFIG_FILES: tuple[str, ...] = (".bawbelignore", "bawbel.yml")
 
+# ── Coverage: what a directory scan did not read (issue 182) ──────────────────
+
+# File types a component can carry code in. A directory scan does not read them, and the coverage
+# report names the ones it found. Lower case, with the dot. Only types with evidence in the
+# issue 177 report are listed; no other type is flagged by presence.
+EXECUTABLE_EXTENSIONS: tuple[str, ...] = (
+    ".py",
+    ".pyc",
+    ".js",
+    ".mjs",
+    ".ts",
+    ".sh",
+    ".ps1",
+    ".bat",
+    ".rb",
+)
+
+# Directories whose files the coverage report counts as ignored and never lists. A directory that
+# holds VENV_MARKER_FILE is a virtual environment and is treated the same way. This changes what
+# is counted, not what is scanned: a text file inside one is still scanned.
+COVERAGE_EXCLUDED_DIRS: tuple[str, ...] = (".git", "node_modules")
+VENV_MARKER_FILE = "pyvenv.cfg"
+
+# The most executable-type files the coverage report names (the rest are counted), and the most
+# extensions it lists (the rest are folded into "(other)"). Both bound the size of the output.
+COVERAGE_MAX_NAMED_FILES = 50
+COVERAGE_MAX_EXTENSION_KEYS = 50
+
+# Precompiled bytecode. The header is read, never the code object.
+PYC_EXTENSION = ".pyc"
+PYC_HEADER_BYTES = 16
+# First magic number whose header carries the PEP 552 flags field (Python 3.7a4, from the table in
+# importlib._bootstrap_external). Older files have a timestamp in that position instead.
+PYC_PEP552_MIN_MAGIC = 3392
+
 
 # ── Logging ────────────────────────────────────────────────────────────────────
 
