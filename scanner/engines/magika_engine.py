@@ -50,13 +50,16 @@ _EXPECTED_TYPES: dict[str, set[str]] = {
 
 # Content types that are always dangerous inside a skill file
 # (description, severity, aivss_score)
+#
+# Every key must be a label of the installed Magika. Magika names a Windows executable `pebin`
+# (not pe32 or pe64) and compiled Python `pythonbytecode` (not python_pyc), and has no JSP label
+# at all, so a jsp key could never match. tests/unit/test_magika_types.py checks the keys against
+# the installed Magika and fails on a key that is not a label (issue #186).
 _DANGEROUS_TYPES: dict[str, tuple[str, str, float]] = {
     "elf": ("ELF binary disguised as skill file", "CRITICAL", 6.8),
-    "pe32": ("Windows PE executable disguised as skill", "CRITICAL", 6.8),
-    "pe64": ("Windows PE executable disguised as skill", "CRITICAL", 6.8),
-    "python_pyc": ("Python bytecode disguised as skill file", "CRITICAL", 6.8),
+    "pebin": ("Windows PE executable disguised as skill", "CRITICAL", 6.8),
+    "pythonbytecode": ("Python bytecode disguised as skill file", "CRITICAL", 6.8),
     "php": ("PHP code disguised as skill file", "CRITICAL", 6.8),
-    "jsp": ("JSP code disguised as skill file", "CRITICAL", 6.8),
     "shell": ("Shell script disguised as skill file", "HIGH", 6.8),
     "batch": ("Windows batch file disguised as skill", "HIGH", 6.8),
     "powershell": ("PowerShell script disguised as skill", "HIGH", 6.8),

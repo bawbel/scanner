@@ -44,6 +44,20 @@ COMPONENT_EXTENSIONS: dict[str, str] = {
 }
 
 
+# The file types a directory scan reads (`bawbel scan`, `chain`, `creds`, `report`, and --watch).
+# Matched on the end of the file name, case-insensitively, so `NOTES.MD` is read. One place, so
+# the collector and the watcher cannot disagree.
+SCANNED_EXTENSIONS: tuple[str, ...] = (
+    ".md",
+    ".json",
+    ".yaml",
+    ".yml",
+    ".txt",
+    ".markdown",
+    ".toml",
+)
+
+
 # ── Suppression comments ───────────────────────────────────────────────────────
 
 # The longest bawbel-ignore / bawbel-accept HTML comment, in characters, whose text is kept
