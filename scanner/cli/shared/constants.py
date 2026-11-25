@@ -92,6 +92,15 @@ REMEDIATION_GUIDE: dict[str, str] = {
         "Remove instructions embedded in tool descriptions. Tool descriptions "
         "should only describe tool functionality, not give the agent additional tasks."
     ),
+    "bawbel-mcp-server-card-injection": (
+        "Remove the instruction from the description. Server-card and tool descriptions "
+        "should say what a tool does, not tell the agent to send data, hide its "
+        "instructions, or call the tool first."
+    ),
+    "bawbel-obfuscated-payload": (
+        "Replace the decoded and executed value with the plain text or code it stands "
+        "for, so it can be read and reviewed. Do not pass decoded data to eval or exec."
+    ),
     "bawbel-system-prompt-leak": (
         "Remove instructions that attempt to extract the system prompt "
         "or operating configuration."

@@ -503,13 +503,13 @@ AVE-2026-00046  MCP Tool Hook Hijacking                         AIVSS 9.2  CRITI
 | | |
 |---|---|
 | Records published | <!-- count:published -->89<!-- /count --> (<!-- count:id_first -->AVE-2026-00001<!-- /count --> to <!-- count:id_last -->AVE-2026-00089<!-- /count -->) |
-| Records with a detection rule in this scanner | <!-- count:detected -->43<!-- /count --> (<!-- count:detected_static -->42<!-- /count --> by pattern, YARA, or Semgrep rules; <!-- count:magika_only_ids -->AVE-2026-00024<!-- /count --> by Magika) |
-| Records with scanner metadata only, no rule | <!-- count:metadata_only -->8<!-- /count --> (<!-- count:metadata_only_ids -->AVE-2026-00041 to 00045, 00049 to 00051<!-- /count -->) |
+| Records with a detection rule in this scanner | <!-- count:detected -->45<!-- /count --> (<!-- count:detected_static -->44<!-- /count --> by pattern, YARA, or Semgrep rules; <!-- count:magika_only_ids -->AVE-2026-00024<!-- /count --> by Magika) |
+| Records with scanner metadata only, no rule | <!-- count:metadata_only -->7<!-- /count --> (<!-- count:metadata_only_ids -->AVE-2026-00042 to 00045, 00049 to 00051<!-- /count -->) |
 | Schema | <!-- count:schema_version -->1.3.0<!-- /count -->, validates at [aveproject.org/schema.html](https://aveproject.org/schema.html) |
 | AIVSS | v<!-- count:aivss_spec -->0.8<!-- /count -->, every record scored |
 | Crosswalks | OWASP MCP Top 10, MITRE ATLAS, NIST AI RMF, OWASP AST10 |
 
-<!-- count:uncovered -->46<!-- /count --> of the <!-- count:published -->89<!-- /count --> published records have no detection rule in this scanner. <!-- count:uncovered_static -->27<!-- /count --> of them are
+<!-- count:uncovered -->44<!-- /count --> of the <!-- count:published -->89<!-- /count --> published records have no detection rule in this scanner. <!-- count:uncovered_static -->25<!-- /count --> of them are
 `static_detection` records that a rule could catch and are the scanner's backlog. The
 other <!-- count:uncovered_runtime -->19<!-- /count --> are runtime-stage records (<!-- count:runtime_observed -->17<!-- /count --> `runtime_observed`, <!-- count:runtime_drift_detected -->2<!-- /count --> `runtime_drift_detected`):
 they describe behavior that only shows up while an agent runs, so static analysis of a
@@ -540,7 +540,7 @@ go stale unnoticed.
 
 | Engine | What it does | Install |
 |---|---|---|
-| Pattern | <!-- count:pattern_rules -->40<!-- /count --> regex rules mapped to AVE records | Always on |
+| Pattern | <!-- count:pattern_rules -->42<!-- /count --> regex rules mapped to AVE records | Always on |
 | YARA | <!-- count:yara_rules -->39<!-- /count --> binary and behavioral YARA rules | `[yara]` |
 | Semgrep | <!-- count:semgrep_rules -->41<!-- /count --> structural Semgrep rules | `[semgrep]` |
 | LLM | Semantic analysis of intent and context | `[llm]` |

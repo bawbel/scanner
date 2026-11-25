@@ -35,6 +35,11 @@ MAX_MATCH_LENGTH = 80
 # One finding per rule per file - first matching pattern wins.
 # Rules are evaluated in order - put most critical first.
 
+# A JSON "description" or "title" string value up to the point a pattern looks inside it.
+# One line, no escaped quote, at most 300 characters before the directive.
+_JSON_TEXT = r'"(?:description|title)"\s*:\s*"[^"\n]{0,300}?'
+
+
 PATTERN_RULES: list[dict] = [
     # ── Goal hijack / prompt injection ────────────────────────────────────────
     {
@@ -354,6 +359,58 @@ PATTERN_RULES: list[dict] = [
             r"before\s+(calling|using|invoking)\s+(any|other|this)\s+tool",
             r"after\s+calling\s+this\s+tool\s*,\s*(always|never|also|send|post)",
             r"this\s+tool\s+(secretly|silently|also|additionally)\s+(sends|posts|uploads|reads)",
+        ],
+    },
+    # ── Server-card and encoded payloads (AVE-2026-00041, AVE-2026-00057) ──────
+    # Drafted from the records' own descriptions and example_patterns. Each pattern is one line,
+    # case-insensitive, with bounded gaps only, so none can backtrack without limit.
+    {
+        "rule_id": "bawbel-mcp-server-card-injection",
+        "ave_id": "AVE-2026-00041",
+        "title": "Directive in an MCP server-card description",
+        "description": (
+            "A description string in a JSON file, such as an MCP server card or manifest, holds "
+            "an instruction aimed at the agent: send data to a URL, hide the instructions, or "
+            "call this tool first. An agent reads these strings before its first tool call."
+        ),
+        "severity": Severity.HIGH,
+        "aivss_score": 8.2,
+        "owasp": ["ASI01"],
+        "owasp_mcp": ["MCP03"],
+        "patterns": [
+            # a description that says to send something to a URL before or after the agent acts
+            _JSON_TEXT
+            + r"\b(?:before|after)\s+(?:returning|responding|answering|replying|calling|using)\b"
+            + r"[^\"\n]{0,120}?\b(?:send|post|upload|forward|transmit|submit)\b"
+            + r"[^\"\n]{0,120}?https?://",
+            # IMPORTANT, WARNING or NOTE followed by an order to hide the instructions
+            _JSON_TEXT
+            + r"\b(?:IMPORTANT|WARNING|NOTE)\s*:\s*(?:do\s+not|don't|never)\s+"
+            + r"(?:reveal|disclose|mention|show|tell)\b[^\"\n]{0,40}?"
+            + r"\b(?:these|this|those|the)\s+instructions?\b",
+            # IMPORTANT, WARNING or NOTE followed by an order to call this tool first
+            _JSON_TEXT
+            + r"\b(?:IMPORTANT|WARNING|NOTE)\s*:\s*always\s+call\s+this\s+tool\s+"
+            + r"(?:first|before)\b",
+        ],
+    },
+    {
+        "rule_id": "bawbel-obfuscated-payload",
+        "ave_id": "AVE-2026-00057",
+        "title": "Decoded or deserialized payload passed to eval or exec",
+        "description": (
+            "Component passes the output of a decode or deserialization call, such as base64, "
+            "marshal or hex, to eval or exec. The text a reader or a pattern rule sees is not "
+            "the text that runs. The decoded content is not examined."
+        ),
+        "severity": Severity.MEDIUM,
+        "aivss_score": 4.4,
+        "owasp": [],
+        "owasp_mcp": ["MCP03", "MCP04"],
+        "patterns": [
+            r"\b(?:eval|exec)\s*\(\s*(?:base64\.\w{0,8}decode|marshal\.loads|zlib\.decompress"
+            r"|binascii\.unhexlify|codecs\.decode|bytes\.fromhex|bytearray\.fromhex)\s*\(",
+            r"\beval\s*\(\s*(?:atob|Buffer\.from)\s*\(",
         ],
     },
     # ── Prompt leak ────────────────────────────────────────────────────────────
