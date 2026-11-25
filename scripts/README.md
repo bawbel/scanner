@@ -13,6 +13,9 @@ scripts/
   sync_records.py         sync AVE records from github.com/bawbel/ave → PiranhaDB
   sync_record_counts.py   write the README's record, rule, and chain counts from the corpus
   update_log.py           update CHANGELOG.md from git log
+  coverage_matrix.py      coverage matrix of the active AVE records: read the corpus, the rule files and tests/
+  coverage_examples.py    scan each record's own example_patterns with the static engines
+  coverage_render.py      print docs/reports/COVERAGE-MATRIX.md from the two files above
 ```
 
 Manual testing guides have moved to `docs/guides/`:
