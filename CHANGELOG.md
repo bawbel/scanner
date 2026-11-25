@@ -46,6 +46,11 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - `docs/VERIFYING-RELEASES.md`: how to check a release file against the signed build provenance
   PyPI holds for it, with `pypi-attestations`, what a pass means and what it does not (#154).
 
+- `scanner/py.typed`, the `Typing :: Typed` classifier, and a non-blocking `Type Check` CI job that
+  runs mypy. Code that imports `scanner` and is checked with mypy no longer gets "module is
+  installed, but missing library stubs or py.typed marker". The package's own annotations now
+  reach consumers, and mypy reports findings in them that the CI job does not yet fail on (#156).
+
 ### Changed
 
 - The User-Agent on outbound requests is built from the package version (it said

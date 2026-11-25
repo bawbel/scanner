@@ -61,6 +61,7 @@ classifiers = [
     "Topic :: Security",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Software Development :: Quality Assurance",
+    "Typing :: Typed",
     "Environment :: Console",
 ]
 
@@ -128,10 +129,19 @@ exclude = ["tests*", "scripts*", "docs*"]
 # Include non-Python files (YARA and Semgrep rules) in the distribution
 [tool.setuptools.package-data]
 "scanner" = [
+    "py.typed",
     "rules/yara/*.yar",
     "rules/semgrep/*.yaml",
     "rules/semgrep/*.yml",
 ]
+
+# ── Tool: mypy ────────────────────────────────────────────────────────────────
+# Run by the non-blocking "Type Check" CI job. It reports and does not fail the build.
+# The optional engines (yara, magika, litellm) are not installed in that job and ship no stubs.
+[tool.mypy]
+python_version = "3.10"
+ignore_missing_imports = true
+warn_unused_configs = true
 
 # ── Tool: black ───────────────────────────────────────────────────────────────
 [tool.black]
