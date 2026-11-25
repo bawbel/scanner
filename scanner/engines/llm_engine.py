@@ -35,9 +35,10 @@ from typing import Optional
 
 from scanner.ave_meta import get_ave_meta
 from scanner.core.engine_ledger import error_code, report_degraded, report_ran
+from scanner.core.inference_usage import record_inference
 from scanner.messages import Errors, Logs
 from scanner.models import DegradedReason, Finding, Severity
-from scanner.utils import get_logger, parse_cvss, parse_severity, truncate_match
+from scanner.utils import Timer, get_logger, parse_cvss, parse_severity, truncate_match
 
 log = get_logger(__name__)
 
@@ -158,15 +159,17 @@ def _call_llm(model: str, content: str) -> Optional[str]:
     )
 
     try:
-        response = litellm.completion(
-            model=model,
-            messages=[
-                {"role": "system", "content": _SYSTEM_PROMPT},
-                {"role": "user", "content": wrapped},
-            ],
-            max_tokens=2048,
-            timeout=LLM_TIMEOUT_SEC,
-        )
+        with Timer() as t:
+            response = litellm.completion(
+                model=model,
+                messages=[
+                    {"role": "system", "content": _SYSTEM_PROMPT},
+                    {"role": "user", "content": wrapped},
+                ],
+                max_tokens=2048,
+                timeout=LLM_TIMEOUT_SEC,
+            )
+        record_inference(litellm, response, model, t.elapsed_ms)
         return response.choices[0].message.content or None
     except Exception as e:
         log.warning("LLM engine: call failed: model=%s error_type=%s", model, type(e).__name__)

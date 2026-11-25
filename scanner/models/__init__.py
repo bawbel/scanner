@@ -9,6 +9,7 @@ Import from here, not from individual model files.
 
 from scanner.models.engine_status import ENGINES, DegradedReason, EngineDegradation
 from scanner.models.finding import Finding
+from scanner.models.inference_usage import InferenceUsage
 from scanner.models.result import ScanResult
 from scanner.models.severity import SEVERITY_SCORES, Severity
 
@@ -17,6 +18,7 @@ __all__ = [
     "DegradedReason",
     "EngineDegradation",
     "Finding",
+    "InferenceUsage",
     "ScanResult",
     "Severity",
     "SEVERITY_SCORES",
