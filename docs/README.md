@@ -21,6 +21,7 @@ vulnerabilities mapped to the [AVE standard](https://github.com/bawbel/ave).
 | [Publishing](guides/publishing.md) | Publish to PyPI - step by step |
 | [Verifying Releases](VERIFYING-RELEASES.md) | Check a release against its signed build provenance |
 | [Writing Rules](guides/writing-rules.md) | All built-in rules, OWASP mapping, adding new rules |
+| [Ignore granularity](reports/IGNORE-GRANULARITY.md) | How each kind of ignore is scoped (file, rule, line), why a YARA finding has no line, and what scoping to a line would take. A report |
 | [Suppression](guides/suppression.md) | All suppression mechanisms including justified suppression and accepted risks |
 | [Credentials and Delegation](guides/creds-and-chain.md) | bawbel creds and bawbel chain focused scans |
 | [False Positive Reduction](guides/false-positive-reduction.md) | 8-point strategy - code fences, confidence scoring, LLM filter |
