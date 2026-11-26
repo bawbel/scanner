@@ -94,6 +94,13 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   is now kept out of content analysis when suppressions are honored. `--no-ignore` still scans
   it. `bawbel.yml` and `.bawbelignore` at the root of a directory scan are skipped (#122).
 
+- The rule `bawbel-unsafe-delegation` (AVE-2026-00048) flagged none of its record's five example
+  patterns: its six patterns wanted an exact word order, no article, and a space and not a hyphen
+  in "sub agent". Four patterns were added and the six were left as they were. Each added pattern
+  names the clause that escalates, grants or inherits, so a bare "delegate to a sub-agent" is
+  still not flagged. `tests/unit/test_rule_00048.py` checks every example, the boundary and benign
+  text (#200).
+
 ---
 
 ## [1.3.0] - 2026-06-28

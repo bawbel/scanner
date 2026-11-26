@@ -1058,6 +1058,17 @@ PATTERN_RULES_V2: list[dict] = [
             r"escalate\s+(?:to|permissions?\s+for)\s+(?:sub.?agent|child.?agent)",
             r"grant\s+(?:full|admin|elevated|all)\s+(?:access|permissions?)\s+to\s+sub",
             r"sub.?agent\s+(?:has|gets|inherits)\s+(?:your|my|all)\s+permissions?",
+            # The six above flagged none of the record's own examples (issue #200): they want an
+            # exact word order, no article, and a space and not a hyphen in "sub agent". The four
+            # below are the same ideas with an article, a hyphen, or other verbs and objects. Each
+            # names the clause that grants or escalates, so a bare "delegate to a sub-agent" is not
+            # claimed. Bounded, per line.
+            r"\bescalate\s+(?:to|permissions?\s+for)\s+(?:(?:a|an|the)\s+)?(?:sub|child|worker)[\s\-]?agents?\b",
+            r"\bgrant\s+(?:(?:the|a|an)\s+)?(?:sub|child|worker)[\s\-]?agents?\s+(?:full|admin|elevated|all)\b",
+            r"\b(?:spawn|create|start|launch)\s+(?:(?:a|an)\s+)?(?:new\s+)?(?:(?:sub|child|worker)[\s\-]?)?agents?\b"
+            r"[^\n]{0,80}?\b(?:all|full|admin|elevated)\s+(?:your\s+)?(?:current\s+)?(?:permissions?|access|privileges?)\b",
+            r"\b(?:sub|child|worker)[\s\-]?agents?\s+(?:has|gets|inherits|receives)\s+(?:all\s+)?(?:your|my|all)\s+"
+            r"(?:(?:api|secret|access)\s+)?(?:permissions?|keys?|credentials|tokens|secrets)\b",
         ],
     },
 ]
