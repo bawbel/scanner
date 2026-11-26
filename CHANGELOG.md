@@ -8,6 +8,13 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Scan-level tests for the rules of eleven AVE records that no test named (00016, 00018, 00019,
+  00020, 00021, 00022, 00023, 00025, 00029, 00035, 00046): a test through `scan()` for each pattern
+  rule and each YARA rule, a case for every pattern, and benign text. The tests pin three measured
+  behaviours as strict `xfail`: five YARA rules whose two-word conditions are always true, the
+  Semgrep rules with several regexes under `patterns:` that did not fire on any text tried, and a
+  zero-width character dropped in a file not named like a skill. No rule changes (#204).
+
 - `ave_url` on every finding (JSON, SARIF, `scan()`): the AVE record at
   https://api.aveproject.org/records/{ave_id}, built from `AVE_RECORD_URL_TEMPLATE` (#116).
 
