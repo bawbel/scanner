@@ -21,14 +21,14 @@ What stops a hostile file from stalling or crashing a scan, what does not, and w
 ## What was measured
 
 - **A quadratic pattern, now fixed.** One pattern of `bawbel-hardcoded-credential` (AVE-2026-00047) took 0.19 s at 10,000 characters, 0.75 s at 20,000, 3.1 s at 40,000 and 13.5 s at 80,000 on a line of letters: each doubling quadrupled it. A scan of one 5 MB line had not returned after 216 s. The pattern now starts only at the start of a word. On 18,857 matching strings built to exercise it, and on 57 more, the old and new patterns gave the same matched span in every case. At 80,000 characters it takes 0.001 s.
-- **Every pattern of every rule, after the fix.** On eleven adversarial single lines of 200,000 characters the slowest single search was 13 ms.
+- **Every pattern of every rule, after the fix.** On thirteen adversarial single lines of 200,000 characters (the lines `tests/unit/redos_probe.py` builds) the slowest single search was 24 ms.
 - **The cost that remains is linear.** One 5 MB line of letters: 17.3 s. One 10 MB line: 43.6 s. A 5 MB file of 262,000 short lines: 30.2 s. About 3.4 seconds per megabyte on this machine, almost all of it in the regular expression searches. A file at the size limit can take up to about 45 s.
 - **YARA.** Five megabytes of `a`, of spaces, of `ignore all ` and of `x | ` took 0.04 s or less. Five megabytes of `curl ` repeated took 10.6 s, because the fetch-then-pipe expression looks up to 300 characters ahead from each `curl`. Linear in size, with a large constant.
 - **Odd bytes.** NUL bytes and invalid UTF-8 are scanned without an error.
 
 ## Tests
 
-`tests/unit/test_ingest_limits.py`: every pattern of every rule on adversarial lines, with a limit the old pattern fails; the credential pattern is linear and matches what the old one did; named pipe, symlink, symlink loop, deep tree, NUL bytes, invalid UTF-8, a directory named like a skill and an oversize file; and a seeded fuzz test (a fixed seed, the standard library only) that `scan()` never raises.
+`tests/unit/test_ingest_limits.py`: every pattern of every rule on adversarial lines, with a limit the old pattern fails, each timed in a child process (`tests/unit/redos_probe.py`) that is stopped after 30 s, so a pattern that never returns fails the test and does not stall the suite; the credential pattern is linear and matches what the old one did; named pipe, symlink, symlink loop, deep tree, NUL bytes, invalid UTF-8, a directory named like a skill and an oversize file; and a seeded fuzz test (a fixed seed, the standard library only) that `scan()` never raises.
 
 ## Not verified
 

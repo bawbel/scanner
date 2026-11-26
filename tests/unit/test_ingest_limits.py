@@ -5,7 +5,9 @@ The pattern engine runs every pattern of every rule on every line. A pattern who
 faster than the line (a ReDoS) lets one file stall a scan, and nothing else limits it: there is no
 line length limit and no time budget for the pattern engine. This file checks:
 
-  - every pattern of every rule, on adversarial single lines of 100000 characters, per rule
+  - every pattern of every rule, on adversarial single lines of 100000 characters, per rule, each
+    timed in a child process with a time limit (tests/unit/redos_probe.py), so a pattern that never
+    returns fails the test and does not stall the suite
   - the one pattern that was quadratic, `bawbel-hardcoded-credential`, is linear, and matches
     exactly the text it matched before (the old pattern is kept here to show it)
   - how ingest treats a named pipe, a symlink, a symlink loop, a deep tree, NUL bytes, invalid
@@ -18,6 +20,7 @@ seed. docs/INGEST-LIMITS.md states the limits and what was measured.
 Run: pytest tests/unit/test_ingest_limits.py -q
 """
 
+import json
 import os
 import random
 import re
@@ -39,45 +42,47 @@ LINE = 100_000
 STAGE_ONE = 20_000  # a quadratic pattern is caught here before the long run
 
 
-def adversarial(n: int) -> dict[str, str]:
-    """Single lines shaped to make a backtracking regex work hard."""
-    return {
-        "letters": "a" * n,
-        "spaces": " " * n,
-        "words": "ab " * (n // 3),
-        "fetch": "curl " + "x" * n,
-        "ignore": "ignore " + "all " * (n // 4),
-        "label": "IMPORTANT: " * (n // 11),
-        "json": '"description": "' + "a " * (n // 2),
-        "url": "https://" + "a." * (n // 2),
-        "tabs": ("\t" * 50 + "x") * (n // 51),
-        "base64": "A" * n + "=",
-        "unicode": "\u00e9" * n,
-    }
+PROBE = Path(__file__).with_name("redos_probe.py")
+PROBE_SECONDS = 30  # a child that has not finished by then counts as a pattern that never returns
 
 
-def slowest(patterns, n: int):
-    worst = (0.0, "", "")
-    for pattern in patterns:
-        compiled = re.compile(pattern, re.IGNORECASE)
-        for name, line in adversarial(n).items():
-            start = time.perf_counter()
-            compiled.search(line)
-            elapsed = time.perf_counter() - start
-            if elapsed > worst[0]:
-                worst = (elapsed, name, pattern[:60])
-    return worst
+def slowest(patterns, n: int, seconds: int = PROBE_SECONDS):
+    """The slowest search of any pattern on any adversarial line of n characters, measured in a
+    child process. A child that does not finish in `seconds` is killed and reported as that long."""
+    try:
+        proc = subprocess.run(
+            [sys.executable, "-I", str(PROBE), str(n)],
+            input=json.dumps(list(patterns)),
+            capture_output=True,
+            text=True,
+            timeout=seconds,
+            check=False,
+        )
+    except subprocess.TimeoutExpired:
+        return (float(seconds), "did not finish", f"{len(patterns)} pattern(s)")
+    assert proc.returncode == 0, proc.stderr
+    elapsed, name, pattern = json.loads(proc.stdout)
+    return (elapsed, name, pattern)
 
 
 @pytest.mark.parametrize("rule", PATTERN_RULES, ids=[r["rule_id"] for r in PATTERN_RULES])
 def test_every_pattern_of_the_rule_is_fast_on_adversarial_lines(rule):
-    """Per rule. The first stage stops a quadratic pattern before the long run starts."""
+    """Per rule. The first stage stops a quadratic pattern before the long run starts, and a
+    pattern that never returns is stopped by the child's time limit."""
     first = slowest(rule["patterns"], STAGE_ONE)
     assert (
         first[0] < 0.25
     ), f"{rule['rule_id']}: {first[0]:.2f} s at {STAGE_ONE} characters: {first}"
     worst = slowest(rule["patterns"], LINE)
     assert worst[0] < 1.0, f"{rule['rule_id']}: {worst[0]:.2f} s at {LINE} characters: {worst}"
+
+
+def test_a_pattern_that_never_returns_is_reported_and_does_not_stall():
+    """Control for the test above: an exponential pattern fails in about PROBE_SECONDS."""
+    start = time.perf_counter()
+    result = slowest([r"(a+)+b"], STAGE_ONE, seconds=3)
+    assert result[1] == "did not finish" and result[0] >= 3
+    assert time.perf_counter() - start < 10
 
 
 # ── The pattern that was quadratic ────────────────────────────────────────────
@@ -91,11 +96,9 @@ def credential_url_pattern() -> str:
 
 
 def test_the_credential_url_pattern_is_linear():
-    compiled = re.compile(credential_url_pattern(), re.IGNORECASE)
-    for line in ("a" * 200_000, "0123456789abcdef" * 12_500, "ab-" * 66_000):
-        start = time.perf_counter()
-        compiled.search(line)
-        assert time.perf_counter() - start < 0.5, "the pattern is slow on a long word"
+    """Long words of letters, hex digits and `ab-`, among the adversarial lines, at 200000."""
+    worst = slowest([credential_url_pattern()], 200_000)
+    assert worst[0] < 0.5, f"the pattern is slow on a long word: {worst}"
 
 
 def test_the_old_credential_url_pattern_is_what_this_test_replaced():
@@ -168,14 +171,17 @@ def run_scan_in_child(path: Path, seconds: int = 30) -> str:
         "print(r.error or 'no error', len(r.findings))"
     )
     env = dict(os.environ, PYTHONPATH=str(ROOT), BAWBEL_LOG_LEVEL="CRITICAL")
-    proc = subprocess.run(
-        [sys.executable, "-c", code, str(path)],
-        capture_output=True,
-        text=True,
-        timeout=seconds,
-        check=False,
-        env=env,
-    )
+    try:
+        proc = subprocess.run(
+            [sys.executable, "-c", code, str(path)],
+            capture_output=True,
+            text=True,
+            timeout=seconds,
+            check=False,
+            env=env,
+        )
+    except subprocess.TimeoutExpired:
+        pytest.fail(f"the scan of {path.name} did not finish in {seconds} s")
     return proc.stdout.strip()
 
 
