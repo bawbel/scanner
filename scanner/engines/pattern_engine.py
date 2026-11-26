@@ -1034,7 +1034,10 @@ PATTERN_RULES_V2: list[dict] = [
             r"Bearer\s+[a-zA-Z0-9\-_\.]{20,}",
             r'(?:ANTHROPIC|OPENAI|GEMINI|MISTRAL|GROQ)_API_KEY\s*[:=]\s*["\'][^"\' ]+["\']',
             r"-----BEGIN\s+(?:RSA\s+)?PRIVATE\s+KEY-----",
-            r"[\w\-]+://[\w\-]+:[^/@\s]{8,}@[\w\-\.]+",
+            # A credential in a URL. Starts only at the start of a word: without the lookbehind the
+            # leading [\w\-]+ is retried from every position of a long word and takes time
+            # proportional to the square of its length (issue #198).
+            r"(?<![\w\-])[\w\-]+://[\w\-]+:[^/@\s]{8,}@[\w\-\.]+",
         ],
     },
     # -- A2: Unsafe delegation chain (AVE-2026-00048) ------------------------

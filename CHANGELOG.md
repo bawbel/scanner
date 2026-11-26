@@ -77,6 +77,8 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- One pattern of `bawbel-hardcoded-credential` took time proportional to the square of a line's length, so a file with one long line could stall a scan for minutes. It now starts a match only at the start of a word and takes linear time, and it matches the same text. `docs/INGEST-LIMITS.md` states the limits that exist and the ones that do not (#198).
+
 - The pre-commit hook told users to read `https://bawbel.io/docs/suppression`, which returns
   404. It now points at `docs/guides/suppression.md` in this repository. The documentation
   URLs the CLI prints or carries now live in one module, `scanner/docs_urls.py`, and a test
