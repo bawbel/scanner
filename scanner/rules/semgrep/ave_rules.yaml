@@ -47,7 +47,11 @@ rules:
 
   - id: ave-shell-injection-pattern
     patterns:
-      - pattern-regex: '(?i)(curl|wget|bash|sh|python|pip|npm|eval)\s*\|'
+      # A pipe into an interpreter counts only after a download (curl or wget) on the same
+      # line, as in the YARA rule AVE_ShellPipeInjection. An interpreter name before a pipe, or
+      # a markdown table cell that ends in "publish" or "Python", is not an instruction to run
+      # downloaded code.
+      - pattern-regex: '(?i)\b(curl|wget)\b[^\n|]{0,300}\|\s*(sudo\s+)?(python[0-9.]*|pip[0-9]*|npm|npx|node|perl|ruby|bash|sh|zsh)\b'
     message: >
       [HIGH] Shell pipe injection pattern detected.
       curl|bash and similar patterns in skill instructions can cause
