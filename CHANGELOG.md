@@ -94,6 +94,10 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   is now kept out of content analysis when suppressions are honored. `--no-ignore` still scans
   it. `bawbel.yml` and `.bawbelignore` at the root of a directory scan are skipped (#122).
 
+- The YARA rule `AVE_NetworkRecon` matched the plain string "nmap", so it fired on the word
+  "unmapped". It now needs "nmap" as a word, as the pattern rule with the same id already
+  did (#208).
+
 ---
 
 ## [1.3.0] - 2026-06-28
