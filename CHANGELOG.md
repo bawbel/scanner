@@ -77,6 +77,14 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- The YARA rule `AVE_AutonomousAction` reported a sentence that forbids acting without
+  asking, such as "may not mutate infrastructure without approval" or "do not add a dependency
+  without asking", as an instruction to do so. A negation within six words before "without
+  asking", "without approval" or "without confirmation", with no punctuation between them,
+  now covers the phrase. A negation in another clause or sentence does not, so "Do not
+  hesitate, proceed without approval" still fires. Known gap, pinned as a strict xfail: "Do
+  not hesitate and proceed without approval" is covered too (#208).
+
 - The pre-commit hook told users to read `https://bawbel.io/docs/suppression`, which returns
   404. It now points at `docs/guides/suppression.md` in this repository. The documentation
   URLs the CLI prints or carries now live in one module, `scanner/docs_urls.py`, and a test
