@@ -189,3 +189,64 @@ def test_the_report_counts_come_from_the_results(built, tmp_path):
     assert "\u2014" not in text
     for banned in ("better than", "ahead of", "beyond"):
         assert banned not in text.lower(), banned
+
+
+def render_two_tools(built, tmp_path):
+    out, manifest = built
+    ids = [f["fixture"] for f in manifest["fixtures"]]
+    paths = []
+    for name, tool, severities in (
+        ("bawbel-core", "bawbel", ["HIGH", "INFO", "MEDIUM", None, "LOW"]),
+        ("skillspector", "skillspector", ["MEDIUM", "HIGH", None, "LOW", "LOW"]),
+    ):
+        path = tmp_path / f"{name}.json"
+        data = {
+            "command": [tool, "scan", "{path}"],
+            "tool": tool,
+            "results": [result(i, s) for i, s in zip(ids, severities)],
+        }
+        path.write_text(json.dumps(data), encoding="utf-8")
+        paths.append(str(path))
+    proc = subprocess.run(
+        [sys.executable, str(SCRIPTS / "competitive_render.py"), "--manifest"]
+        + [str(out / "manifest.json"), "--results", *paths]
+        + ["--bawbel-ref", "abc1234", "--date", "2026-01-01"],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return proc.stdout
+
+
+def test_no_results_table_sets_one_tool_beside_another(built, tmp_path):
+    """The decision on the report: numbers about another tool say whose method produced them and are
+    never compared across sources. Every table before the feature table names at most one tool."""
+    text = render_two_tools(built, tmp_path)
+    results_part = text.split("## Features")[0]
+    families = ("bawbel", "SkillSpector", "Cisco")
+    tables, block = [], []
+    for line in results_part.splitlines() + [""]:
+        if line.startswith("|"):
+            block.append(line)
+        elif block:
+            tables.append(block)
+            block = []
+    assert tables
+    for table in tables:
+        named = {family for line in table for family in families if family in line}
+        assert len(named) <= 1, (named, table[0])
+    assert "### Agreement" not in text
+    assert "## SkillSpector, static mode" in text and "## bawbel, our own scanner" in text
+
+
+def test_the_report_says_whose_method_produced_the_numbers_and_that_they_are_not_a_comparison(
+    built, tmp_path
+):
+    text = render_two_tools(built, tmp_path)
+    assert "**They were produced by our method, not by the tools' methods:**" in text
+    assert "**They are not a comparison of the tools, and they are not a rate of detection" in text
+    assert "not SkillSpector's own method" in text
+    assert "Internal reading, for our own work." in text
+    for banned in ("better than", "ahead of", "beyond", "outperform", "winner", "best"):
+        assert banned not in text.lower(), banned
+    assert "—" not in text
