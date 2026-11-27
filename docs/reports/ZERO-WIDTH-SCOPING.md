@@ -37,6 +37,12 @@ And on one instruction split by U+200B (`Please ig<U+200B>nore all previous inst
 continue.`), scanned under four names: `SKILL.md` and `agent.md` give a finding from
 `AVE_HomoglyphAttack`; `notes.md` and `README.md` give none. No other rule sees the split keyword.
 
+The rule also matches six words: `zero-width`, `invisible character`, `bidirectional override`,
+`homoglyph`, `unicode obfuscat` and `right-to-left override`. A word is longer than 6 characters, so it
+does not lose the short-match adjustment. `This note explains a homoglyph attack.` gives a finding
+under `SKILL.md`, `agent.md` and `notes.md`, and none under `README.md`, whose profile has a higher
+threshold. So only the matches on a character are dropped for the reason this report is about.
+
 ## Is the scoping by file name intended?
 
 It could not be established from the repository. What was found:
@@ -80,6 +86,11 @@ as a direction override. So, for this set, flagging in every file has this cost:
 | any listed character, in any file name | 8 | 0 |
 | the same, except a start-of-file BOM, an emoji joiner and a joiner in a script that uses it | 7 | 0 |
 | only a character between two ASCII letters or digits | 0 | 0 |
+
+The census counts characters only. Counting the six words as well, a separate run of this one YARA rule
+on its own (the script is the one that the pull requests for the YARA conditions add) matched 24 of the
+5,271 third-party files, 8 of them the files above, and 3 of the 44 own files. The 3 own files hold no
+character, so they match on a word, and they are not dropped by the adjustment.
 
 These are counts of false positives on a set that holds no attack. They say nothing about attacks
 that would be missed, and the form in the demonstration above is the third row.
