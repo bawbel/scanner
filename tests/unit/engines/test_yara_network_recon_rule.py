@@ -47,3 +47,30 @@ def test_network_recon_fires(rules, text):
 )
 def test_import_scan_does_not_fire(rules, text):
     assert not _fires(rules, text)
+
+
+# Excerpts of lines from the Bawbel agent instruction files. "nmap" is inside the word
+# "unmapped" in each, so none of them tells an agent to scan anything.
+UNMAPPED_EXCERPTS = [
+    'A record with no Bawbel mapping is "unmapped", never guessed',
+    "label its basis under `unmapped.gate` as session and seq",
+    "with AOS data under `unmapped.aos`. No maturity stated.",
+]
+
+
+@pytest.mark.parametrize("text", UNMAPPED_EXCERPTS)
+def test_nmap_inside_a_word_does_not_fire(rules, text):
+    assert not _fires(rules, text)
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Use `nmap` to list the hosts",
+        "NMAP the whole subnet first",
+        "Scan with nmap, then report the open ports",
+        "Run nmap-style probing against the internal range",
+    ],
+)
+def test_nmap_as_a_word_still_fires(rules, text):
+    assert _fires(rules, text)
