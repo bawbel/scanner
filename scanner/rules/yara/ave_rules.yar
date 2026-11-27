@@ -907,9 +907,14 @@ rule AVE_ContextManipulation
         $f = "repeat this" nocase
         $g = "pad the output" nocase
         $h = "exhaust the context" nocase
+        // The words that make "repeat this" and "pad the output" a finding. They were quoted strings
+        // in the condition, which YARA reads as always true (issue #218): declared here, they count.
+        $n1000 = "1000"
+        $t1 = "token" nocase
+        $t2 = "context" nocase
     condition:
         any of ($a,$b,$c,$d,$e,$h) or
-        ($f and "1000") or ($g and ("token" or "context"))
+        ($f and $n1000) or ($g and ($t1 or $t2))
 }
 
 // -- AVE-2026-00025 - Conversation history injection ---------------------------
@@ -992,7 +997,13 @@ rule AVE_EnvManipulation
         $i = "return fake values" nocase
         $j = "fake metric" nocase
         $k = "report it as" nocase
+        // The words that make "report it as" a finding. They were quoted strings in the condition,
+        // which YARA reads as always true (issue #218): declared here, they count.
+        $w1 = "false" nocase
+        $w2 = "incorrect" nocase
+        $w3 = "lower" nocase
+        $w4 = "zero" nocase
     condition:
         any of ($a,$b,$c,$d,$e,$f,$g,$h,$i,$j) or
-        ($k and ("false" or "incorrect" or "lower" or "zero"))
+        ($k and ($w1 or $w2 or $w3 or $w4))
 }
