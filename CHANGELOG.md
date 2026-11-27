@@ -88,13 +88,14 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   redirects there. A weekly workflow fetches the external URLs and fails when one stops
   resolving (#133).
 
-- The Semgrep rule `ave-shell-injection-pattern` fired on an interpreter name before a pipe, so a
-  markdown table cell that ends in "Python", or in a word ending in "sh" such as "publish" or
-  "hash", was reported as a shell pipe injection. It now needs a `curl` or `wget` download
-  before the pipe into an interpreter on the same line, as the YARA rule for the same record
-  has since #98. It also catches downloads piped into an interpreter that the old pattern
-  missed, because that needed the text before the pipe to end in one of its interpreter
-  names (#208).
+- The Semgrep rule `ave-shell-injection-pattern` is narrowed and fixed. It fired on an interpreter
+  name before a pipe, so a markdown table cell that ends in "Python", or in a word ending in "sh"
+  such as "publish" or "hash", was reported as a shell pipe injection: four such table rows from
+  our own instruction files no longer fire. It now needs a `curl` or `wget` download before the
+  pipe into an interpreter on the same line, as the YARA rule for the same record has since #98.
+  That also fixes a miss: the old pattern needed the text before the pipe to end in one of its
+  interpreter names, so four of the seven download pipes in the new tests did not fire and now do.
+  This changes precision and recall on one rule. It is not a detection-rate claim (#208).
 
 - A suppression comment could raise findings of its own: a `bawbel-ignore` reason that quoted
   the pattern it suppressed created a second, unsuppressed finding, and a block comment's text
