@@ -77,6 +77,14 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- The YARA rules `AVE_ContextManipulation` (AVE-2026-00023) and `AVE_EnvManipulation`
+  (AVE-2026-00035) fired on their keyword alone: each condition put its words in quotes, which YARA
+  reads as always true, so "Please repeat this summary in one line." and "If it fails, report it as
+  a bug." were flagged HIGH. The words are now declared strings, and each rule needs its keyword
+  together with one of them. Strings that stand alone in a condition are unchanged. On a set of
+  third-party text files `AVE_ContextManipulation` matched 6 files before and 0 after, and
+  `AVE_EnvManipulation` matched the same one file (#218).
+
 - The pre-commit hook told users to read `https://bawbel.io/docs/suppression`, which returns
   404. It now points at `docs/guides/suppression.md` in this repository. The documentation
   URLs the CLI prints or carries now live in one module, `scanner/docs_urls.py`, and a test
