@@ -21,6 +21,7 @@ vulnerabilities mapped to the [AVE standard](https://github.com/bawbel/ave).
 | [Publishing](guides/publishing.md) | Publish to PyPI - step by step |
 | [Verifying Releases](VERIFYING-RELEASES.md) | Check a release against its signed build provenance |
 | [Writing Rules](guides/writing-rules.md) | All built-in rules, OWASP mapping, adding new rules |
+| [Data egress](DATA-EGRESS.md) | What leaves the machine, per engine, option and command, and how each statement was checked |
 | [Suppression](guides/suppression.md) | All suppression mechanisms including justified suppression and accepted risks |
 | [Credentials and Delegation](guides/creds-and-chain.md) | bawbel creds and bawbel chain focused scans |
 | [False Positive Reduction](guides/false-positive-reduction.md) | 8-point strategy - code fences, confidence scoring, LLM filter |

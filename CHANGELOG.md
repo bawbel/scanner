@@ -8,6 +8,13 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- `docs/DATA-EGRESS.md` and `tests/unit/test_no_network.py`: what leaves the machine for each engine,
+  option and command, and a test that the core scan makes no network attempt, with a control that
+  shows the guard works. Findings the checks produced are reported in the document and not changed:
+  the meta-analyzer is not stopped by `BAWBEL_LLM_ENABLED=false` and sends the directory path of the
+  file, Semgrep makes name lookups with its default settings, and importing `litellm` fetches a
+  public price list (#195).
+
 - `ave_url` on every finding (JSON, SARIF, `scan()`): the AVE record at
   https://api.aveproject.org/records/{ave_id}, built from `AVE_RECORD_URL_TEMPLATE` (#116).
 
