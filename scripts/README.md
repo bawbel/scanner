@@ -12,6 +12,7 @@ scripts/
   scan_mcp_registry.py    sweep official MCP registry for AVE vulnerabilities
   sync_records.py         sync AVE records from github.com/bawbel/ave → PiranhaDB
   sync_record_counts.py   write the README's record, rule, and chain counts from the corpus
+  yara_rule_firing.py     count the files each YARA rule matches, before and after a change (needs yara-python)
   update_log.py           update CHANGELOG.md from git log
 ```
 

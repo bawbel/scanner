@@ -77,6 +77,13 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- The YARA rules `AVE_MemoryPoisoning` (AVE-2026-00019) and `AVE_HistoryInjection` (AVE-2026-00025)
+  fired on their keyword alone: each condition put its group of words in quotes, which YARA reads as
+  always true, so "The memory store is a key value table." was flagged CRITICAL and "As you previously
+  said, the build runs nightly." HIGH. The words are now declared strings, and each rule needs its
+  keyword together with one of them. Strings that stand alone in a condition are unchanged. On a set
+  of third-party text files the number of files matched did not change (#217).
+
 - The pre-commit hook told users to read `https://bawbel.io/docs/suppression`, which returns
   404. It now points at `docs/guides/suppression.md` in this repository. The documentation
   URLs the CLI prints or carries now live in one module, `scanner/docs_urls.py`, and a test

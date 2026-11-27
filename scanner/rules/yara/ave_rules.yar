@@ -814,9 +814,15 @@ rule AVE_MemoryPoisoning
         $f = "plant in memory" nocase
         $g = "corrupt agent memory" nocase
         $h = "memory store" nocase
+        // The words that make "memory store" a finding. They were quoted strings in the condition,
+        // which YARA reads as always true (issue #217): declared here, they count.
+        $k1 = "inject" nocase
+        $k2 = "poison" nocase
+        $k3 = "corrupt" nocase
+        $k4 = "false" nocase
     condition:
         any of ($a,$b,$c,$d,$e,$f,$g) or
-        ($h and ("inject" or "poison" or "corrupt" or "false"))
+        ($h and ($k1 or $k2 or $k3 or $k4))
 }
 
 // -- AVE-2026-00020 - A2A cross-agent injection --------------------------------
@@ -932,9 +938,15 @@ rule AVE_HistoryInjection
         $h = "fabricate history" nocase
         $i = "inject conversation" nocase
         $j = "previous conversation" nocase
+        // The words that make a history phrase a finding. They were quoted strings in the condition,
+        // which YARA reads as always true (issue #217): declared here, they count.
+        $k1 = "inject" nocase
+        $k2 = "fake" nocase
+        $k3 = "fabricate" nocase
+        $k4 = "false" nocase
     condition:
         any of ($g,$h,$i) or
-        (any of ($a,$b,$c,$d,$e,$f,$j) and ("inject" or "fake" or "fabricate" or "false"))
+        (any of ($a,$b,$c,$d,$e,$f,$j) and ($k1 or $k2 or $k3 or $k4))
 }
 
 // -- AVE-2026-00029 - Homoglyph / Unicode obfuscation -------------------------
