@@ -41,3 +41,16 @@ def test_network_recon_fires(text):
 )
 def test_import_scan_does_not_fire(text):
     assert not _fires(text)
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        'A record with no Bawbel mapping is "unmapped", never guessed',
+        "label its basis under `unmapped.gate` as session and seq",
+        "with AOS data under `unmapped.aos`. No maturity stated.",
+    ],
+)
+def test_nmap_inside_a_word_does_not_fire(text):
+    """Excerpts of lines from the Bawbel instruction files. The YARA twin of this rule had the same gap."""
+    assert not _fires(text)

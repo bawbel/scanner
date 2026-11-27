@@ -572,8 +572,9 @@ rule AVE_NetworkRecon
         severity = "HIGH"
         aivss  = "8.2"
     strings:
-        $a = "nmap" nocase
-        // Word boundary first: "port scan" also occurs inside "import scan".
+        // Word boundary first: "nmap" also occurs inside "unmapped", and "port scan" inside
+        // "import scan".
+        $a = /\bnmap\b/ nocase
         $b = /\bport\s*scan/ nocase
         $c = /\bnetwork\s*scan/ nocase
         $d = "host discovery" nocase
