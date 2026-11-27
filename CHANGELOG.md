@@ -77,6 +77,14 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- The YARA rule `AVE_A2AInjection` (AVE-2026-00020) fired on one agent word alone: its condition put
+  `inject`, `instruct`, `disregard` and `override` in quotes, which YARA reads as always true, so
+  "The sub-agent returns a summary." was flagged HIGH. The four words are now declared strings, and
+  the rule needs an agent word together with one of them. Strings that stand alone in the condition
+  (`agent instruction:`, `agent to agent`, `a2a` and the others) are unchanged. On a set of
+  third-party text files the number of files matched did not change; of the example texts of the AVE
+  records it matched 7 before and 1 after (#216).
+
 - The pre-commit hook told users to read `https://bawbel.io/docs/suppression`, which returns
   404. It now points at `docs/guides/suppression.md` in this repository. The documentation
   URLs the CLI prints or carries now live in one module, `scanner/docs_urls.py`, and a test
