@@ -85,14 +85,35 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: pip
 
-      - name: Install all deps including semgrep
+      - name: Install all deps including semgrep and yara
         run: |
           pip install --upgrade pip
-          pip install -e ".[semgrep]"
+          pip install -e ".[semgrep,yara]"
           pip install pytest pytest-cov
 
       - name: Run full test suite with semgrep engine
-        run: python -m pytest tests/ -v --tb=short
+        run: |
+          set -o pipefail
+          python -m pytest tests/ -v --tb=short -rs | tee pytest-integration.log
+
+      - name: Fail if the YARA rule tests were skipped
+        run: |
+          # The YARA rule tests skip themselves when yara-python is missing, and a skip is not a
+          # pass. Every YARA rule test module must show passing tests in the log above.
+          status=0
+          for f in tests/unit/engines/test_yara_*_rule.py; do
+            n=$(grep -c "^$f::.* PASSED" pytest-integration.log || true)
+            echo "$f: $n passed"
+            if [ "$n" -eq 0 ]; then
+              echo "::error file=$f::No test in this module passed. It was skipped or not collected."
+              status=1
+            fi
+          done
+          if grep -q "could not import 'yara'" pytest-integration.log; then
+            echo "::error::A test was skipped because yara-python is not installed."
+            status=1
+          fi
+          exit $status
 
   # ── Docker build ───────────────────────────────────────────────────────────
   docker:
