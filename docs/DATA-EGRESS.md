@@ -14,7 +14,7 @@ No claim is made for an engine or a command that was not tested. A statement abo
 |---|---|---|
 | The core scan: `scan`, `report`, `creds` and `chain` with the pattern engine | Nothing | VERIFIED |
 | YARA and Magika, which run inside the scanner's process | Nothing. No network system call was made by the whole process tree | VERIFIED |
-| Semgrep, a separate command line the scanner starts | The scanner sends it nothing. Semgrep itself, with its default settings, made name lookups (it tried `semgrep.dev`) in every run; with two Semgrep settings it made none. What it would have sent was not observed | VERIFIED (the attempts), NOT RUN (the content) |
+| Semgrep, a separate command line the scanner starts | The scanner sends it nothing and does not turn its own requests off (issue #209). With default settings Semgrep looks up `semgrep.dev`, which is its version check. If the caller is logged in to Semgrep, or has `SEMGREP_SEND_METRICS=on`, it also tries `metrics.semgrep.dev`. What it would have sent was not observed | VERIFIED (the attempts), NOT RUN (the content) |
 | Importing `litellm`, which the LLM stage, the meta-analyzer and `bawbel version` do when it is installed | A request for a public file, its model price list, from `raw.githubusercontent.com`. No file content or path | VERIFIED |
 | The LLM stage | The whole file content, to the model provider you configure | VERIFIED with a stand-in for the provider library, NOT RUN against a provider |
 | The meta-analyzer (false-positive filter) | The file name, the absolute path of the file's directory, and for each reviewed finding its details and the lines around it, to the same provider. `BAWBEL_LLM_ENABLED=false` does not stop it | VERIFIED with a stand-in |
@@ -36,10 +36,27 @@ Nothing leaves the machine. VERIFIED: the guard and the logger above, and `strac
 
 ## Semgrep
 
-The scanner starts `semgrep --config <a local rule file> --json --quiet <a temporary copy of the text>`. It passes no `--metrics` or `--disable-version-check` option and sets no Semgrep environment variable.
+The scanner starts `semgrep --config <a local rule file> --json --quiet <a temporary copy of the text>`. It passes no `--metrics` or `--disable-version-check` option, sets no Semgrep environment variable, and gives the child process the caller's whole environment, so a Semgrep login or a `SEMGREP_SEND_METRICS` setting of the caller reaches it. This is a defect against the rule that Semgrep runs with metrics off and no login: issue #209.
 
-- With default settings and a new home directory, the Semgrep command line tried to resolve `semgrep.dev` on port 443, twice per scan (VERIFIED, with the logger). `strace` over one scan showed eight `connect` calls to the DNS resolver on port 53, each failing with `ENETUNREACH`. The network was disabled, so what Semgrep would have sent was not observed.
-- With `SEMGREP_SEND_METRICS=off` and `SEMGREP_ENABLE_VERSION_CHECK=0`, the logger saw no attempt, `strace` showed no `connect` to an internet address (only local sockets), and Semgrep ran (VERIFIED).
+What Semgrep 1.186.0 tried to reach, with `--network none` and a logger that records each name lookup and connection attempt of the process (attempts only, so what it would have sent was not observed; VERIFIED):
+
+| How Semgrep was started | Attempts | Hosts |
+|---|---|---|
+| as the scanner starts it, no login | 4 | `semgrep.dev` |
+| `--metrics=off` only | 4 | `semgrep.dev` |
+| `--disable-version-check` only | 0 | none |
+| both flags | 0 | none |
+| `SEMGREP_SEND_METRICS=off` only | 4 | `semgrep.dev` |
+| `SEMGREP_ENABLE_VERSION_CHECK=0` only | 0 | none |
+| both settings in the environment | 0 | none |
+| caller logged in (a dummy token), as the scanner starts it | 5 | `metrics.semgrep.dev`, `semgrep.dev` |
+| caller logged in, with both flags | 0 | none |
+| caller has `SEMGREP_SEND_METRICS=on`, as the scanner starts it | 5 | `metrics.semgrep.dev`, `semgrep.dev` |
+| caller has `SEMGREP_SEND_METRICS=on`, with both flags | 0 | none |
+
+So the lookups of a default scan with no login are the version check, not metrics. Semgrep's own help says that with the option absent, metrics are sent when the `--config` value pulls from the Semgrep server or the user is logged in, and always when set to `on`. The two flags on the command line closed every case above. In the environment, the two settings closed the default case, and the login and `on` cases were measured only with the flags.
+
+- Earlier runs, with default settings and a new home directory, gave the same lookups: `strace` over one scan showed eight `connect` calls to the DNS resolver on port 53, each failing with `ENETUNREACH`, and with the two settings in the environment, no `connect` to an internet address (only local sockets), and Semgrep ran (VERIFIED).
 - With default settings and no network, the Semgrep engine did not run: the result lists it as degraded with the reason `timeout` and the error code `E013` (VERIFIED). A scan with no network therefore needs those two settings for Semgrep to run.
 - `strace` followed Semgrep's native binary as well, so the result above covers it.
 
@@ -77,7 +94,7 @@ Off unless `BAWBEL_SANDBOX_ENABLED=true`. Read from `scanner/engines/sandbox_eng
 |---|---|
 | the LLM stage | `BAWBEL_LLM_ENABLED=false`, or no model and no provider key |
 | the meta-analyzer | `BAWBEL_META_ANALYZER_ENABLED=false`, or no provider key and no `BAWBEL_LLM_MODEL`, or `litellm` not installed |
-| Semgrep's own requests | `SEMGREP_SEND_METRICS=off` and `SEMGREP_ENABLE_VERSION_CHECK=0` in the environment of the scan |
+| Semgrep's own requests | `--metrics=off` and `--disable-version-check` on its command line, which the scanner does not pass (issue #209); `SEMGREP_ENABLE_VERSION_CHECK=0` stops the lookups of a default scan. Only the flags were measured to close the login and `SEMGREP_SEND_METRICS=on` cases |
 | the sandbox stage | leave `BAWBEL_SANDBOX_ENABLED` unset |
 | the signal | leave `BAWBEL_PIRANHA_URL` unset |
 | `litellm`'s request for its price list | `LITELLM_LOCAL_MODEL_COST_MAP=True` in the environment of the scan |
