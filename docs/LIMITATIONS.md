@@ -95,3 +95,35 @@ of this table. A test also fails if a known miss is tested but not listed here.
 A missed phrasing is an ordinary issue: use the "New detection rule" form under
 `.github/ISSUE_TEMPLATE/`, and see [CONTRIBUTING.md](../CONTRIBUTING.md). A vulnerability in the
 scanner itself does not go in an issue. See [SECURITY.md](../SECURITY.md).
+
+---
+
+## Rule behaviours that were measured and are pinned by tests
+
+These are not missing rules. They are rules that do not do what their text suggests. Each is pinned
+by a strict `xfail` test in
+[`tests/unit/test_scan_level_records.py`](../tests/unit/test_scan_level_records.py), so the suite
+fails when one is fixed, and the pull request that fixes it removes its entry here.
+
+**Some YARA rules fire on one word.** These YARA rules were written as "this word together with one
+of these others": `AVE_A2AInjection`, `AVE_MemoryPoisoning`, `AVE_HistoryInjection`,
+`AVE_ContextManipulation` and `AVE_EnvManipulation`. The second part was written as quoted text
+inside the YARA condition, and YARA reads a quoted string there as always true. So each of these
+rules flags a file that holds only the first word. A file with the sentence "The sub-agent returns a
+summary." gets a HIGH finding from the cross-agent rule, with nothing else in it. The YARA file's
+other rules build their conditions from declared strings only.
+
+**Some Semgrep rules do not fire.** Semgrep reads several `pattern-regex` entries under `patterns:`
+as "all of them must match". Rules written that way did not fire on any text that was tried,
+including text built to match each of their regular expressions. All the Semgrep rules of the
+records `AVE-2026-00016`, `00018`, `00019`, `00020`, `00021`, `00022`, `00023` and `00025` are
+written that way. Those records also have a pattern rule and a YARA rule, which do fire, so a scan
+still reports them. Tested with Semgrep 1.186.0 only.
+
+**A zero-width character is flagged only in some file names.** The YARA rule `AVE_HomoglyphAttack`
+matches a zero-width character, but the finding is one character long, which lowers its confidence
+by 0.2, and only a file named like a skill (`SKILL.md`, `skill.md`, `agent.md`, `prompt.md` and a
+few others) gains the 0.15 that keeps it above the threshold. The same character in a file called
+`notes.md`, with the default settings, gives no finding. So an instruction split by a hidden
+character, such as `ig<U+200B>nore all previous instructions`, is reported in a skill-named file and
+not in other files.
