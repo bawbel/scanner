@@ -862,8 +862,21 @@ rule AVE_AutonomousAction
         $g = "execute without pausing" nocase
         $h = "no need to confirm" nocase
         $i = "bypass confirmation" nocase
+        // A sentence that forbids the action says the opposite of this rule's pattern:
+        // "may not mutate infrastructure without approval", "do not add a dependency without
+        // asking", "with and without approval waits". A negation within six words before
+        // "without ..." with no punctuation between them covers the phrase. A negation in
+        // another clause or sentence does not, so "Do not hesitate, proceed without approval"
+        // still fires. Known gap: "Do not hesitate and proceed without approval" is covered too.
+        $forbid = /(may not|must not|should not|shall not|will not|do not|don'?t|never|cannot|can'?t|no new)\s+([a-z`'-]+\s+){0,6}without\s+(asking|approval|confirmation)|with and without\s+(asking|approval|confirmation)/ nocase
     condition:
-        any of them
+        any of ($d, $e, $f, $g, $h, $i) or
+        (for any n in (1..#a) : (not (for any m in (1..#forbid) :
+            (@forbid[m] <= @a[n] and @forbid[m] + !forbid[m] >= @a[n] + !a[n])))) or
+        (for any n in (1..#b) : (not (for any m in (1..#forbid) :
+            (@forbid[m] <= @b[n] and @forbid[m] + !forbid[m] >= @b[n] + !b[n])))) or
+        (for any n in (1..#c) : (not (for any m in (1..#forbid) :
+            (@forbid[m] <= @c[n] and @forbid[m] + !forbid[m] >= @c[n] + !c[n]))))
 }
 
 // -- AVE-2026-00022 - Scope creep ----------------------------------------------
