@@ -838,8 +838,14 @@ rule AVE_A2AInjection
         $g = "disregard the orchestrator" nocase
         $h = "agent to agent" nocase
         $i = "a2a" nocase
+        // The four words that make an agent word a finding. They were quoted strings in the
+        // condition, which YARA reads as always true (issue #216): declared here, they count.
+        $k1 = "inject" nocase
+        $k2 = "instruct" nocase
+        $k3 = "disregard" nocase
+        $k4 = "override" nocase
     condition:
-        ($a or $b or $c or $d) and ("inject" or "instruct" or "disregard" or "override") or
+        ($a or $b or $c or $d) and ($k1 or $k2 or $k3 or $k4) or
         ($e or $f or $g or $h or $i)
 }
 
