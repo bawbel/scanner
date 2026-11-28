@@ -8,6 +8,12 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Scan-level tests for the rules of AVE-2026-00017, MCP server impersonation or spoofing: a test
+  through `scan()` for the pattern rule and the YARA rule, a case for every pattern, benign text, and
+  the Semgrep rule as a strict `xfail` because it lists several regexes under `patterns:` and did not
+  fire on any text tried. The record has no examples, so the text is written from the rules'
+  patterns. No rule changes (#224).
+
 - `ave_url` on every finding (JSON, SARIF, `scan()`): the AVE record at
   https://api.aveproject.org/records/{ave_id}, built from `AVE_RECORD_URL_TEMPLATE` (#116).
 
