@@ -163,4 +163,4 @@ def test_measure_and_render_print_counts_and_no_file_names(tmp_path):
     assert "| inside-ascii-word | 1 | 1 |" in report
     for word in ("better", "best", "worse", "winner", "safe", "secure"):
         assert word not in report.lower(), word
-    assert "—" not in report
+    assert chr(0x2014) not in report
