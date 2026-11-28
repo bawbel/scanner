@@ -249,4 +249,4 @@ def test_the_report_says_whose_method_produced_the_numbers_and_that_they_are_not
     assert "Internal reading, for our own work." in text
     for banned in ("better than", "ahead of", "beyond", "outperform", "winner", "best"):
         assert banned not in text.lower(), banned
-    assert "—" not in text
+    assert chr(0x2014) not in text
