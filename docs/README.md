@@ -26,6 +26,7 @@ vulnerabilities mapped to the [AVE standard](https://github.com/bawbel/ave).
 | [False Positive Reduction](guides/false-positive-reduction.md) | 8-point strategy - code fences, confidence scoring, LLM filter |
 | [Detection Engines](guides/engines.md) | The detection engines explained - purpose, how it works, what it detects, how to use |
 | [Limitations](LIMITATIONS.md) | What the scanner does not catch, how to read "No findings", and the known misses pinned by tests |
+| [Which Semgrep rules fire](reports/SEMGREP-RULES-FIRED.md) | How often each Semgrep rule fired on third-party text files and on every AVE example, which rules never did, and whether a public claim counts them. A report |
 | [Adding an Engine](guides/adding-engine.md) | Add a new detection stage |
 | [MCP Server Scanning](guides/mcp-server-scanning.md) | Scan MCP server cards, conformance scoring |
 

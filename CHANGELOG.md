@@ -8,6 +8,12 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- A report of how often each Semgrep rule fires, on third-party text files and on every AVE
+  example, with the script that produces it (`docs/reports/SEMGREP-RULES-FIRED.md`,
+  `scripts/semgrep_rule_firing.py`). It finds that the rules written with several regexes under
+  `patterns:` did not fire on either set, and says which public lines count them. It changes no
+  rule (#210).
+
 - `ave_url` on every finding (JSON, SARIF, `scan()`): the AVE record at
   https://api.aveproject.org/records/{ave_id}, built from `AVE_RECORD_URL_TEMPLATE` (#116).
 
