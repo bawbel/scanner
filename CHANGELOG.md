@@ -8,6 +8,11 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- A report on why a zero-width character is flagged only in a file named like a skill, with a
+  census of the characters in third-party text files and the script that produces it
+  (`docs/reports/ZERO-WIDTH-SCOPING.md`, `scripts/hidden_character_census.py`). It changes no rule
+  and no score, and lists options without choosing one (#212).
+
 - `ave_url` on every finding (JSON, SARIF, `scan()`): the AVE record at
   https://api.aveproject.org/records/{ave_id}, built from `AVE_RECORD_URL_TEMPLATE` (#116).
 
