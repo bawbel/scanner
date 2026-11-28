@@ -1,0 +1,2713 @@
+{
+ "tool": "cisco",
+ "command": [
+  "/w/venv-cisco/bin/skill-scanner",
+  "scan",
+  "{path}",
+  "--format",
+  "json"
+ ],
+ "results": [
+  {
+   "fixture": "ave-2026-00041-0",
+   "exit": 0,
+   "seconds": 12.122,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00041-1",
+   "exit": 0,
+   "seconds": 11.63,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00041-2",
+   "exit": 0,
+   "seconds": 11.412,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE",
+    "YARA_coercive_injection_generic"
+   ],
+   "max_severity": "CRITICAL",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00041-3",
+   "exit": 0,
+   "seconds": 11.475,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00042-0",
+   "exit": 0,
+   "seconds": 11.218,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "ACTIVE_DYNAMIC_EXECUTION",
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "HIGH",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00042-1",
+   "exit": 0,
+   "seconds": 11.232,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "ACTIVE_DYNAMIC_EXECUTION",
+    "MANIFEST_MISSING_LICENSE",
+    "YARA_code_execution_generic"
+   ],
+   "max_severity": "HIGH",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00042-2",
+   "exit": 0,
+   "seconds": 11.07,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE",
+    "PIPELINE_TAINT_FLOW"
+   ],
+   "max_severity": "HIGH",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00042-3",
+   "exit": 0,
+   "seconds": 11.07,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00043-0",
+   "exit": 0,
+   "seconds": 12.47,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE",
+    "PROMPT_INJECTION_IGNORE_INSTRUCTIONS"
+   ],
+   "max_severity": "HIGH",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00043-1",
+   "exit": 0,
+   "seconds": 11.493,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00043-2",
+   "exit": 0,
+   "seconds": 11.439,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00043-3",
+   "exit": 0,
+   "seconds": 11.361,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00044-0",
+   "exit": 0,
+   "seconds": 10.942,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE",
+    "PROMPT_INJECTION_IGNORE_INSTRUCTIONS"
+   ],
+   "max_severity": "HIGH",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00044-1",
+   "exit": 0,
+   "seconds": 12.927,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00044-2",
+   "exit": 0,
+   "seconds": 11.638,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00044-3",
+   "exit": 0,
+   "seconds": 12.147,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00044-4",
+   "exit": 0,
+   "seconds": 11.271,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00045-0",
+   "exit": 0,
+   "seconds": 11.632,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00045-1",
+   "exit": 0,
+   "seconds": 12.198,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00045-2",
+   "exit": 0,
+   "seconds": 15.063,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00045-3",
+   "exit": 0,
+   "seconds": 15.586,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00046-0",
+   "exit": 0,
+   "seconds": 13.45,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00046-1",
+   "exit": 0,
+   "seconds": 16.846,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00046-2",
+   "exit": 0,
+   "seconds": 15.216,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00046-3",
+   "exit": 0,
+   "seconds": 13.932,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00046-4",
+   "exit": 0,
+   "seconds": 14.118,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00047-0",
+   "exit": 0,
+   "seconds": 13.509,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE",
+    "YARA_credential_harvesting_generic"
+   ],
+   "max_severity": "CRITICAL",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00047-1",
+   "exit": 0,
+   "seconds": 12.96,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00047-2",
+   "exit": 0,
+   "seconds": 16.054,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00047-3",
+   "exit": 0,
+   "seconds": 11.527,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00047-4",
+   "exit": 0,
+   "seconds": 11.087,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE",
+    "YARA_credential_harvesting_generic"
+   ],
+   "max_severity": "CRITICAL",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00048-0",
+   "exit": 0,
+   "seconds": 11.642,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00048-1",
+   "exit": 0,
+   "seconds": 11.834,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00048-2",
+   "exit": 0,
+   "seconds": 12.238,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00048-3",
+   "exit": 0,
+   "seconds": 11.868,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00048-4",
+   "exit": 0,
+   "seconds": 10.966,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00049-0",
+   "exit": 0,
+   "seconds": 11.779,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00049-1",
+   "exit": 0,
+   "seconds": 11.422,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00049-2",
+   "exit": 0,
+   "seconds": 11.188,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00049-3",
+   "exit": 0,
+   "seconds": 12.512,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00049-4",
+   "exit": 0,
+   "seconds": 11.21,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00050-0",
+   "exit": 0,
+   "seconds": 10.884,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00050-1",
+   "exit": 0,
+   "seconds": 12.366,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00050-2",
+   "exit": 0,
+   "seconds": 14.476,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00050-3",
+   "exit": 0,
+   "seconds": 14.028,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00050-4",
+   "exit": 0,
+   "seconds": 12.002,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00051-0",
+   "exit": 0,
+   "seconds": 9.787,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00051-1",
+   "exit": 0,
+   "seconds": 9.8,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00051-2",
+   "exit": 0,
+   "seconds": 11.236,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00051-3",
+   "exit": 0,
+   "seconds": 11.539,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00051-4",
+   "exit": 0,
+   "seconds": 10.933,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00054-0",
+   "exit": 0,
+   "seconds": 10.219,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00054-1",
+   "exit": 0,
+   "seconds": 9.72,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00054-2",
+   "exit": 0,
+   "seconds": 10.113,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00055-0",
+   "exit": 0,
+   "seconds": 9.813,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00055-1",
+   "exit": 0,
+   "seconds": 9.641,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00055-2",
+   "exit": 0,
+   "seconds": 10.129,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00056-0",
+   "exit": 0,
+   "seconds": 12.37,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00056-1",
+   "exit": 0,
+   "seconds": 11.919,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00056-2",
+   "exit": 0,
+   "seconds": 11.091,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00057-0",
+   "exit": 0,
+   "seconds": 10.986,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "ACTIVE_DYNAMIC_EXECUTION",
+    "MANIFEST_MISSING_LICENSE",
+    "OBFUSCATION_BASE64_LARGE"
+   ],
+   "max_severity": "HIGH",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00057-1",
+   "exit": 0,
+   "seconds": 10.541,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "ACTIVE_DYNAMIC_EXECUTION",
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "HIGH",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00057-2",
+   "exit": 0,
+   "seconds": 9.523,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00057-3",
+   "exit": 0,
+   "seconds": 10.794,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00058-0",
+   "exit": 0,
+   "seconds": 11.777,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00058-1",
+   "exit": 0,
+   "seconds": 10.986,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00058-2",
+   "exit": 0,
+   "seconds": 10.144,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00059-0",
+   "exit": 0,
+   "seconds": 10.31,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00059-1",
+   "exit": 0,
+   "seconds": 10.754,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00059-2",
+   "exit": 0,
+   "seconds": 12.659,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00059-3",
+   "exit": 0,
+   "seconds": 12.096,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00062-0",
+   "exit": 0,
+   "seconds": 11.352,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00062-1",
+   "exit": 0,
+   "seconds": 8.006,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00063-0",
+   "exit": 0,
+   "seconds": 7.974,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00063-1",
+   "exit": 0,
+   "seconds": 7.891,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00064-0",
+   "exit": 0,
+   "seconds": 7.377,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00064-1",
+   "exit": 0,
+   "seconds": 6.941,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00065-0",
+   "exit": 0,
+   "seconds": 7.416,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00065-1",
+   "exit": 0,
+   "seconds": 7.323,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00066-0",
+   "exit": 0,
+   "seconds": 7.349,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00066-1",
+   "exit": 0,
+   "seconds": 7.803,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00067-0",
+   "exit": 0,
+   "seconds": 7.495,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00067-1",
+   "exit": 0,
+   "seconds": 7.38,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00068-0",
+   "exit": 0,
+   "seconds": 7.552,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00068-1",
+   "exit": 0,
+   "seconds": 8.019,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00069-0",
+   "exit": 0,
+   "seconds": 8.674,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00069-1",
+   "exit": 0,
+   "seconds": 7.899,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00070-0",
+   "exit": 0,
+   "seconds": 7.881,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00070-1",
+   "exit": 0,
+   "seconds": 9.004,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00071-0",
+   "exit": 0,
+   "seconds": 8.39,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00071-1",
+   "exit": 0,
+   "seconds": 7.978,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00072-0",
+   "exit": 0,
+   "seconds": 7.711,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00072-1",
+   "exit": 0,
+   "seconds": 7.837,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00073-0",
+   "exit": 0,
+   "seconds": 7.178,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00073-1",
+   "exit": 0,
+   "seconds": 7.266,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00073-2",
+   "exit": 0,
+   "seconds": 7.291,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00073-3",
+   "exit": 0,
+   "seconds": 7.884,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00073-4",
+   "exit": 0,
+   "seconds": 7.578,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00074-0",
+   "exit": 0,
+   "seconds": 7.527,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00074-1",
+   "exit": 0,
+   "seconds": 7.519,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00074-2",
+   "exit": 0,
+   "seconds": 7.445,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00074-3",
+   "exit": 0,
+   "seconds": 7.421,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00075-0",
+   "exit": 0,
+   "seconds": 7.969,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00075-1",
+   "exit": 0,
+   "seconds": 7.776,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00075-2",
+   "exit": 0,
+   "seconds": 9.074,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00076-0",
+   "exit": 0,
+   "seconds": 8.003,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00076-1",
+   "exit": 0,
+   "seconds": 8.132,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00076-2",
+   "exit": 0,
+   "seconds": 8.119,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00077-0",
+   "exit": 0,
+   "seconds": 9.295,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00077-1",
+   "exit": 0,
+   "seconds": 7.938,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00077-2",
+   "exit": 0,
+   "seconds": 7.638,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00078-0",
+   "exit": 0,
+   "seconds": 7.537,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00078-1",
+   "exit": 0,
+   "seconds": 7.228,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00078-2",
+   "exit": 0,
+   "seconds": 7.47,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00079-0",
+   "exit": 0,
+   "seconds": 8.758,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00079-1",
+   "exit": 0,
+   "seconds": 8.322,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00079-2",
+   "exit": 0,
+   "seconds": 7.678,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00080-0",
+   "exit": 0,
+   "seconds": 9.328,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00080-1",
+   "exit": 0,
+   "seconds": 9.347,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00080-2",
+   "exit": 0,
+   "seconds": 8.645,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00081-0",
+   "exit": 0,
+   "seconds": 7.433,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00081-1",
+   "exit": 0,
+   "seconds": 7.204,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00081-2",
+   "exit": 0,
+   "seconds": 7.318,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00082-0",
+   "exit": 0,
+   "seconds": 7.275,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00082-1",
+   "exit": 0,
+   "seconds": 7.84,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00083-0",
+   "exit": 0,
+   "seconds": 7.416,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00083-1",
+   "exit": 0,
+   "seconds": 7.173,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00083-2",
+   "exit": 0,
+   "seconds": 7.362,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00084-0",
+   "exit": 0,
+   "seconds": 7.314,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00084-1",
+   "exit": 0,
+   "seconds": 7.276,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00084-2",
+   "exit": 0,
+   "seconds": 9.66,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00085-0",
+   "exit": 0,
+   "seconds": 7.202,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00085-1",
+   "exit": 0,
+   "seconds": 7.716,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00085-2",
+   "exit": 0,
+   "seconds": 7.944,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00086-0",
+   "exit": 0,
+   "seconds": 8.544,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00086-1",
+   "exit": 0,
+   "seconds": 8.805,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00086-2",
+   "exit": 0,
+   "seconds": 8.921,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00087-0",
+   "exit": 0,
+   "seconds": 9.196,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00087-1",
+   "exit": 0,
+   "seconds": 7.331,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00087-2",
+   "exit": 0,
+   "seconds": 7.346,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00088-0",
+   "exit": 0,
+   "seconds": 7.346,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00088-1",
+   "exit": 0,
+   "seconds": 8.395,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00088-2",
+   "exit": 0,
+   "seconds": 9.672,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00088-3",
+   "exit": 0,
+   "seconds": 9.555,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00089-0",
+   "exit": 0,
+   "seconds": 8.393,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00089-1",
+   "exit": 0,
+   "seconds": 7.665,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "ave-2026-00089-2",
+   "exit": 0,
+   "seconds": 7.726,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE"
+   ],
+   "max_severity": "INFO",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "repo-suppression-skill",
+   "exit": 0,
+   "seconds": 7.868,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "MANIFEST_MISSING_LICENSE",
+    "PROMPT_INJECTION_IGNORE_INSTRUCTIONS",
+    "YARA_prompt_injection_generic"
+   ],
+   "max_severity": "CRITICAL",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  },
+  {
+   "fixture": "repo-golden-skill",
+   "exit": 0,
+   "seconds": 8.291,
+   "parsed": true,
+   "flagged": true,
+   "rules": [
+    "ACTIVE_SENSITIVE_EXFILTRATION",
+    "MANIFEST_MISSING_LICENSE",
+    "PROMPT_INJECTION_CONCEALMENT",
+    "PROMPT_INJECTION_IGNORE_INSTRUCTIONS",
+    "YARA_prompt_injection_generic",
+    "YARA_tool_chaining_abuse_generic"
+   ],
+   "max_severity": "CRITICAL",
+   "analyzers": [
+    "static_analyzer",
+    "bytecode",
+    "pipeline",
+    "correlation"
+   ],
+   "stderr_chars": 0
+  }
+ ]
+}

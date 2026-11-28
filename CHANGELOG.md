@@ -8,6 +8,11 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- `docs/reports/COMPETITIVE-MATRIX.md`, with `scripts/competitive_fixtures.py`, `competitive_run.py` and
+  `competitive_render.py`: a feature matrix of bawbel and three other open source agent-skill scanners,
+  each cell tagged VERIFIED, SOURCED or UNVERIFIED, from offline runs of two of them on harmless
+  fixtures and from the documentation of the third. It ranks nothing and changes no behaviour (#194).
+
 - `ave_url` on every finding (JSON, SARIF, `scan()`): the AVE record at
   https://api.aveproject.org/records/{ave_id}, built from `AVE_RECORD_URL_TEMPLATE` (#116).
 
